@@ -329,12 +329,14 @@ class OPEXUploaderGUI(UploaderGUI):
             uploader = OPEXUploader(args)
             uploader.config()
             uploader.xnatconnect()
-            logging.info('Connecting to Server:%s Project:%s', uploader.args.database, uploader.args.projectcode)
+            msg = 'Connecting to Server:%s Project:%s' % (uploader.args.database, uploader.args.projectcode)
+            logging.info(msg)
+            print msg
 
             try:
                 if uploader.xnat.testconnection():
                     logging.info("...Connected")
-                    print "Connection Successful - running data upload for ", runoption
+                    print "...Connected"
                     uploader.runDataUpload(proj, self.dirname, runoption)
                 else:
                     raise ConnectionError('Not connected')

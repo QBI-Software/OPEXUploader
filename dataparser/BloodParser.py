@@ -13,7 +13,7 @@ Created on Thu Mar 2 2017
 import argparse
 import glob
 from os import R_OK, access
-from os.path import join
+from os.path import join, dirname, abspath
 from datetime import datetime
 import pandas
 import numpy as np
@@ -31,16 +31,16 @@ class BloodParser(DataParser):
         if 'fields' in kwargs:
             fields = kwargs.get('fields')
         else:
-            fields = 'resources/blood_fields.csv'
+
+           fields = join(self.resource_dir, 'blood_fields.csv')
 
         try:
-            self.opex = pandas.read_csv(join('resources', 'opex.csv'))
+
             access(fields, R_OK)
             df = pandas.read_csv(fields, header=0)
             self.fields = df[self.type]
             self.fields.dropna(inplace=True)
-            #TODO replace headers with Value.x - true for COBAS data SO FAR
-            if self.type =='COBAS':
+            if self.fields[0] not in self.data.columns:
                 colnames = {}
                 v=1
                 for i in range(len(self.fields)):
@@ -48,7 +48,7 @@ class BloodParser(DataParser):
                     v = v + 2
 
                 df = self.data.rename(index=str, columns=colnames)
-                print("NB. renamed columns: ", colnames)
+                print "Renamed columns: ", colnames
                 self.data = df
 
         except:
@@ -143,6 +143,7 @@ class BloodParser(DataParser):
         data = {}
         for ctab in self.fields:
             if ctab in row:
+                print ctab, ' = ', row[ctab]
                 data[xsd + '/' + ctab] = str(row[ctab])
 
         return (mandata,data)
@@ -160,7 +161,7 @@ if __name__ == "__main__":
 
              ''')
 
-    parser.add_argument('--filedir', action='store', help='Directory containing files', default="sampledata\\blood\\COBAS")
+    parser.add_argument('--filedir', action='store', help='Directory containing files', default="..\\sampledata\\blood\\COBAS")
     parser.add_argument('--sheet', action='store', help='Sheet name to extract', default="0")
     args = parser.parse_args()
 

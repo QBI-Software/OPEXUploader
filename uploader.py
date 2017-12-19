@@ -143,62 +143,69 @@ class OPEXUploader():
             # Load data PER ROW
             matches.append(sd)
             if self.args.checks is None or not self.args.checks:  # Don't upload if checks
-                xsdtypes = dp.getxsd()
-                if 'dexa' in xsdtypes:
-                    checkfield = dp.fields['Field'][0]  # test if data in row
-                    for i, row in dp.subjects[sd].items():
-                        if checkfield in row and not isnan(row[checkfield].iloc[0]):
-                            print 'Interval:', dp.intervals[i]
+                try:
+                    xsdtypes = dp.getxsd()
+                    if 'dexa' in xsdtypes:
+                        checkfield = dp.fields['Field'][0]  # test if data in row
+                        for i, row in dp.subjects[sd].items():
+                            if checkfield in row and not isnan(row[checkfield].iloc[0]):
+                                print 'Interval:', dp.intervals[i]
+                                sampleid = dp.getSampleid(sd, i)
+                                (mandata, data) = dp.mapData(row, i, xsdtypes)
+                                msg = self.loadSampledata(s, xsdtypes, sampleid, mandata, data)
+                                logging.info(msg)
+                                print(msg)
+                    elif 'cosmed' in xsdtypes:
+                        for i, row in dp.subjects[sd].items():
+                            row.replace(nan, '', inplace=True)
                             sampleid = dp.getSampleid(sd, i)
+                            if sampleid in ['COS_1021LB_0', 'COS_1021LB_3']:
+                                continue
                             (mandata, data) = dp.mapData(row, i, xsdtypes)
+
                             msg = self.loadSampledata(s, xsdtypes, sampleid, mandata, data)
                             logging.info(msg)
                             print(msg)
-                elif 'cosmed' in xsdtypes:
-                    for i, row in dp.subjects[sd].items():
-                        row.replace(nan, '', inplace=True)
-                        sampleid = dp.getSampleid(sd, i)
-                        if sampleid in ['COS_1021LB_0', 'COS_1021LB_3']:
-                            continue
-                        (mandata, data) = dp.mapData(row, i, xsdtypes)
+                    else:
+                        for i, row in dp.subjects[sd].iterrows():
+                            sampleid = dp.getSampleid(sd, row)
+                            if self.args.skiprows is not None and self.args.skiprows and \
+                                    (('NOT_RUN' in row.values) or ('ABORTED' in row.values)):
+                                msg = "Skipping due to ABORT or NOT RUN: %s" % sampleid
+                                logging.warning(msg)
+                                print(msg)
+                                continue
+                            row.replace(nan, '', inplace=True)
 
-                        msg = self.loadSampledata(s, xsdtypes, sampleid, mandata, data)
-                        logging.info(msg)
-                        print(msg)
-                else:
-                    for i, row in dp.subjects[sd].iterrows():
-                        sampleid = dp.getSampleid(sd, row)
-                        if self.args.skiprows is not None and self.args.skiprows and \
-                                (('NOT_RUN' in row.values) or ('ABORTED' in row.values)):
-                            msg = "Skipping due to ABORT or NOT RUN: %s" % sampleid
-                            logging.warning(msg)
-                            print(msg)
-                            continue
-                        row.replace(nan, '', inplace=True)
+                            # Sample
 
-                        # Sample
-
-                        if ('amunet' in xsdtypes):
-                            msg = self.loadAMUNETdata(sampleid, i, row, s, dp)
-                            logging.info(msg)
-                            print(msg)
-                        elif ('FS' in xsdtypes or 'COBAS' in xsdtypes):
-                            xsd = dp.getxsd()[dp.type]
-                            (mandata, data) = dp.mapData(row, i, xsd)
-                            if hasattr(dp,'opex'):
-                                prefix = dp.opex['prefix'][dp.opex['xsitype'] == xsd]
-                            else:
-                                prefix = dp.type
-                            msg = self.loadSampledata(s, xsd, prefix + "_" + sampleid, mandata, data)
-                            logging.info(msg)
-                            print(msg)
-                        else:  # cantab and ACER
-                            for type in xsdtypes.keys():
-                                (mandata, data) = dp.mapData(row, i, type)
-                                xsd = xsdtypes[type]
-                                msg = self.loadSampledata(s, xsd, type + "_" + sampleid, mandata, data)
+                            if ('amunet' in xsdtypes):
+                                msg = self.loadAMUNETdata(sampleid, i, row, s, dp)
                                 logging.info(msg)
                                 print(msg)
+                            elif ('FS' in xsdtypes or 'COBAS' in xsdtypes):
+                                xsd = dp.getxsd()[dp.type]
+                                (mandata, data) = dp.mapData(row, i, xsd)
+                                print mandata
+                                print data
+                                if hasattr(dp,'opex'):
+                                    p = dp.opex['prefix'][dp.opex['xsitype'] == xsd] #Series
+                                    prefix = p.values[0]
+                                else:
+                                    prefix = dp.type
+                                msg = self.loadSampledata(s, xsd, prefix + "_" + sampleid, mandata, data)
+                                logging.info(msg)
+                                print(msg)
+                            else:  # cantab and ACER
+                                for type in xsdtypes.keys():
+                                    (mandata, data) = dp.mapData(row, i, type)
+                                    xsd = xsdtypes[type]
+                                    msg = self.loadSampledata(s, xsd, type + "_" + sampleid, mandata, data)
+                                    logging.info(msg)
+                                    print(msg)
+                except Exception as e:
+                    logging.error(e.args[0])
+                    raise ValueError(e)
         return (missing, matches)
 
     def outputChecks(self, projectcode, matches, missing, inputdir, f2):
@@ -297,7 +304,7 @@ class OPEXUploader():
 
     def generateAmunetdates(self, dirpath, filename, interval):
         if access(dirpath, R_OK):
-            pdates = uploader.extractDateInfo(dirpath, ext='zip')
+            pdates = self.extractDateInfo(dirpath, ext='zip')
             # Output to a csvfile
             csvfile = join(dirpath, interval + 'm_' + filename)
             try:
@@ -323,7 +330,9 @@ class OPEXUploader():
         :param kwargs:
         :return: success or error
         """
-        print "Running data upload for ", datatype, " from " ,inputdir
+        msg = "Running data upload for %s from %s " % (datatype, inputdir)
+        logging.info(msg)
+        print msg
         project = self.xnat.get_project(projectcode)
         if access(inputdir, R_OK):
             if datatype == 'cantab':
@@ -356,6 +365,7 @@ class OPEXUploader():
                         continue
                     interval = inputdir[0]
                     inputdir = join(topinputdir, inputdir)
+                    print inputdir
                     # Get dates from zip files
                     dates_uri_file = join(inputdir, 'folderpath.txt')
                     with open(dates_uri_file, "r") as dd:
@@ -392,10 +402,10 @@ class OPEXUploader():
                 for f2 in files:
                     print "Loading ", f2
                     dp = AcerParser(f2, sheet)
-                    (missing, matches) = uploader.uploadData(project, dp)
+                    (missing, matches) = self.uploadData(project, dp)
                     # Output matches and missing
                     if len(matches) > 0 or len(missing) > 0:
-                        (out1, out2) = uploader.outputChecks(projectcode, matches, missing, inputdir, f2)
+                        (out1, out2) = self.outputChecks(projectcode, matches, missing, inputdir, f2)
                         msg = "Reports created: \n\t%s\n\t%s" % (out1, out2)
                         print(msg)
                         logging.info(msg)
@@ -406,21 +416,19 @@ class OPEXUploader():
                 sheet = 1  # "1"
                 files = glob.glob(join(inputdir, seriespattern))
                 print("Files:", len(files))
-                project = uploader.xnat.get_project(projectcode)
                 for f2 in files:
                     print "Loading ", f2, "with fields: ", fields
                     dp = MridataParser(fields, f2, sheet)
-                    (missing, matches) = uploader.uploadData(project, dp)
+                    (missing, matches) = self.uploadData(project, dp)
                     # Output matches and missing
                     if len(matches) > 0 or len(missing) > 0:
-                        (out1, out2) = uploader.outputChecks(projectcode, matches, missing, inputdir,
+                        (out1, out2) = self.outputChecks(projectcode, matches, missing, inputdir,
                                                              f2)
                         msg = "Reports created: \n\t%s\n\t%s" % (out1, out2)
                         print(msg)
                         logging.info(msg)
             # ---------------------------------------------------------------------#
             elif datatype == 'blood':
-                fields = join(getcwd(), "resources", "MRI_fields.csv")
                 seriespattern = '*.xlsx'
                 sheet = 0
                 skip = 1
@@ -430,10 +438,10 @@ class OPEXUploader():
                 for f2 in files:
                     print "Loading ", f2
                     dp = BloodParser(f2, sheet, skip, type=type)
-                    (missing, matches) = uploader.uploadData(project, dp)
+                    (missing, matches) = self.uploadData(project, dp)
                     # Output matches and missing
                     if len(matches) > 0 or len(missing) > 0:
-                        (out1, out2) = uploader.outputChecks(projectcode, matches, missing, inputdir, f2)
+                        (out1, out2) = self.outputChecks(projectcode, matches, missing, inputdir, f2)
                         msg = "Reports created: \n\t%s\n\t%s" % (out1, out2)
                         print(msg)
                         logging.info(msg)
@@ -449,10 +457,10 @@ class OPEXUploader():
                 for f2 in files:
                     print "Loading ", f2
                     dp = DexaParser(fields, f2, sheet, skip)
-                    (missing, matches) = uploader.uploadData(project, dp)
+                    (missing, matches) = self.uploadData(project, dp)
                     # Output matches and missing
                     if len(matches) > 0 or len(missing) > 0:
-                        (out1, out2) = uploader.outputChecks(projectcode, matches, missing, inputdir, f2)
+                        (out1, out2) = self.outputChecks(projectcode, matches, missing, inputdir, f2)
                         msg = "Reports created: \n\t%s\n\t%s" % (out1, out2)
                         print(msg)
                         logging.info(msg)
@@ -471,10 +479,10 @@ class OPEXUploader():
                     if dp.df.empty:
                         raise ValueError('Data error during compilation - not uploaded to XNAT')
                     else:
-                        (missing, matches) = uploader.uploadData(project, dp)
+                        (missing, matches) = self.uploadData(project, dp)
                         # Output matches and missing
                         if len(matches) > 0 or len(missing) > 0:
-                            (out1, out2) = uploader.outputChecks(projectcode,
+                            (out1, out2) = self.outputChecks(projectcode,
                                                                  matches,
                                                                  missing,
                                                                  inputdir,
@@ -492,8 +500,8 @@ class OPEXUploader():
                 inputfile = join(inputdir,'Visits.xlsx')
                 try:
                     dp = VisitParser(inputfile, 1, 1)
-                    dp.updateGenders(projectcode, uploader.xnat)
-                    dp.processData(projectcode, uploader.xnat)
+                    dp.updateGenders(projectcode, self.xnat)
+                    dp.processData(projectcode, self.xnat)
                 except Exception as e:
                     raise ValueError(e)
 

@@ -14,8 +14,8 @@ import argparse
 import glob
 from datetime import datetime
 from os import R_OK, access
-from os.path import join, basename, splitext
-
+from os.path import join, basename, splitext, dirname, abspath
+import sys
 import pandas
 import logging
 
@@ -23,7 +23,9 @@ import logging
 class DataParser(object):
     def __init__(self, datafile, sheet=0,skiplines=0, header=None):
         self.datafile = datafile #full pathname to data file
-        self.incorrect = pandas.read_csv(join('resources', 'incorrectIds.csv'))
+        self.resource_dir = self.__findResourcesdir()
+        self.opex = pandas.read_csv(join(self.resource_dir, 'opex.csv'))
+        self.incorrect = pandas.read_csv(join(self.resource_dir, 'incorrectIds.csv'))
         if (datafile is not None and len(datafile)> 0):
             (bname, extn)= splitext(basename(datafile))
             self.type = extn #extension - xlsx or csv
@@ -31,6 +33,17 @@ class DataParser(object):
             self.skiplines = skiplines
             self.header = header
             self._loadData()
+
+    def __findResourcesdir(self):
+        #TODO
+        resource_dir = glob.glob(join(dirname(__file__), "resources"))
+        middir = ".."
+        ctr = 1
+        while len(resource_dir) <= 0 and ctr < 5:
+            resource_dir = glob.glob(join(dirname(__file__), middir, "resources"))
+            middir = join(middir, "..")
+            ctr += 1
+        return abspath(resource_dir[0])
 
     def __checkSID(self,sid):
         rsid = sid
