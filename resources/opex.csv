@@ -1,0 +1,23 @@
+Expt,interval,total,xsitype,prefix
+Health,3,5,opex:health,MX
+ACER,6,3,opex:acer,AC
+CANTAB DMS,1,9,opex:cantabDMS,DMS
+CANTAB ERT,1,9,opex:cantabERT,ERT
+CANTAB MOT,1,9,opex:cantabMOT,MOT
+CANTAB PAL,1,9,opex:cantabPAL,PAL
+CANTAB SWM,1,9,opex:cantabSWM,SWM
+VWM,3,5,opex:amunet,AM
+PSQI,3,5,opex:psqi,PSQ
+DASS,3,5,opex:dass,DASS
+IPAQ,3,5,opex:ipaq,IPQ
+Insomnia,3,5,opex:insomnia,INS
+Godin,3,5,opex:godin,GDN
+COBAS,1,23,opex:bloodCobasData,COBAS
+ELISAS,1,23,opex:bloodElisasData,ELS
+MULTIPLEX,1,23,opex:bloodMultiplexData,MPX
+MR Sessions,6,3,xnat:mrSessionData,MR
+MRI ASHS,6,3,opex:mriashs,ASHS
+MRI FS,6,3,opex:mrifs,FS
+DEXA,3,5,opex:dexa,DXA
+COSMED,3,5,opex:cosmed,COS
+FMRI,6,3,opex:fmri,FMRI
