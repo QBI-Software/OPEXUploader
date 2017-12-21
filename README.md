@@ -63,8 +63,9 @@ MRI scans must be sorted into their series before uploading so this is a two ste
 1. In the popup window, check OPEX IDs (default is checked)
 1. Enter the raw data directory as input (eg \DATA\7TMRIData\raw for baseline and \DATA\7TMRIData\raw_06 for 6mth)
 1. Select one of two subdirectories ('sorted_0m', 'sorted_6m') in the sampledata/mri directory as output depending on baseline or 6mth scan.
-1. Previous uploads can be ignored by adding the 'done' directories sampledata\mri\done_0m or sampledata\mri\done_6m
-1. Check the 'done' directory is empty - this is where the files will be moved. If not, move the files to the appropriate done_0m or done_6m directory.
+1. Previous uploads can be ignored by adding the 'done' directories (sampledata\mri\done_0m or sampledata\mri\done_6m)
+1. The 'done' directory is where the files will be moved after uploading.
+1. When complete, move the files to the appropriate done_0m or done_6m directory.
 1. Click 'RUN'
 
 #### MRI upload
@@ -87,7 +88,7 @@ Both ASHS and Freesurfer hippocampal volume data can be uploaded.  (NB, Fields f
 
 Some experimental data is not accompanied by the visit date (eg blood, DEXA, MRIdata) so it is extracted from the participants file.  This file cannot be used directly however.
 
-1. Copy data file (Participant visit record_20171110.xlsx) to this directory from share drive (\CENTRE ADMIN\PARTICIPANTS)
+1. Copy data file ('Participant visit record_20171110.xlsx') to this directory from share drive (\CENTRE ADMIN\PARTICIPANTS)
 1. A new line of headers needs to be added - see the existing file 'Visits.xlsx'
 1. Some data may need cleaning up then rename the file to 'Visits.xlsx' before Running
 
@@ -100,3 +101,20 @@ When data is able to match the headings directly, it is quicker to use XNAT's Sp
 
 1. Reports are created in the report directory showing missing and matched participants - these should be checked and any repeated incorrect IDs can be added to the file called 'incorrectIds.csv' in the application resources directory.
 1. Once uploaded, it is good to move the file into the 'done' directory
+
+## Other Options
+
+### Create Subjects from Data
+
+If the subject doesn't exist, this will create it in the database. Generally, this isn't used in case there are errors in the Participant IDs and thus incorrect data entry.
+
+### Update existing data
+
+This will reload the data over existing data.  This is useful, for example, with the MRIdata (hippocampal volumes) where there have been improvements in the methods.
+
+### Download CSVs
+
+This function generates CSV files for each experiment type.  They are currently used for statistics and is a lot quicker than downloading the data via XNAT.
+
+1. Enter the Output directory
+1. Click on 'Download CSVs'

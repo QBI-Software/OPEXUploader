@@ -115,6 +115,7 @@ class OPEXUploaderGUI(UploaderGUI):
         """
         super(OPEXUploaderGUI, self).__init__(parent)
         self.SetTitle("XNAT Connector App")
+        self.SetPosition(wx.Point(100,100))
         self.SetSize((700, 700))
         self.runoptions = self.__loadOptions()
         self.configfile = join(expanduser('~'), '.xnat.cfg')
