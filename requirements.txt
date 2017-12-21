@@ -39,12 +39,10 @@ openpyxl==2.4.9
 packaging==16.8
 pandas==0.21.1
 plotly==2.2.3
-py2exe2msi==0.0.2
 pycparser==2.18
 pydicom==0.9.9
 pyOpenSSL==17.5.0
 pyparsing==2.2.0
-pypiwin32==219
 python-dateutil==2.6.1
 pytz==2017.3
 pyxnat==1.0.0.0
@@ -53,6 +51,6 @@ six==1.11.0
 traitlets==4.3.2
 urllib3==1.22
 Werkzeug==0.13
-winpython==1.0
 wxPython==4.0.0b2
 xlrd==1.1.0
+wx
