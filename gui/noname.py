@@ -318,7 +318,7 @@ class dlgConfig ( wx.Dialog ):
 		fgSizer3.Add( self.m_staticText13, 0, wx.ALL, 5 )
 		
 		chConfigChoices = []
-		self.chConfig = wx.ComboBox( self, wx.ID_ANY, u"Enter config ref", wx.DefaultPosition, wx.DefaultSize, chConfigChoices, wx.CB_SORT )
+		self.chConfig = wx.ComboBox( self, wx.ID_ANY, u"Enter config ref", wx.DefaultPosition, wx.DefaultSize, chConfigChoices, 0 )
 		fgSizer3.Add( self.chConfig, 0, wx.ALL, 5 )
 		
 		self.m_staticText14 = wx.StaticText( self, wx.ID_ANY, u"URL", wx.DefaultPosition, wx.DefaultSize, 0 )
