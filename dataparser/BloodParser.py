@@ -31,12 +31,9 @@ class BloodParser(DataParser):
         if 'fields' in kwargs:
             fields = kwargs.get('fields')
         else:
-
            fields = join(self.resource_dir, 'blood_fields.csv')
 
         try:
-
-            access(fields, R_OK)
             df = pandas.read_csv(fields, header=0)
             self.fields = df[self.type]
             self.fields.dropna(inplace=True)
@@ -52,7 +49,7 @@ class BloodParser(DataParser):
                 self.data = df
 
         except:
-            raise ValueError("Cannot access fields")
+            raise ValueError("Cannot load fieldnames")
 
     def sortSubjects(self):
         '''Sort data into subjects by participant ID'''
@@ -143,7 +140,8 @@ class BloodParser(DataParser):
         data = {}
         for ctab in self.fields:
             if ctab in row:
-                print ctab, ' = ', row[ctab]
+                if VERBOSE:
+                    print ctab, ' = ', row[ctab]
                 data[xsd + '/' + ctab] = str(row[ctab])
 
         return (mandata,data)

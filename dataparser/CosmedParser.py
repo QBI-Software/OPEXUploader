@@ -38,9 +38,10 @@ Created on Thu Mar 2 2017
 import argparse
 import glob
 import logging
+import re
 from datetime import datetime, time
 from os import R_OK, access, mkdir
-from os.path import join, basename, split, isdir
+from os.path import join, basename, split, isdir, dirname, abspath
 
 import numpy as np
 import pandas as pd
@@ -53,25 +54,36 @@ VERBOSE = 1
 
 # Not using DataParser as too complex
 class CosmedParser():
-    def __init__(self, inputdir, inputsubdir, datafile, fieldsfile):
+    def __init__(self, inputdir, inputsubdir, datafile):
         self.inputdir = inputdir
         # Load fields
+        fieldsfile = join(self.getResourceDir(), "cosmed_fields.xlsx")
         self.subjectdataloc = pd.read_excel(fieldsfile, header=0, sheetname='cosmed')
         self.fields = pd.read_excel(fieldsfile, header=0, sheetname='cosmed_xnat')
         self.datafields = pd.read_excel(fieldsfile, header=0, sheetname='cosmed_data')
 
         # Get list of subjects - parse individual files
-        self.files = glob.glob(join(inputdir, inputsubdir, "*.xlsx"))
+        self.files = glob.glob(join(inputsubdir, "*.xlsx"))
         # create an output dir for processed files
-        pdir = join(inputdir, inputsubdir, 'processed')
+        pdir = join(inputsubdir, 'processed')
         if not isdir(pdir):
             mkdir(pdir)
 
         # Load efficiency data from single file
         self.effdata_cols = {'0': [5, 8], '3': [9, 12], '6': [13, 16], '9': [17, 20], '12': [21, 24]}
-        self.effdata = self.__loadEfficiencydata(join(inputdir, datafile))
+        self.effdata = self.__loadEfficiencydata(datafile)
         # Load data from files
         self.loaded = self.__loadData()
+
+    def getResourceDir(self):
+        resource_dir = glob.glob(join(dirname(__file__), "resources"))
+        middir = ".."
+        ctr = 1
+        while len(resource_dir) <= 0 and ctr < 5:
+            resource_dir = glob.glob(join(dirname(__file__), middir, "resources"))
+            middir = join(middir, "..")
+            ctr += 1
+        return abspath(resource_dir[0])
 
     def __loadEfficiencydata(self, datafile):
         # Load efficiency data from single file
@@ -90,14 +102,18 @@ class CosmedParser():
         try:
             for f in self.files:
                 filename = basename(f)
-
-                if "MonthA" in filename or filename.startswith('~') or filename.startswith('VO2'):
+                #exclude certain files
+                if "MonthA" in filename or "_10s" in filename or filename.startswith('~') or filename.startswith('VO2'):
                     continue
-                print "File: ", filename
                 fdata = self.parseFilename(filename)
                 if fdata is None:
-                    logging.warning('Skipping file: %s', filename)
+                    msg = 'Skipping file: %s' % filename
+                    logging.warning(msg)
                     continue
+                else:
+                    msg = "File: %s" % filename
+                    logging.info(msg)
+                print msg
                 df_file_data = pd.read_excel(f, header=0, sheetname='Data')
                 # Replace LEVEL with int
                 df_file_data['Dyspnea'] = df_file_data['Dyspnea'].apply(lambda r: self.extractLevel(r))
@@ -127,7 +143,7 @@ class CosmedParser():
                 now = datetime.now()
                 outputfile = 'cosmed_xnatupload_' + now.strftime('%Y%m%d') + '.csv'
                 self.df.to_csv(join(self.inputdir, outputfile), index=False)
-                msg = 'COSMED data file for upload: %s' % join(self.inputdir, outputfile)
+                msg = 'COSMED data file generated: %s' % join(self.inputdir, outputfile)
                 logging.info(msg)
                 print msg
                 rtn = True
@@ -141,7 +157,7 @@ class CosmedParser():
             logging.error(msg)
         finally:
             msg = "COSMED Data Load completed: %d files [%s]" % (len(self.files), rtn)
-            print(msg)
+            print msg
             logging.info(msg)
             return rtn
 
@@ -159,20 +175,29 @@ class CosmedParser():
     def parseFilename(self, filename):
         """
         Splits filename to get information
+        EXPECTS: 1022BB_6MonthD_30sec_20170918.xlsx
+        MAY GET: 1022BB_6MonthD_20170918.xlsx - OK
+        or 1022_6MonthD_20170918.xlsx - not ok
         If syntax is wrong - this will fail TODO: replace with regex
         :param filename:
         :return:
         """
-        fparts = filename.split("_")
-        if len(fparts) == 4:
-            # split to ID, interval, date
-            self.data['SubjectID'].append(fparts[0])
-            self.data['interval'].append(fparts[1][0])
-            self.data['date'].append(fparts[3][0:8])
+        pattern = '^(\d{4}\S{2})_(\d{1}).*(\d{8})\.xlsx$'
+        m = re.search(pattern,filename)
+        if m is not None:
+            self.data['SubjectID'].append(m.group(1))
+            self.data['interval'].append(m.group(2))
+            self.data['date'].append(m.group(3))
             self.data['filename'].append(filename)
+        # fparts = filename.split("_")
+        # if len(fparts) == 4:
+        #     # split to ID, interval, date
+        #     self.data['SubjectID'].append(fparts[0])
+        #     self.data['interval'].append(fparts[1][0])
+        #     self.data['date'].append(fparts[3][0:8])
+        #     self.data['filename'].append(filename)
             results = [self.data[f][-1] for f in ['SubjectID', 'interval', 'date', 'filename']]
             msg = 'Filedata: %s' % ",".join(results)
-            print(msg)
             logging.debug(msg)
         else:
             logging.error('Filename syntax is different: %s', filename)
@@ -388,10 +413,11 @@ class CosmedParser():
         except Exception as e:
             msg = 'File: %s - %s ' % (f, e)
             logging.error(msg)
+            print msg
         finally:
-            msg = 'Phase data tab DONE for %s' % f
-            logging.info(msg)
-            print(msg)
+            msg = 'Phase data DONE: %s' % fparts[1]
+            logging.debug(msg)
+            #print(msg)
             # if book is not None:
             #     book.close()
             # if writer is not None:
@@ -474,21 +500,19 @@ if __name__ == "__main__":
             Reads files in a directory and extracts data for upload to XNAT
 
              ''')
-    parser.add_argument('--filedir', action='store', help='Directory containing files', default="sampledata\\cosmed")
-    parser.add_argument('--subdir', action='store', help='Subdirectory with individual files',
-                        default="VO2data_crosschecked")
-    parser.add_argument('--datafile', action='store', help='VEVCO2 file', default='VO2data_VEVCO2.xlsx')
-    parser.add_argument('--fields', action='store', help='Fields to extract',
-                        default="resources\\cosmed_fields.xlsx")
+    parser.add_argument('--filedir', action='store', help='Directory containing xnatpaths.txt (paths for COSMED)', default="sampledata\\cosmed")
+    parser.add_argument('--subdir', action='store', help='Full Subdirectory for individual files')
+    parser.add_argument('--datafile', action='store', help='Full path to VEVCO2 file')
+
     args = parser.parse_args()
 
     inputdir = args.filedir
     inputsubdir = args.subdir
     datafile = args.datafile
-    fieldsfile = args.fields
+
     print("Input:", inputdir)
     if access(inputdir, R_OK):
-        dp = CosmedParser(inputdir, inputsubdir, datafile, fieldsfile)
+        dp = CosmedParser(inputdir, inputsubdir, datafile)
         if dp.df.empty:
             raise ValueError("Error during compilation - data not loaded")
         xsd = dp.getxsd()

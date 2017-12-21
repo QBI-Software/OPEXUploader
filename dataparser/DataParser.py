@@ -15,7 +15,7 @@ import glob
 from datetime import datetime
 from os import R_OK, access
 from os.path import join, basename, splitext, dirname, abspath
-import sys
+
 import pandas
 import logging
 
@@ -35,7 +35,6 @@ class DataParser(object):
             self._loadData()
 
     def __findResourcesdir(self):
-        #TODO
         resource_dir = glob.glob(join(dirname(__file__), "resources"))
         middir = ".."
         ctr = 1

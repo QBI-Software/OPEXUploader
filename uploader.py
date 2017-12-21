@@ -186,8 +186,8 @@ class OPEXUploader():
                             elif ('FS' in xsdtypes or 'COBAS' in xsdtypes):
                                 xsd = dp.getxsd()[dp.type]
                                 (mandata, data) = dp.mapData(row, i, xsd)
-                                print mandata
-                                print data
+                                # print mandata
+                                # print data
                                 if hasattr(dp,'opex'):
                                     p = dp.opex['prefix'][dp.opex['xsitype'] == xsd] #Series
                                     prefix = p.values[0]
@@ -470,12 +470,16 @@ class OPEXUploader():
                     f = open(join(inputdir, 'xnatpaths.txt'))
                     paths ={}
                     for p in f.readlines():
+                        p = p.rstrip()
                         (k,v) = p.split('=')
                         paths[k] = v
                     inputsubdir = join(paths['datadir'],paths['subdata'])
                     datafile = join(paths['datadir'],paths['datafile'])  # 'VO2data_VEVCO2_20171009.xlsx'
-                    fields = join(getcwd(), "resources", "cosmed_fields.xlsx")
-                    dp = CosmedParser(inputdir, inputsubdir, datafile, fields)
+                    msg = 'COSMED: datafile= %s - generating time series for files in %s ' % (datafile, inputsubdir )
+                    logging.info(msg)
+                    print msg
+
+                    dp = CosmedParser(inputdir, inputsubdir, datafile)
                     if dp.df.empty:
                         raise ValueError('Data error during compilation - not uploaded to XNAT')
                     else:
@@ -491,10 +495,8 @@ class OPEXUploader():
                             print(msg)
                             logging.info(msg)
                 except Exception as e:
-                    msg = 'COSMED data access failed'
-                    print msg
-                    logging.error(msg)
-                    raise IOError(msg)
+                    msg = 'COSMED data access failed - %s' % e.args[0]
+                    raise ValueError(msg)
             # ---------------------------------------------------------------------#
             elif datatype == 'visit':
                 inputfile = join(inputdir,'Visits.xlsx')
