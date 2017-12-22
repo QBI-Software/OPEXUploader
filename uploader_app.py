@@ -1,27 +1,113 @@
 import argparse
+import csv
 import logging
 import sys
-from os import access, R_OK, getcwd
-from os.path import join, expanduser
+from os import access, R_OK
+from os.path import join, expanduser, dirname
 
 import wx
 from configobj import ConfigObj
 from requests.exceptions import ConnectionError
 
-from gui.noname import UploaderGUI, dlgScans, dlgConfig
+from gui.noname import UploaderGUI, dlgScans, dlgConfig, dlgHelp, dlgIDS, dlgDownloads
 from report.report import OPEXReport
 from uploader import OPEXUploader
 from xnatconnect.XnatConnector import XnatConnector
 from xnatconnect.XnatOrganizeFiles import Organizer
 
 
+class DownloadDialog(dlgDownloads):
+    def __init__(self, parent, db, proj):
+        super(DownloadDialog, self).__init__(parent)
+        self.configfile = parent.configfile
+        self.db = db
+        self.proj = proj
+
+    def OnCSVDownload(self, event):
+        """
+        Download CSVs
+        :param event:
+        :return:
+        """
+        downloaddirname = self.m_downloaddir.GetPath()
+        deltas = self.chDelta.GetValue()
+        if downloaddirname is not None and self.db is not None and self.proj is not None:
+            xnat = XnatConnector(self.configfile, self.db)
+            xnat.connect()
+            subjects = xnat.getSubjectsDataframe(self.proj)
+            op = OPEXReport(subjects=subjects)
+            op.xnat = xnat
+            if op.downloadOPEXExpts(self.proj,downloaddirname, deltas):
+                msg = "***Downloads Completed: %s" % downloaddirname
+                logging.info(msg)
+            else:
+                msg = "Error during download"
+                logging.error(msg)
+            dlg = wx.MessageDialog(self, msg, "Download CSVs", wx.OK)
+            dlg.ShowModal()  # Show it
+            dlg.Destroy()
+
+    def OnCloseDlg(self, event):
+        self.Destroy()
+
+
+class IdsDialog(dlgIDS):
+    def __init__(self, parent):
+        super(IdsDialog, self).__init__(parent)
+        self.idfile = join(dirname(__file__),'resources', 'incorrectIds.csv')
+        self.__loadData()
+
+    def __loadData(self):
+        if access(self.idfile, R_OK):
+            with open(self.idfile, 'rb') as csvfile:
+                sreader = csv.reader(csvfile, delimiter=',', quotechar='"')
+                rownum = 0
+                for row in sreader:
+                    if row[0] == 'INCORRECT':
+                        continue
+                    self.m_grid1.SetCellValue(rownum, 0, row[0])
+                    self.m_grid1.SetCellValue(rownum, 1, row[1])
+                    rownum += 1
+        # resize
+        self.m_grid1.AutoSizeColumns()
+        self.m_grid1.AutoSize()
+
+    def OnSaveIds(self, event):
+        try:
+            data = self.m_grid1.GetTable()
+            with open(self.idfile, 'wb') as csvfile:
+                swriter = csv.writer(csvfile, delimiter=',', quotechar='"')
+                swriter.writerow([data.GetColLabelValue(0), data.GetColLabelValue(1)])
+                for rownum in range(0, data.GetRowsCount()):
+                    if not data.IsEmptyCell(rownum, 0):
+                        swriter.writerow([self.m_grid1.GetCellValue(rownum, 0), self.m_grid1.GetCellValue(rownum, 0)])
+            dlg = wx.MessageDialog(self, "IDs file saved", "Incorrect IDs", wx.OK)
+            dlg.ShowModal()  # Show it
+            dlg.Destroy()
+        except Exception as e:
+            dlg = wx.MessageDialog(self, e.args[0], "Incorrect IDs", wx.OK)
+            dlg.ShowModal()  # Show it
+            dlg.Destroy()
+
+    def OnAddRow(self, event):
+        self.m_grid1.AppendRows(1, True)
+
+    def OnDeleteRow(self, event):
+        # get row pos from event
+        pos = event.GetEventUserData()
+        self.m_grid1.DeleteRows(pos, 1, True)
+
+    def OnCloseDlg(self, event):
+        self.Destroy()
+
+
 class ConfigDialog(dlgConfig):
     def __init__(self, parent):
         super(ConfigDialog, self).__init__(parent)
-        self.config= None
+        self.config = None
 
     def load(self, configfile):
-        if access(configfile,R_OK):
+        if access(configfile, R_OK):
             self.config = ConfigObj(configfile)
             self.chConfig.Clear()
             self.chConfig.AppendItems(self.config.keys())
@@ -29,21 +115,21 @@ class ConfigDialog(dlgConfig):
             self.txtUser.Clear()
             self.txtPass.Clear()
 
-    def OnConfigText( self, event ):
+    def OnConfigText(self, event):
         """
         Add new item
         :param event:
         :return:
         """
         if len(event.GetString()) > 0:
-            ref=event.GetString()
+            ref = event.GetString()
             self.chConfig.AppendItems([ref])
-            self.config[ref]== {'URL': '', 'USER': '', 'PASS': ''}
+            self.config[ref] == {'URL': '', 'USER': '', 'PASS': ''}
             self.txtURL.SetValue(self.config[ref]['URL'])
             self.txtUser.SetValue(self.config[ref]['USER'])
             self.txtPass.SetValue(self.config[ref]['PASS'])
 
-    def OnConfigSelect( self, event ):
+    def OnConfigSelect(self, event):
         """
         Select config ref and load fields
         :param event:
@@ -55,7 +141,7 @@ class ConfigDialog(dlgConfig):
             self.txtUser.SetValue(self.config[ref]['USER'])
             self.txtPass.SetValue(self.config[ref]['PASS'])
 
-    def OnLoadConfig( self, event ):
+    def OnLoadConfig(self, event):
         """
         Load values from config file
         :param event:
@@ -68,24 +154,24 @@ class ConfigDialog(dlgConfig):
             print 'Config file loaded'
         dlg.Destroy()
 
-    def OnSaveConfig( self, event ):
+    def OnSaveConfig(self, event):
         """
         Save values to new or existing config
         :param event:
         :return:
         """
         if self.config is not None:
-            self.config = ConfigObj(join(expanduser('~'),'.xnat.cfg'))
+            self.config = ConfigObj(join(expanduser('~'), '.xnat.cfg'))
             url = self.txtURL.GetValue()
             user = self.txtUser.GetValue()
-            passwd =self.txtPass.GetValue()
+            passwd = self.txtPass.GetValue()
             self.config[self.chConfig.GetValue()] = {'URL': url, 'USER': user, 'PASS': passwd}
             self.config.write()
             print 'Config file updated'
 
         self.Close()
 
-    def OnRemoveConfig( self, event ):
+    def OnRemoveConfig(self, event):
         """
         Remove selected ref
         :param event:
@@ -98,13 +184,15 @@ class ConfigDialog(dlgConfig):
             print 'Config setting removed'
             self.load(configfile=self.config.filename)
 
+
 ####################################################################################################
 class LogOutput():
-    def __init__(self,aWxTextCtrl):
+    def __init__(self, aWxTextCtrl):
         self.out = aWxTextCtrl
 
     def write(self, string):
         self.out.WriteText(string)
+
 
 ####################################################################################################
 class OPEXUploaderGUI(UploaderGUI):
@@ -115,7 +203,7 @@ class OPEXUploaderGUI(UploaderGUI):
         """
         super(OPEXUploaderGUI, self).__init__(parent)
         self.SetTitle("XNAT Connector App")
-        self.SetPosition(wx.Point(100,100))
+        self.SetPosition(wx.Point(100, 100))
         self.SetSize((700, 700))
         self.runoptions = self.__loadOptions()
         self.configfile = join(expanduser('~'), '.xnat.cfg')
@@ -125,8 +213,8 @@ class OPEXUploaderGUI(UploaderGUI):
             self.dbedit.AppendItems(self.config.keys())
         redir = LogOutput(self.tcResults)
         sys.stdout = redir
-        sys.stderr = redir
-        #print 'test'
+        # sys.stderr = redir
+        # print 'test'
         self.Show()
 
     def __loadConfig(self):
@@ -139,57 +227,56 @@ class OPEXUploaderGUI(UploaderGUI):
             raise IOError("Config file not accessible: %s", self.configfile)
 
     def __loadOptions(self):
-        optionsfile = join('resources','run_options.cfg')
+        optionsfile = join(dirname(__file__),'resources', 'run_options.cfg')
         config = ConfigObj(optionsfile)
         if 'options' in config:
             runoptions = config['options']
         else:
-            runoptions = {'Help':'--h'}
+            runoptions = {'Help': '--h'}
         return runoptions
 
     def __loadConnection(self):
         db = self.dbedit.GetStringSelection()
         proj = self.projectedit.GetValue()
         if len(db) <= 0 and len(proj) <= 0:
-            dlg = wx.MessageDialog(self, "Database or project configuration is empty or invalid", "Connection Config Error", wx.OK)
+            dlg = wx.MessageDialog(self, "Database or project configuration is empty or invalid",
+                                   "Connection Config Error", wx.OK)
             dlg.ShowModal()
             dlg.Destroy()
             return (None, None)
         else:
-            return (db,proj)
+            return (db, proj)
 
     def OnAbout(self, e):
         # A message dialog box with an OK button. wx.OK is a standard ID in wxWidgets.
-        dlg = wx.MessageDialog(self, "Uploader for OPEX data to XNAT\n(c)2017 QBI Software", "About OPEX Uploader", wx.OK)
+        dlg = wx.MessageDialog(self, "Uploader for OPEX data to XNAT\n(c)2017 QBI Software", "About OPEX Uploader",
+                               wx.OK)
         dlg.ShowModal()  # Show it
         dlg.Destroy()  # finally destroy it when finished.
 
-    def OnHelp(self,e):
-        self.tcResults.Clear()
-        #cmd = self.__loadCommand(['--h'])
-        try:
-            #output = subprocess.check_output(cmd, shell=True)
-            with open('README.md') as f:
-                output = f.readlines()
-                for line in output:
-                    self.tcResults.AppendText(line)
-        # except subprocess.CalledProcessError as e:
-        #     msg = "Program Execution failed:" + e.message + "(" + str(e.returncode) + ")"
-        #     print >> sys.stderr, msg
-            #self.tcResults.AppendText(msg)
-        except IOError as e:
-            msg = "Help file not accessible"
-            print >> sys.stderr, msg
+    def OnHelp(self, e):
+        """
+        Show the User Help Guide
+        :param e:
+        :return:
+        """
+        import markdown
+        md = markdown.Markdown()
+        md.convertFile('README.md', 'HELP.html')
+        # Load to dialog
+        dlg = dlgHelp(self)
+        dlg.m_htmlWin1.LoadPage('HELP.html')
+        dlg.Show()
 
-    def OnTest(self,e):
+    def OnTest(self, e):
         """
         Test connection is correctly configured
         :param e:
         :return:
         """
         self.tcResults.Clear()
-        (db,proj) = self.__loadConnection()
-        xnat = XnatConnector(self.configfile,db)
+        (db, proj) = self.__loadConnection()
+        xnat = XnatConnector(self.configfile, db)
         xnat.connect()
         msg = "Connection to %s for project=%s\n" % (db, proj)
         self.tcResults.AppendText(msg)
@@ -203,8 +290,17 @@ class OPEXUploaderGUI(UploaderGUI):
             msg = "CONNECTION FAILED - please check config"
         self.tcResults.AppendText(msg)
 
+    def OnIds(self, event):
+        """
+        Configure Incorrect ID list
+        :param event:
+        :return:
+        """
+        dlg = IdsDialog(self)
+        dlg.ShowModal()
+        dlg.Destroy()
 
-    def OnLaunch( self, event ):
+    def OnLaunch(self, event):
         """
         Dialog for XnatScans organizer
         :param event:
@@ -216,7 +312,7 @@ class OPEXUploaderGUI(UploaderGUI):
             scanoutput = dlg.txtOutputScans.GetPath()
             ignore = dlg.txtIgnoreScans.GetPath()
             opexid = dlg.chkOPEX.GetValue()
-            if len(scaninput)<=0 or len(scanoutput) <=0:
+            if len(scaninput) <= 0 or len(scanoutput) <= 0:
                 dlg = wx.MessageDialog(self, "Please specify data directories", "Scan organizer", wx.OK)
                 dlg.ShowModal()  # Show it
                 dlg.Destroy()
@@ -231,52 +327,31 @@ class OPEXUploaderGUI(UploaderGUI):
 
     def OnOpen(self, e):
         """ Open a file"""
-        #self.dirname = ''
+        # self.dirname = ''
         dlg = wx.DirDialog(self, "Choose a directory containing input files")
         if dlg.ShowModal() == wx.ID_OK:
             self.dirname = '"{0}"'.format(dlg.GetPath())
             self.dirname = dlg.GetPath()
-            #self.StatusBar.SetStatusText("Loaded: %s\n" % self.dirname)
+            # self.StatusBar.SetStatusText("Loaded: %s\n" % self.dirname)
             self.inputedit.SetValue(self.dirname)
         dlg.Destroy()
 
     def OnEditDirname(self, event):
         self.dirname = '"{0}"'.format(event.GetString())
         self.dirname = event.GetString()
-        #self.StatusBar.SetStatusText("Input dir: %s\n" % self.dirname)
+        # self.StatusBar.SetStatusText("Input dir: %s\n" % self.dirname)
 
-    def OnDownload( self, event ):
+    def OnDownload(self, event):
         """
         Run downloads
         :param event:
         :return:
         """
-        if self.dirname is None or len(self.dirname) <=0:
-            dlg = wx.MessageDialog(self, "Please specify output directory", "OPEX Report", wx.OK)
-            dlg.ShowModal()  # Show it
-        else:
-            msg = "Output directory for downloads: %s" % self.dirname
-            dlg = wx.MessageDialog(self,msg , "OPEX Report", wx.OK)
-            if dlg.ShowModal() == wx.ID_OK:
-                runoption =['--output', self.dirname]
-                (db, proj) = self.__loadConnection()
-
-                xnat = XnatConnector(self.configfile, db)
-                xnat.connect()
-                subjects = xnat.getSubjectsDataframe(proj)
-                op = OPEXReport(subjects=subjects,
-                                opexfile=join(getcwd(),'resources', 'opex.csv'))
-                op.xnat = xnat
-                if op.downloadOPEXExpts(proj,self.dirname):
-                    msg = "***Downloads Completed***"
-                    logging.info(msg)
-                else:
-                    msg = "Error during download"
-                    logging.error(msg)
-
-                self.tcResults.AppendText(msg)
-
+        (db, proj) = self.__loadConnection()
+        dlg = DownloadDialog(self, db, proj)
+        dlg.ShowModal()
         dlg.Destroy()
+
 
     def OnSettings(self, event):
         """
@@ -289,9 +364,7 @@ class OPEXUploaderGUI(UploaderGUI):
         dlg.ShowModal()
         dlg.Destroy()
 
-
-
-    def OnSelectData(self,event):
+    def OnSelectData(self, event):
         """
         On data selection, enable Run
         :param event:
@@ -302,7 +375,7 @@ class OPEXUploaderGUI(UploaderGUI):
         else:
             self.btnRun.Enable(False)
 
-    def OnSubmit(self,event):
+    def OnSubmit(self, event):
         """
         Run OPEX Uploader
         :param event:
@@ -312,18 +385,18 @@ class OPEXUploaderGUI(UploaderGUI):
         runoption = self.runoptions.get(self.chOptions.GetValue())[2:]
 
         (db, proj) = self.__loadConnection()
-        if self.dirname is None or len(self.dirname) <=0:
+        if self.dirname is None or len(self.dirname) <= 0:
             dlg = wx.MessageDialog(self, "Data directory not specified", "OPEX Uploader", wx.OK)
             dlg.ShowModal()  # Show it
             dlg.Destroy()
         else:
-            #Load uploader args
+            # Load uploader args
             args = argparse.ArgumentParser(prog='OPEX Uploader')
-            args.config=join(expanduser('~'), '.xnat.cfg')
+            args.config = join(expanduser('~'), '.xnat.cfg')
             args.database = db
             args.projectcode = proj
             args.create = self.cbCreateSubject.GetValue()
-            args.skiprows =self.cbSkiprows.GetValue()
+            args.skiprows = self.cbSkiprows.GetValue()
             args.checks = self.cbChecks.GetValue()
             args.update = self.cbUpdate.GetValue()
 
@@ -361,12 +434,12 @@ class OPEXUploaderGUI(UploaderGUI):
                 print("FINISHED - see xnatupload.log for details")
 
 
-
 def main():
     app = wx.App(False)
     OPEXUploaderGUI(None)
     app.MainLoop()
 
-#Execute the application
+
+# Execute the application
 if __name__ == '__main__':
     main()

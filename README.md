@@ -1,11 +1,35 @@
 # OPEXUploader
 Data upload to XNAT modules for OPEX project
 
-## Quick Guide for Data uploads
+## Quick Guide for Data Uploads
 
-**Test the connection** first after selecting the database configuration and entering the project code (eg 'P1').  Before a run, it is good to check **TEST RUN** to ensure data is OK.  Note, that datafiles must be closed if being viewed in Excel. (See Setup for initial use.)
+### Settings
 
-The following steps refer to the XnatUploaded directory on the share drive.  It is best to copy the main data files here except for MRI scans, and Amunet and COSMED subdirectories which are too large.
+#### Database
+
+On first use, you will need to add your XNAT login details.
+
+1. From the Menu, select "Settings" then "Database"
+1. In the dropdown box, enter a name for the db config (eg 'opex')
+1. Enter username and password
+1. **Save**
+
+Note this file is saved in your user home directory, called '.xnat.cfg'
+
+#### Incorrect IDs
+
+1. From the Menu, select "Settings" then "Incorrect IDs"
+1. To change a value, just click in the box then click **Save**
+1. To add a new value, click on Add, to add a new row, then enter values, and **Save**
+1. To remove a value, clear the data then click **Save**
+
+### Getting started
+
+**Test the connection** first after selecting the database configuration and entering the project code (eg 'P1').  
+
+Before a run, it is good to check **TEST RUN** to ensure data is OK - it will not be loaded to the database.  Note, that datafiles must be closed if being viewed in Excel. (See Setup for initial use.)
+
+The following steps refer to the **XnatUploaded** directory on the share drive.  It is best to copy the main data files here except for MRI scans, and Amunet and COSMED subdirectories which are too large.
 
 All data upload is recorded in a log file in your user directory called logs/xnatupload.log.
 
@@ -37,7 +61,7 @@ Copy data file to this directory.  Add a column for the visit interval called 'V
 
 Copy data files to appropriate subdirectories ('COBAS', 'MULTIPLEX','ELISAS'), then select the subdirectory eg XnatUploaded/sampledata/blood/COBAS as Input.
 
-1. Check that headings are in the second row (eg Prolactin, etc) although the script should rename them but any changes may cause errors
+1. Check that headings are in the second row (eg Prolactin, etc) although the script should rename them if the columns are still in the same order
 1. Select 'BLOOD' from the Data Type dropdown
 1. Click 'RUN'
 
@@ -48,7 +72,7 @@ The COSMED data is uploaded from an excel file in the original COSMED data direc
 ### DEXA data (XnatUploaded/sampledata/dexa)
 
 1. Copy data file (DXA Data entry_20171215.xlsx) to this directory from share drive (\DATA\DXA Data)
-1. Set input directory to this
+1. Set input directory to this directory
 1. Select 'DEXA' from the Data Type dropdown
 1. Click 'RUN'
 
@@ -59,8 +83,8 @@ MRI scans must be sorted into their series before uploading so this is a two ste
 
 #### Scans Organizer
 
-1. Click on the "Launch" button next to "Scans Organizer"
-1. In the popup window, check OPEX IDs (default is checked)
+1. From the Menu, select "Functions" then "MRI Scans Organizer"
+1. Check OPEX IDs (default is checked)
 1. Enter the raw data directory as input (eg \DATA\7TMRIData\raw for baseline and \DATA\7TMRIData\raw_06 for 6mth)
 1. Select one of two subdirectories ('sorted_0m', 'sorted_6m') in the sampledata/mri directory as output depending on baseline or 6mth scan.
 1. Previous uploads can be ignored by adding the 'done' directories (sampledata\mri\done_0m or sampledata\mri\done_6m)
@@ -116,5 +140,7 @@ This will reload the data over existing data.  This is useful, for example, with
 
 This function generates CSV files for each experiment type.  They are currently used for statistics and is a lot quicker than downloading the data via XNAT.
 
-1. Enter the Output directory
-1. Click on 'Download CSVs'
+1. From the File Menu, Select "Download CSVs"
+1. Check the "Deltas" if you also want the changes between intervals (per individual - note that baseline data remains the same)
+1. Select the Output directory
+1. Click on **'Download'**

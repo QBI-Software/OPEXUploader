@@ -1,8 +1,9 @@
 #!/bin/bash
 
-# what real Python executable to use
+# copy this file over venv/bin/python on MacOSX to enable GUI
 PYVER=2.7
-PYTHON=/Library/Frameworks/Python.framework/Versions/$PYVER/bin/python$PYVER
+PYTHON=/System/Library/Frameworks/Python.framework/Versions/$PYVER/bin/python$PYVER
+#PYTHON=/Library/Frameworks/Python.framework/Versions/$PYVER/bin/python$PYVER
 
 # find the root of the virtualenv, it should be the parent of the dir this script is in
 ENV=`$PYTHON -c "import os; print os.path.abspath(os.path.join(os.path.dirname(\"$0\"), '..'))"`

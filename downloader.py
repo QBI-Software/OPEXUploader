@@ -1,5 +1,5 @@
 from xnatconnect.XnatConnector import XnatConnector
-from report.report.OPEXReport import OPEXReport
+from report.report import OPEXReport
 from os.path import join, expanduser
 import argparse
 
@@ -10,7 +10,7 @@ def rundownloads(database, projectcode, output):
     op = OPEXReport(subjects=subjects, opexfile=join('resources', 'opex.csv'))
     op.xnat = xnat
     outputdir = output
-    op.downloadOPEXExpts(projectcode=projectcode, outputdir=outputdir)
+    op.downloadOPEXExpts(projectcode=projectcode, outputdir=outputdir, deltas=True)
 
 
 if __name__ == '__main__':

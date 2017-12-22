@@ -1,0 +1,94 @@
+<h1>OPEXUploader</h1>
+<p>Data upload to XNAT modules for OPEX project</p>
+<h2>Quick Guide for Data Uploads</h2>
+<p><strong>Test the connection</strong> first after selecting the database configuration and entering the project code (eg 'P1').  </p>
+<p>Before a run, it is good to check <strong>TEST RUN</strong> to ensure data is OK - it will not be loaded to the database.  Note, that datafiles must be closed if being viewed in Excel. (See Setup for initial use.)</p>
+<p>The following steps refer to the <strong>XnatUploaded</strong> directory on the share drive.  It is best to copy the main data files here except for MRI scans, and Amunet and COSMED subdirectories which are too large.</p>
+<p>All data upload is recorded in a log file in your user directory called logs/xnatupload.log.</p>
+<h3>CANTAB data (XnatUploaded/sampledata/cantab)</h3>
+<p>Downloaded excel sheet called 'RowBySession' should be copied into this directory.</p>
+<ol>
+<li>Select this directory as input</li>
+<li>Select 'CANTAB' from the Data Type dropdown</li>
+<li>Check 'Skip ABORTED'</li>
+<li>Click 'RUN'</li>
+</ol>
+<h3>AMUNET data (XnatUploaded/sampledata/amunet)</h3>
+<p><strong>aka Virtual Human Water Maze (vHWM)</strong></p>
+<p>Interval subdirectories have been created (0m, 3m, 6m, 9m, 12m).</p>
+<ol>
+<li>Copy appropriate Excel files into the subdirectories (Amunet1 and Amunet2 are split).</li>
+<li>Check the file path is correct in the file called 'folderpath.txt' in each subdirectory - this is where the original files are and the script gets the dates from the filenames.</li>
+<li>Select 'AMUNET' from the Data Type dropdown</li>
+<li>Click 'RUN'</li>
+</ol>
+<h3>ACER data (XnatUploaded/sampledata/acer)</h3>
+<p>Copy data file to this directory.  Add a column for the visit interval called 'Visit' and set to value of 0,3,6,9 or 12 as appropriate. Then click 'RUN'. (NB a lot of this data has been entered manually.)</p>
+<h3>Blood data (XnatUploaded/sampledata/blood)</h3>
+<p>Copy data files to appropriate subdirectories ('COBAS', 'MULTIPLEX','ELISAS'), then select the subdirectory eg XnatUploaded/sampledata/blood/COBAS as Input.</p>
+<ol>
+<li>Check that headings are in the second row (eg Prolactin, etc) although the script should rename them if the columns are still in the same order</li>
+<li>Select 'BLOOD' from the Data Type dropdown</li>
+<li>Click 'RUN'</li>
+</ol>
+<h3>COSMED data (XnatUploaded/sampledata/cosmed)</h3>
+<p>The COSMED data is uploaded from an excel file in the original COSMED data directory, but the scripts also generate time-series data for individual files.  A text file in this directory called 'xnatpaths.txt' gives the directory to use, the subdirectory for individual files and the name of the datafile.  Check the paths are correct before running.  Use the input directory as 'XnatUploaded/sampledata/cosmed' as this is where the text file is. An output of the compiled COSMED data is also produced.</p>
+<h3>DEXA data (XnatUploaded/sampledata/dexa)</h3>
+<ol>
+<li>Copy data file (DXA Data entry_20171215.xlsx) to this directory from share drive (\DATA\DXA Data)</li>
+<li>Set input directory to this directory</li>
+<li>Select 'DEXA' from the Data Type dropdown</li>
+<li>Click 'RUN'</li>
+</ol>
+<h3>MRI Scans (XnatUploaded/sampledata/mri)</h3>
+<p>MRI scans must be sorted into their series before uploading so this is a two step process.</p>
+<h4>Scans Organizer</h4>
+<ol>
+<li>Click on the "Launch" button next to "Scans Organizer"</li>
+<li>In the popup window, check OPEX IDs (default is checked)</li>
+<li>Enter the raw data directory as input (eg \DATA\7TMRIData\raw for baseline and \DATA\7TMRIData\raw_06 for 6mth)</li>
+<li>Select one of two subdirectories ('sorted_0m', 'sorted_6m') in the sampledata/mri directory as output depending on baseline or 6mth scan.</li>
+<li>Previous uploads can be ignored by adding the 'done' directories (sampledata\mri\done_0m or sampledata\mri\done_6m)</li>
+<li>The 'done' directory is where the files will be moved after uploading.</li>
+<li>When complete, move the files to the appropriate done_0m or done_6m directory.</li>
+<li>Click 'RUN'</li>
+</ol>
+<h4>MRI upload</h4>
+<ol>
+<li>Select the 'sorted_0m' or 'sorted_6m' directory</li>
+<li>Select MRIscans from the Data Type dropdown</li>
+<li>Click 'RUN'</li>
+</ol>
+<p>Both steps involve the script copying scans around 5GB in total which can take around 15-30 mins per participant depending on the network.  Checking the log file regularly will let you know how it's going.</p>
+<h3>MRI data (XnatUploaded/sampledata/mridata)</h3>
+<p>Both ASHS and Freesurfer hippocampal volume data can be uploaded.  (NB, Fields for cortical volumes are still under discussion)</p>
+<ol>
+<li>Copy data file to this directory and rename if necessary with 'ASHS' or 'FreeSurf' in the filename</li>
+<li>Two additional columns are required: 'Subject' and 'Visit'</li>
+<li>Click 'RUN'</li>
+</ol>
+<h3>Visits (XnatUploaded/sampledata/visit)</h3>
+<p>Some experimental data is not accompanied by the visit date (eg blood, DEXA, MRIdata) so it is extracted from the participants file.  This file cannot be used directly however.</p>
+<ol>
+<li>Copy data file ('Participant visit record_20171110.xlsx') to this directory from share drive (\CENTRE ADMIN\PARTICIPANTS)</li>
+<li>A new line of headers needs to be added - see the existing file 'Visits.xlsx'</li>
+<li>Some data may need cleaning up then rename the file to 'Visits.xlsx' before Running</li>
+</ol>
+<h3>DASS, FMRI data (XnatUploaded\sampledata\spreadsheet_upload)</h3>
+<p>When data is able to match the headings directly, it is quicker to use XNAT's Spreadsheet upload option.  Guidelines for this are in the OPEX XNAT User guide.</p>
+<h2>General Housekeeping</h2>
+<ol>
+<li>Reports are created in the report directory showing missing and matched participants - these should be checked and any repeated incorrect IDs can be added to the file called 'incorrectIds.csv' in the application resources directory.</li>
+<li>Once uploaded, it is good to move the file into the 'done' directory</li>
+</ol>
+<h2>Other Options</h2>
+<h3>Create Subjects from Data</h3>
+<p>If the subject doesn't exist, this will create it in the database. Generally, this isn't used in case there are errors in the Participant IDs and thus incorrect data entry.</p>
+<h3>Update existing data</h3>
+<p>This will reload the data over existing data.  This is useful, for example, with the MRIdata (hippocampal volumes) where there have been improvements in the methods.</p>
+<h3>Download CSVs</h3>
+<p>This function generates CSV files for each experiment type.  They are currently used for statistics and is a lot quicker than downloading the data via XNAT.</p>
+<ol>
+<li>Enter the Output directory</li>
+<li>Click on 'Download CSVs'</li>
+</ol>

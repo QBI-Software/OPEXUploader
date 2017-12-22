@@ -11,54 +11,73 @@ Created on Thu Mar 2 2017
 """
 
 import argparse
-from collections import OrderedDict
+import glob
+import logging
 from datetime import datetime
-from os.path import expanduser
-from os.path import join
-from os import getcwd
+from os.path import expanduser, join, abspath, dirname
 
 import numpy as np
 import pandas
-import logging
+
 
 class OPEXReport(object):
-    def __init__(self, subjects=None, csvfile=None, opexfile=None):
+    def __init__(self, subjects=None, csvfile=None):
         """
         List of subjects from XNAT as collection
         :param subjects:
         :param csvfile: spreadsheet export from OPEX subjects tab (with counts)
         """
-        self.subjects = None
+        self.subjects = subjects
+        self.csvfile = csvfile
         self.subjectids = None
         self.data = None
         self.minmth = 0
         self.maxmth = 12
         self.cache = csvfile
-        self.opexfile = opexfile
+        self.opex = self.__loadopexfile()
         self.xnat = None
-        try:
-            self.opex = pandas.read_csv(self.opexfile)
-            msg = 'OPEX Resources loaded: %s from %s' % (not self.opex.empty, self.opexfile)
-            logging.info(msg)
-        except Exception as e:
-            msg = 'OPEX Resources NOT loaded: %s' % (e.args[0])
-            logging.error(msg)
-            raise IOError(e)
+        self.__loaddata()
 
-        #self.exptintervals = self.__experiments()
-        if csvfile is not None:
-            self.data = pandas.read_csv(csvfile)
-        if subjects is not None:
-            self.subjects = subjects
-            if isinstance(subjects, pandas.DataFrame):
-                self.subjectids = subjects['subject_label']
+
+    def __loaddata(self):
+        if self.csvfile is not None:
+            self.data = pandas.read_csv(self.csvfile)
+        if self.subjects is not None:
+            if isinstance(self.subjects, pandas.DataFrame):
+                self.subjectids = self.subjects['subject_label']
             else:
-                self.subjectids = [s.label() for s in subjects]
+                self.subjectids = [s.label() for s in self.subjects]
             print "Subjects loaded from database"
         elif self.data is not None and 'Subject' in self.data:
             self.subjectids = self.data.Subject.unique()
             print "Subject IDs loaded from file"
 
+    def __loadopexfile(self):
+        """
+        Load experiment info from opex.csv
+        :return:
+        """
+        try:
+            self.resource_dir = self.__findResourcesdir()
+            opexfile = join(self.resource_dir,'opex.csv')
+            opex = pandas.read_csv(opexfile)
+            msg = 'OPEX Resources loaded: %s from %s' % (not opex.empty, opexfile)
+            logging.info(msg)
+            return opex
+        except Exception as e:
+            msg = 'OPEX Resources NOT loaded: %s' % (e.args[0])
+            logging.error(msg)
+            raise IOError(e)
+
+    def __findResourcesdir(self):
+        resource_dir = glob.glob(join(dirname(__file__), "resources"))
+        middir = ".."
+        ctr = 1
+        while len(resource_dir) <= 0 and ctr < 5:
+            resource_dir = glob.glob(join(dirname(__file__), middir, "resources"))
+            middir = join(middir, "..")
+            ctr += 1
+        return abspath(resource_dir[0])
 
     def getParticipants(self):
         """
@@ -185,7 +204,7 @@ class OPEXReport(object):
 
         return df_subjects
 
-    def downloadOPEXExpts(self,projectcode, outputdir):
+    def downloadOPEXExpts(self,projectcode, outputdir, deltas=False):
         '''
         CSV downloads for each expt type
         :param projectcode:
@@ -207,11 +226,61 @@ class OPEXReport(object):
                         print "Expt type:", etype, ' = ',len(df_expts),' expts'
                         outputname = etype.replace(":", "_") + ".csv"
                         df_expts.to_csv(join(outputdir,outputname), index=False)
+                        if deltas:
+                            df_delta = self.deltaValues(etype, df_expts)
+                            if df_delta is not None:
+                                deltaname = outputname.replace(".csv","_delta.csv")
+                                df_delta.to_csv(join(outputdir,deltaname), index=False)
+                                print 'Deltas:', deltaname
                     else:
                         print "Expt type:", etype, ' - No data'
         except Exception as e:
             raise ValueError(e)
         return True
+
+    def deltaValues(self, etype, df_expts):
+        """
+        Replace data with delta values
+        ie interval data - baseline data
+        :param df_expts: dataframe with expt data from download
+        :param etype: xnat namespace
+        :return: dataframe with delta values
+        """
+        df_ints = df_expts.groupby('interval')
+        excludes=['age','date','insert_date','interval','project','sample_id','xnat_subjectdata_dob']
+        deltaerror=' DELTA calculation failed due to data error '
+        flagload=0
+        if len(df_ints.groups)<=1:
+            print 'Deltas: Only baseline data:', etype
+            return None
+        b = '0' #baseline
+        for k in sorted(df_ints.groups.keys()):
+            if k == '0':
+                continue
+            for s in df_expts.iloc[df_ints.groups[k].values]['subject_id']:
+                baseline = df_expts.iloc[df_ints.groups[b].values].loc[df_expts['subject_id'] == s]
+                data = df_expts.iloc[df_ints.groups[k].values].loc[df_expts['subject_id'] == s]
+                if len(baseline) != 1 or len(data) != 1:
+                    df_expts.iloc[df_ints.groups[k].values].loc[df_expts['subject_id'] == s]['comments'] += deltaerror
+                    continue
+                for field in df_expts.columns:
+                    if field in excludes or not field in data:
+                        continue
+                    try:
+                        d1 = float(data[field].values[0])
+                        d0 = float(baseline[field].values[0])
+                        diff = d1-d0
+                        logging.debug("Field=", field, "int=", k," diff=", str(diff))
+                        flagload=1
+                        df_expts.at[data.index[0], field]= str(diff)
+
+                    except ValueError as e:
+                        logging.debug("Field=", field,' - not a float-convertible value')
+                        continue
+        if flagload:
+            return df_expts
+        else:
+            return None
 
 
     def formatCounts(self, df_counts):
@@ -375,14 +444,14 @@ if __name__ == "__main__":
             subjects = xnat.getSubjectsDataframe(projectcode)
             msg = "Loaded %d subjects from %s : %s" % (len(subjects), database, projectcode)
             print msg
-            op = OPEXReport(subjects=subjects, opexfile=join('resources','opex.csv'))
+            op = OPEXReport(subjects=subjects)
             op.xnat = xnat
-            df = op.getParticipants()
-            print df
-            #Download CSV files: DO NOT CHANGE - Hooked up from GUI
+            # df = op.getParticipants()
+            # print df
+            #Download CSV files
             if args.output is not None and args.output:
                 outputdir = args.output
-                op.downloadOPEXExpts(projectcode=projectcode, outputdir=outputdir)
+                op.downloadOPEXExpts(projectcode=projectcode, outputdir=outputdir, deltas=True)
             #Dash report test - can change
             else:
                 op.printMissingExpts(projectcode)
