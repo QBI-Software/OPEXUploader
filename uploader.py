@@ -480,11 +480,11 @@ class OPEXUploader():
                         paths[k] = v
                     inputsubdir = join(paths['datadir'],paths['subdata'])
                     datafile = join(paths['datadir'],paths['datafile'])  # 'VO2data_VEVCO2_20171009.xlsx'
-                    msg = 'COSMED: datafile= %s - generating time series for files in %s ' % (datafile, inputsubdir )
+                    msg = 'COSMED: Datafile= %s \nTime series for files in %s ' % (datafile, inputsubdir )
                     logging.info(msg)
                     print msg
 
-                    dp = CosmedParser(inputdir, inputsubdir, datafile)
+                    dp = CosmedParser(inputdir, inputsubdir, datafile, self.args.checks)
                     if dp.df.empty:
                         raise ValueError('Data error during compilation - not uploaded to XNAT')
                     else:

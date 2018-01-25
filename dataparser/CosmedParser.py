@@ -54,8 +54,9 @@ VERBOSE = 1
 
 # Not using DataParser as too complex
 class CosmedParser():
-    def __init__(self, inputdir, inputsubdir, datafile):
+    def __init__(self, inputdir, inputsubdir, datafile, testonly=False):
         self.inputdir = inputdir
+        self.testonly = testonly
         # Load fields
         fieldsfile = join(self.getResourceDir(), "cosmed_fields.xlsx")
         self.subjectdataloc = pd.read_excel(fieldsfile, header=0, sheetname='cosmed')
@@ -113,10 +114,16 @@ class CosmedParser():
                 else:
                     msg = "File: %s" % filename
                     logging.info(msg)
-                print msg
+
                 df_file_data = pd.read_excel(f, header=0, sheetname='Data')
-                # Replace LEVEL with int
-                df_file_data['Dyspnea'] = df_file_data['Dyspnea'].apply(lambda r: self.extractLevel(r))
+                if 'Dyspnea' in df_file_data.columns:
+                    # Replace LEVEL with int
+                    df_file_data['Dyspnea'] = df_file_data['Dyspnea'].apply(lambda r: self.extractLevel(r))
+                else:
+                    msg = 'Dyspnea column missing in %s' % filename
+                    logging.error(msg)
+                    print msg
+                    df_file_data.insert(len(df_file_data.columns),'Dyspnea','')
                 df_data_ex = df_file_data[df_file_data['Phase'] == 'EXERCISE']
                 df_data_rec = df_file_data[df_file_data['Phase'] == 'RECOVERY']
                 df_file_results = pd.read_excel(f, header=0, sheetname='Results', skiprows=4)
@@ -132,33 +139,37 @@ class CosmedParser():
                 effdata = self.parseEfficiency(self.effdata, fdata[0], self.effdata_cols[fdata[1]])
                 recoverydata = self.calcRecovery(df_data_ex, df_data_rec)
                 row = fdata + protocoldata + metabolicdata + cardiodata + effdata + recoverydata
-                logging.debug("Row appended:%s", row)
-                # Generate phase data as separate tab
-                self.writePhasedata(f, df_file_data, df_file_results)
-            # Create dataframe with dict in one hist - more efficient
-            self.df = pd.DataFrame.from_dict(self.data)
+                print "Row: ", row
 
-            if not self.df.empty:
-                logging.debug("Dataframe loaded rows: %d", len(self.df))
+                if not self.testonly:
+                    # Generate phase data as separate tab
+                    self.writePhasedata(f, df_file_data, df_file_results)
+
+            if len(self.data)> 0:
+                # Create dataframe with dict in one hist - more efficient
+                self.df = pd.DataFrame.from_dict(self.data)
+                msg = "COSMED Data Load completed: %d files [%d rows]" % (len(self.files),len(self.df))
+                print msg
+                logging.info(msg)
+                #output dataframe to csv
                 now = datetime.now()
                 outputfile = 'cosmed_xnatupload_' + now.strftime('%Y%m%d') + '.csv'
                 self.df.to_csv(join(self.inputdir, outputfile), index=False)
                 msg = 'COSMED data file generated: %s' % join(self.inputdir, outputfile)
                 logging.info(msg)
-                print msg
                 rtn = True
             else:
-                logging.error("Data not loaded: %d", len(self.data))
+                raise ValueError("Error: Data load failed")
         except Exception as e:
+            print len(self.data), ' files loaded'
             if f is not None:
-                msg = 'File: %s - %s' % (f, e)
+                msg = 'ERROR in File: %s - %s' % (f, e)
             else:
                 msg = e
             logging.error(msg)
-        finally:
-            msg = "COSMED Data Load completed: %d files [%s]" % (len(self.files), rtn)
             print msg
-            logging.info(msg)
+        finally:
+
             return rtn
 
     def extractLevel(self, dataval):
@@ -293,7 +304,7 @@ class CosmedParser():
                     d=''
                 self.data[fields[i]].append(d)
         loadeddata = [self.data[f][-1] for f in fields.itervalues()]
-        logging.debug('Recovery:', loadeddata)
+        logging.debug('Recovery: %s', loadeddata)
         return loadeddata
 
     def parseEfficiency(self, df_data, sid, intervals):
@@ -315,7 +326,7 @@ class CosmedParser():
         self.data['VeVCO2 Slope'].append(data[0])
         self.data['VEVCO2 intercept'].append(data[1])
         self.data['OUES'].append(data[2])
-        logging.debug("Efficiency:",data)
+        logging.debug("Efficiency: %s",data)
         return data
 
     def getTimesIntervals(self, row, n):
