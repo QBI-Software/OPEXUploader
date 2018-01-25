@@ -343,7 +343,9 @@ class OPEXUploader():
                 print "Files:", len(files)
                 for f2 in files:
                     if ("RowBySession" in f2):
-                        print "Loading: ", f2
+                        msg = "\nLoading: %s" % f2
+                        print msg
+                        logging.info(msg)
                         dp = CantabParser(fields, f2, sheet)
                         (missing, matches) = self.uploadData(project, dp)
                         # Output matches and missing
@@ -433,6 +435,9 @@ class OPEXUploader():
                 sheet = 0
                 skip = 1
                 type = basename(inputdir)  # assume dir is type eg COBAS to match
+
+                if type == 'MULTIPLEX':
+                    skip = 0
                 files = glob.glob(join(inputdir, seriespattern))
                 print("Files:", len(files))
                 for f2 in files:

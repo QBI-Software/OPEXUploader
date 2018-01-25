@@ -1,6 +1,24 @@
 <h1>OPEXUploader</h1>
 <p>Data upload to XNAT modules for OPEX project</p>
 <h2>Quick Guide for Data Uploads</h2>
+<h3>Settings</h3>
+<h4>Database</h4>
+<p>On first use, you will need to add your XNAT login details.</p>
+<ol>
+<li>From the Menu, select "Settings" then "Database"</li>
+<li>In the dropdown box, enter a name for the db config (eg 'opex')</li>
+<li>Enter username and password</li>
+<li><strong>Save</strong></li>
+</ol>
+<p>Note this file is saved in your user home directory, called '.xnat.cfg'</p>
+<h4>Incorrect IDs</h4>
+<ol>
+<li>From the Menu, select "Settings" then "Incorrect IDs"</li>
+<li>To change a value, just click in the box then click <strong>Save</strong></li>
+<li>To add a new value, click on Add, to add a new row, then enter values, and <strong>Save</strong></li>
+<li>To remove a value, clear the data then click <strong>Save</strong></li>
+</ol>
+<h3>Getting started</h3>
 <p><strong>Test the connection</strong> first after selecting the database configuration and entering the project code (eg 'P1').  </p>
 <p>Before a run, it is good to check <strong>TEST RUN</strong> to ensure data is OK - it will not be loaded to the database.  Note, that datafiles must be closed if being viewed in Excel. (See Setup for initial use.)</p>
 <p>The following steps refer to the <strong>XnatUploaded</strong> directory on the share drive.  It is best to copy the main data files here except for MRI scans, and Amunet and COSMED subdirectories which are too large.</p>
@@ -44,8 +62,8 @@
 <p>MRI scans must be sorted into their series before uploading so this is a two step process.</p>
 <h4>Scans Organizer</h4>
 <ol>
-<li>Click on the "Launch" button next to "Scans Organizer"</li>
-<li>In the popup window, check OPEX IDs (default is checked)</li>
+<li>From the Menu, select "Functions" then "MRI Scans Organizer"</li>
+<li>Check OPEX IDs (default is checked)</li>
 <li>Enter the raw data directory as input (eg \DATA\7TMRIData\raw for baseline and \DATA\7TMRIData\raw_06 for 6mth)</li>
 <li>Select one of two subdirectories ('sorted_0m', 'sorted_6m') in the sampledata/mri directory as output depending on baseline or 6mth scan.</li>
 <li>Previous uploads can be ignored by adding the 'done' directories (sampledata\mri\done_0m or sampledata\mri\done_6m)</li>
@@ -89,6 +107,8 @@
 <h3>Download CSVs</h3>
 <p>This function generates CSV files for each experiment type.  They are currently used for statistics and is a lot quicker than downloading the data via XNAT.</p>
 <ol>
-<li>Enter the Output directory</li>
-<li>Click on 'Download CSVs'</li>
+<li>From the File Menu, Select "Download CSVs"</li>
+<li>Check the "Deltas" if you also want the changes between intervals (per individual - note that baseline data remains the same)</li>
+<li>Select the Output directory</li>
+<li>Click on <strong>'Download'</strong></li>
 </ol>

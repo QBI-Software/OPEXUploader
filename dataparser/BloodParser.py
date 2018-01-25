@@ -12,11 +12,11 @@ Created on Thu Mar 2 2017
 
 import argparse
 import glob
-from os import R_OK, access
-from os.path import join, dirname, abspath
 from datetime import datetime
+from os import R_OK, access
+from os.path import join
+
 import pandas
-import numpy as np
 
 from dataparser.DataParser import DataParser
 
@@ -37,6 +37,13 @@ class BloodParser(DataParser):
             df = pandas.read_csv(fields, header=0)
             self.fields = df[self.type]
             self.fields.dropna(inplace=True)
+            #If different headers used
+            if self.type == 'MULTIPLEX':
+                print 'Headers for ', self.type
+                colnames = {'Date': 'A_Date', 'Participant ID ': 'Participant ID', 'Timepoint': 'Sample ID','IGFBP-7':'IGFBP7'}
+                self.data = self.data.rename(index=str, columns=colnames)
+                self.data.insert(0, 'R_No.', range(len(self.data)))
+
             if self.fields[0] not in self.data.columns:
                 colnames = {}
                 v=1
@@ -47,6 +54,10 @@ class BloodParser(DataParser):
                 df = self.data.rename(index=str, columns=colnames)
                 print "Renamed columns: ", colnames
                 self.data = df
+                i = self.data.query('A_Date =="NaT"')
+                if not i.empty:
+                    self.data.drop(i.index[0], inplace=True)
+                    print('NaT row dropped')
 
         except:
             raise ValueError("Cannot load fieldnames")
@@ -55,13 +66,16 @@ class BloodParser(DataParser):
         '''Sort data into subjects by participant ID'''
         self.subjects = dict()
         if self.data is not None:
-            self.data['Participant ID'] = self.data['Participant ID'].str.replace(" ","")
-            ids = self.data['Participant ID'].unique()
-            for sid in ids:
-                self.subjects[sid] = self.data[self.data['Participant ID'] == sid]
-                if VERBOSE:
-                    print 'Subject:', sid, 'with datasets=', len(self.subjects[sid])
-            print 'TOTAL Subjects loaded=', len(self.subjects)
+            participantid = 'Participant ID'
+            if not participantid in self.data.columns:
+               msg = 'Cannot find Participant ID header in %s' % self.datafile
+               raise ValueError(msg)
+            else:
+                self.data[participantid] = self.data[participantid].str.replace(" ","")
+                ids = self.data[participantid].unique()
+                for sid in ids:
+                    self.subjects[sid] = self.data[self.data['Participant ID'] == sid]
+                print 'TOTAL Subjects loaded=', len(self.subjects)
 
     def getxsd(self):
         return {"COBAS":'opex:bloodCobasData',
@@ -95,7 +109,7 @@ class BloodParser(DataParser):
         """
         if 'Sample ID' in row:
             parts = row['Sample ID'].split("-")
-            id = "%s_%dm_%s_%s" % (sd, int(parts[0]), self.getPrepostOptions(int(parts[1])), row['R_No.'])
+            id = "%s_%dm_%s_%s" % (sd, int(parts[0]), self.getPrepostOptions(int(parts[1])), int(row['R_No.']))
         else:
             raise ValueError("Sample ID column missing")
         return id
@@ -106,7 +120,7 @@ class BloodParser(DataParser):
         :param orig:
         :return:
         """
-        if isinstance(orig, pandas.tslib.Timestamp):
+        if isinstance(orig, pandas.Timestamp):
             dt = orig
         elif "/" in orig:
             dt = datetime.strptime(orig, "%d/%m/%Y %H:%M:%S")
@@ -161,12 +175,15 @@ if __name__ == "__main__":
 
     parser.add_argument('--filedir', action='store', help='Directory containing files', default="..\\sampledata\\blood\\COBAS")
     parser.add_argument('--sheet', action='store', help='Sheet name to extract', default="0")
+    parser.add_argument('--type', action='store', help='Type of blood sample', default="COBAS")
     args = parser.parse_args()
 
     inputdir = args.filedir
     sheet = int(args.sheet)
     skip = 1
-    type = "COBAS"
+    type = args.type
+    if args.type =='MULTIPLEX':
+        skip =0
     print("Input:", inputdir)
     if access(inputdir, R_OK):
         seriespattern = '*.xlsx'
@@ -184,7 +201,7 @@ if __name__ == "__main__":
                     for i, row in dp.subjects[sd].iterrows():
                         dob = dp.formatADate(str(dp.subjects[sd]['A_Date'][i]))
                         uid = dp.type + "_" + dp.getSampleid(sd,row)
-                        print i, 'Visit:', uid, 'DOB', dob
+                        print i, 'Visit:', uid, 'Date', dob
                         (d1,d2) = dp.mapData(row,i)
                         print d1
                         print d2

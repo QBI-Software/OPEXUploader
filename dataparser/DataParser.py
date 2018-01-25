@@ -57,18 +57,21 @@ class DataParser(object):
     def _loadData(self):
         if self.type =='.xlsx' or self.type == '.xls':
             if self.header is None:
-                self.data = pandas.read_excel(self.datafile, skiprows=self.skiplines, sheetname=self.sheet, skip_blank_lines=True)
+                self.data = pandas.read_excel(self.datafile, skiprows=self.skiplines, sheet_name=self.sheet, skip_blank_lines=True)
             else:
-                self.data = pandas.read_excel(self.datafile, skiprows=self.skiplines, sheetname=self.sheet,
+                self.data = pandas.read_excel(self.datafile, skiprows=self.skiplines, sheet_name=self.sheet,
                                               skip_blank_lines=True, header=self.header)
         elif self.type == '.csv':
             self.data = pandas.read_csv(self.datafile, skip_blank_lines=True)
         else:
             self.data = None
         if self.data is not None:
-            print('Data loaded')
+            msg = 'Data loaded from %s' % self.datafile
+            logging.info(msg)
+            print(msg)
             self.data.dropna(how="all", axis=0, inplace=True)  # cleanup if rows are all NaN
             self.data.fillna("")  # replace remaining NaNs with empty string
+
         else:
             print('No data to load')
 
