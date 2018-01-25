@@ -67,7 +67,12 @@ Copy data files to appropriate subdirectories ('COBAS', 'MULTIPLEX','ELISAS'), t
 
 ### COSMED data (XnatUploaded/sampledata/cosmed)
 
-The COSMED data is uploaded from an excel file in the original COSMED data directory, but the scripts also generate time-series data for individual files.  A text file in this directory called 'xnatpaths.txt' gives the directory to use, the subdirectory for individual files and the name of the datafile.  Check the paths are correct before running.  Use the input directory as 'XnatUploaded/sampledata/cosmed' as this is where the text file is. An output of the compiled COSMED data is also produced.
+The COSMED data is uploaded from the original COSMED data directory.  
+
+1. Use the input directory as 'XnatUploaded/sampledata/cosmed'
+1. A text file in this directory called 'xnatpaths.txt' gives the actual COSMED directory to use, the subdirectory for individual files and the name of the datafile.  Check the paths are correct before running.   
+1. An output of the compiled COSMED data is produced.
+1. Also time-series data for individual files is generated into a subdirectory in the original data directory called 'processed'.
 
 ### DEXA data (XnatUploaded/sampledata/dexa)
 

@@ -74,7 +74,8 @@ class BloodParser(DataParser):
                 self.data[participantid] = self.data[participantid].str.replace(" ","")
                 ids = self.data[participantid].unique()
                 for sid in ids:
-                    self.subjects[sid] = self.data[self.data['Participant ID'] == sid]
+                    sidkey = self._DataParser__checkSID(sid)
+                    self.subjects[sidkey] = self.data[self.data['Participant ID'] == sid]
                 print 'TOTAL Subjects loaded=', len(self.subjects)
 
     def getxsd(self):
