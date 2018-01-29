@@ -34,8 +34,30 @@ class MridataParser(DataParser):
             access(fields, R_OK)
             df = pandas.read_csv(fields, header=0)
             self.cantabfields = df[self.type]
+            self.cantabfields.dropna(how="all", axis=0, inplace=True)
+            #Generate some fields from data file
+            if self.data is not None and len(self.data)> 0:
+                for blankcol in ['left_head','left_tail', 'right_head', 'right_tail']:
+                    if blankcol not in self.data.columns:
+                        self.data.insert(0,blankcol, 0)
+                cols = ['_CA1','_CA2','_DG','_CA3','_SUB']
+                for lr in ['left', 'right']:
+                    lrcols = [lr + c for c in cols]
+                    self.data[lr +'_Hippoc']= self.data.apply(lambda x: (x.loc[lrcols].sum()), axis=1)
+                self.data['Total_Hippoc'] = self.data.apply(lambda x: (x.loc[['left_Hippoc','right_Hippoc']].sum()),axis=1)
+                #Divide all values by ICV
+                starti =8
+                endi = len(self.data.columns)
+                df_ids = self.data[['Subject','Visit']]
+                self.data = self.data.apply(lambda x: (x[starti:endi]/x.loc['icv']), axis=1)
+                df = df_ids.join(self.data)
+                self.data = df
+                #Save to new data file
+                fname_calc = self.datafile.replace(self.ftype, '_ICV.xlsx')
+                self.data.to_excel(fname_calc, sheet_name='ICV normalized',index=0)
+                print 'ICV Normalized data: ', fname_calc
         except:
-            raise ValueError("Cannot access fields")
+            raise ValueError("Cannot access fields file")
 
     def sortSubjects(self):
         '''Sort data into subjects by participant ID'''
@@ -43,7 +65,8 @@ class MridataParser(DataParser):
         if self.data is not None:
             ids = self.data['Subject'].unique()
             for sid in ids:
-                self.subjects[sid] = self.data[self.data['Subject'] == sid]
+                sidkey = self._DataParser__checkSID(sid)
+                self.subjects[sidkey] = self.data[self.data['Subject'] == sid]
                 if VERBOSE:
                     print('Subject:', sid, 'with datasets=', len(self.subjects[sid]))
             print('Subjects loaded=', len(self.subjects))
@@ -135,24 +158,21 @@ if __name__ == "__main__":
 
              ''')
     parser.add_argument('--filedir', action='store', help='Directory containing files', default="sampledata\\mridata")
-    parser.add_argument('--sheet', action='store', help='Sheet name to extract',
-                        default="1")
     parser.add_argument('--fields', action='store', help='MRI fields to extract',
-                        default="resources\\MRI_fields.csv")
+                        default="..\\resources\\MRI_fields.csv")
     args = parser.parse_args()
 
     inputdir = args.filedir
-    sheet = args.sheet
     fields = args.fields
     print("Input:", inputdir)
     if access(inputdir, R_OK):
-        seriespattern = '*.*'
+        seriespattern = '*.csv'
         try:
             files = glob.glob(join(inputdir, seriespattern))
             print "Files:", len(files)
             for f2 in files:
                 print "Loading ", f2
-                cantab = MridataParser(fields, f2, sheet)
+                cantab = MridataParser(fields, f2)
                 cantab.sortSubjects()
                 for sd in cantab.subjects:
                     print '**SubjectID:', sd

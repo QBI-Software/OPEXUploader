@@ -506,8 +506,8 @@ class OPEXUploader():
             elif datatype == 'visit':
                 inputfile = join(inputdir,'Visits.xlsx')
                 try:
-                    dp = VisitParser(inputfile, 1, 1)
-                    dp.updateGenders(projectcode, self.xnat)
+                    dp = VisitParser(inputfile, 0, 1)
+                    #dp.updateGenders(projectcode, self.xnat)
                     dp.processData(projectcode, self.xnat)
                 except Exception as e:
                     raise ValueError(e)

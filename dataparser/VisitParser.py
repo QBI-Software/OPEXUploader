@@ -16,7 +16,7 @@ from os import R_OK, access
 from os.path import join
 import pandas as pd
 from datetime import datetime
-from numpy import isnan
+from numpy import nan
 import logging
 
 from dataparser.DataParser import DataParser
@@ -26,7 +26,7 @@ class VisitParser(DataParser):
 
     def __init__(self, *args):
         DataParser.__init__(self, *args)
-        self.opex = pd.read_csv(join('resources', 'opex.csv'))
+        self.opex = pd.read_csv(join(self.resource_dir, 'opex.csv'))
 
     def getSubjectData(self,sd):
         """
@@ -124,7 +124,7 @@ class VisitParser(DataParser):
                             if se == "PREPOST":
                                 for sexpt in ['PRE','POST']:
                                     exptid = "%s_%s_%sm_%s_%d" % (prefix, subject_id, intval, sexpt.lower(), 1)
-                                    if isinstance(d, datetime) and not isnan(d.day) and not self.futureDate(d):
+                                    if isinstance(d, datetime) and not self.futureDate(d):
                                         msg = "Subject: %s | Type: %s | ID: %s | Date: %s | Exptid: %s" % (subject_id, xtype, eint, d, exptid)
                                         print msg
                                     if xnat is not None and s is not None:
@@ -147,7 +147,7 @@ class VisitParser(DataParser):
                                             logging.info(msg)
                             else:
                                 exptid = "%s_%s_%sm_%s_%d" % (prefix, subject_id, intval, se.lower(), 1)
-                                if isinstance(d, datetime) and not isnan(d.day) and not self.futureDate(d):
+                                if isinstance(d, datetime) and not self.futureDate(d):
                                     msg = "Subject: %s | Type: %s | ID: %s | Date: %s | Exptid: %s" % (
                                     subject_id, xtype, eint, d, exptid)
                                     print msg
@@ -177,7 +177,7 @@ class VisitParser(DataParser):
                             continue
                         d = sd[eint]
                         exptid = "%s_%s_%s" % (prefix, subject_id, intval)
-                        if isinstance(d, datetime) and not isnan(d.day) and not self.futureDate(d):
+                        if isinstance(d, datetime) and not self.futureDate(d):
                             msg = "Subject: %s | Type: %s | ID: %s | Date: %s | Exptid: %s" % (
                             subject_id, xtype, eint, d, exptid)
                             print msg
@@ -210,7 +210,7 @@ if __name__ == "__main__":
              ''')
 
     parser.add_argument('--file', action='store', help='File with data', default="Q:\\DATA\\DATA ENTRY\\XnatUploaded\\sampledata\\visit\\Visits.xlsx")
-    parser.add_argument('--sheet', action='store', help='Sheet name to extract', default=1)
+    parser.add_argument('--sheet', action='store', help='Sheet name to extract', default=0)
     args = parser.parse_args()
 
     inputfile = args.file
@@ -218,8 +218,8 @@ if __name__ == "__main__":
     try:
         print("Loading",inputfile)
         dp = VisitParser(inputfile,args.sheet,1)
-        #dp.processData()
-        dp.updateGenders()
+        #dp.updateGenders()
+        dp.processData()
 
     except Exception as e:
         print e

@@ -28,7 +28,7 @@ class DataParser(object):
         self.incorrect = pandas.read_csv(join(self.resource_dir, 'incorrectIds.csv'))
         if (datafile is not None and len(datafile)> 0):
             (bname, extn)= splitext(basename(datafile))
-            self.type = extn #extension - xlsx or csv
+            self.ftype = extn #extension - xlsx or csv
             self.sheet = sheet
             self.skiplines = skiplines
             self.header = header
@@ -55,13 +55,13 @@ class DataParser(object):
         return rsid
 
     def _loadData(self):
-        if self.type =='.xlsx' or self.type == '.xls':
+        if self.ftype =='.xlsx' or self.ftype == '.xls':
             if self.header is None:
                 self.data = pandas.read_excel(self.datafile, skiprows=self.skiplines, sheet_name=self.sheet, skip_blank_lines=True)
             else:
                 self.data = pandas.read_excel(self.datafile, skiprows=self.skiplines, sheet_name=self.sheet,
                                               skip_blank_lines=True, header=self.header)
-        elif self.type == '.csv':
+        elif self.ftype == '.csv':
             self.data = pandas.read_csv(self.datafile, skip_blank_lines=True)
         else:
             self.data = None
