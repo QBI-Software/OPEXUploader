@@ -28,18 +28,15 @@
 
 # [Bad fix but only thing that works] NB To add Shortcut working dir - change cx_freeze/windist.py Line 61 : last None - > 'TARGETDIR'
 
-__version__='1.1.0'
-
-
-application_title = 'QBI OPEX XNAT Uploader'
-main_python_file = 'uploader_app.py'
-
-
 import sys
 from os import environ, getcwd
 from os.path import join, dirname, normpath
 
 from cx_Freeze import setup, Executable
+from uploader import __version__
+
+application_title = 'QBI OPEX XNAT Uploader'
+main_python_file = 'uploader_app.py'
 
 venvpython = join(sys.prefix,'Lib','site-packages')
 mainpython = sys.real_prefix

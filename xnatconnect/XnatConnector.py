@@ -192,7 +192,7 @@ class XnatConnector:
 
     def updateExptDate(self,subject,exptid,exptdate, dsitype):
         """
-        Update existing experiment date
+        Update existing experiment date if not equal
         :param subject: Subject obj
         :param exptid:
         :param exptdate:

@@ -1,18 +1,35 @@
+"""
+    Control module for OPEX upload application
+    *******************************************************************************
+    Copyright (C) 2017  QBI Software, The University of Queensland
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+"""
+__version__ = '1.2.0'
+__author__ = 'Liz Cooper-Williams'
+
 import argparse
 import csv
 import glob
 import logging
 import re
 import shutil
-
 from datetime import date
 from os import R_OK, access, listdir, getcwd, mkdir
 from os.path import expanduser, isdir, join, basename, split, exists
-from numpy import isnan,nan
 
+from numpy import isnan, nan
+from pandas import Series
 from requests.exceptions import ConnectionError
 
-from xnatconnect.XnatConnector import XnatConnector
 from dataparser.AcerParser import AcerParser
 from dataparser.AmunetParser import AmunetParser
 from dataparser.BloodParser import BloodParser
@@ -21,8 +38,7 @@ from dataparser.CosmedParser import CosmedParser
 from dataparser.DexaParser import DexaParser
 from dataparser.MridataParser import MridataParser
 from dataparser.VisitParser import VisitParser
-
-from pandas import Series
+from xnatconnect.XnatConnector import XnatConnector
 
 
 class OPEXUploader():
@@ -507,8 +523,13 @@ class OPEXUploader():
                 inputfile = join(inputdir,'Visits.xlsx')
                 try:
                     dp = VisitParser(inputfile, 0, 1)
-                    #dp.updateGenders(projectcode, self.xnat)
-                    dp.processData(projectcode, self.xnat)
+                    dp.processData()
+                    if self.args.checks:
+                        print "**UPDATING dates**"
+                        for eid in dp.expts.keys():
+                            print eid, ": ", dp.expts.get(eid)
+                    else:
+                        dp.uploadDates(projectcode, self.xnat)
                 except Exception as e:
                     raise ValueError(e)
 
