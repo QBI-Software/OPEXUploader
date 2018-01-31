@@ -246,41 +246,30 @@ class OPEXReport(object):
         :param etype: xnat namespace
         :return: dataframe with delta values
         """
+        rtn = pandas.DataFrame()
         df_ints = df_expts.groupby('interval')
         excludes=['age','date','insert_date','interval','project','sample_id','xnat_subjectdata_dob']
         deltaerror=' DELTA calculation failed due to data error '
-        flagload=0
-        if len(df_ints.groups)<=1:
-            print 'Deltas: Only baseline data:', etype
-            return None
-        b = '0' #baseline
-        for k in sorted(df_ints.groups.keys()):
-            if k == '0':
-                continue
-            for s in df_expts.iloc[df_ints.groups[k].values]['subject_id']:
-                baseline = df_expts.iloc[df_ints.groups[b].values].loc[df_expts['subject_id'] == s]
-                data = df_expts.iloc[df_ints.groups[k].values].loc[df_expts['subject_id'] == s]
-                if len(baseline) != 1 or len(data) != 1:
-                    df_expts.iloc[df_ints.groups[k].values].loc[df_expts['subject_id'] == s]['comments'] += deltaerror
+        if len(df_ints.groups)>1:
+            b = '0' #baseline
+            for k in sorted(df_ints.groups.keys()):
+                if k == '0':
                     continue
-                for field in df_expts.columns:
-                    if field in excludes or not field in data:
+                for s in df_expts.iloc[df_ints.groups[k].values]['subject_id']:
+                    baseline = df_expts.iloc[df_ints.groups[b].values].loc[df_expts['subject_id'] == s]
+                    data = df_expts.iloc[df_ints.groups[k].values].loc[df_expts['subject_id'] == s]
+                    if len(baseline) != 1 or len(data) != 1:
+                        df_expts.iloc[df_ints.groups[k].values].loc[df_expts['subject_id'] == s]['comments'] += deltaerror
                         continue
-                    try:
-                        d1 = float(data[field].values[0])
-                        d0 = float(baseline[field].values[0])
-                        diff = d1-d0
+                    for field in df_expts.columns:
+                        if field in excludes or not field in data:
+                            continue
+                        diff =float(data[field].values[0])- float(baseline[field].values[0])
                         logging.debug("Field=", field, "int=", k," diff=", str(diff))
-                        flagload=1
                         df_expts.at[data.index[0], field]= str(diff)
-
-                    except ValueError as e:
-                        logging.debug("Field=", field,' - not a float-convertible value')
-                        continue
-        if flagload:
-            return df_expts
-        else:
-            return None
+                    else:
+                        rtn = df_expts
+        return rtn
 
 
     def formatCounts(self, df_counts):
@@ -399,6 +388,8 @@ class OPEXReport(object):
         dt = datetime.fromordinal(dateoffset + int(orig))
         return dt.strftime("%Y-%m-%d")
 
+    def generateCantabReport(self):
+        pass
 
 ########################################################################
 
@@ -452,6 +443,8 @@ if __name__ == "__main__":
             if args.output is not None and args.output:
                 outputdir = args.output
                 op.downloadOPEXExpts(projectcode=projectcode, outputdir=outputdir, deltas=True)
+                op.generateCantabReport(projectcode=projectcode, outputdir=outputdir)
+                #TODO: op.generateBloodReport(projectcode=projectcode, outputdir=outputdir)
             #Dash report test - can change
             else:
                 op.printMissingExpts(projectcode)

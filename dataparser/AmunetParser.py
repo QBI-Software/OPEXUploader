@@ -18,21 +18,22 @@ import re
 import sys
 from datetime import date
 from os import listdir, R_OK, access
-from os.path import join, isfile, split
-
+from os.path import join, isfile, split, basename
+import shutil
 import pandas
-
+from pandas import Series
+from numpy import nan
 from dataparser.DataParser import DataParser
 
 VERBOSE = 0
 class AmunetParser(DataParser):
 
-    def __init__(self, interval=None, *args):
+    def __init__(self, ival=None, *args):
         #super(AmunetParser, self).__init__(*args) - PYTHON V3
         DataParser.__init__(self, *args)
         self.dates = dict()
         self.subjects = dict()
-        self.interval = interval
+        self.interval = ival
 
     def sortSubjects(self, subjectfield='S_Full name'):
         '''Sort data into subjects by participant ID'''
@@ -47,7 +48,7 @@ class AmunetParser(DataParser):
                 pdates.columns = ['subject', 'visit']
                 self.data['Date'] = self.data.apply(lambda x: self.getRowvisit(x,pdates), axis=1)
             for sid in ids:
-                sidkey = self._DataParser__checkSID(sid)
+                sidkey = self.__checkSID(sid)
                 self.subjects[sidkey] = self.data[self.data[subjectfield] == sid]
                 if VERBOSE:
                     print('Subject:', sid, 'with datasets=', len(self.subjects[sid]))
@@ -224,8 +225,69 @@ class AmunetParser(DataParser):
                 self.dates[d] = vdates.unique()
                 writer.writerow([d, [v.isoformat() for v in self.dates[d]]])
 
+# ---------EXTERNAL FUNCTION------------------------------------------------------
+def generateAmunetdates(dirpath, filename, interval):
+    if access(dirpath, R_OK):
+        pdates = extractDateInfo(dirpath, ext='zip')
+        # Output to a csvfile
+        csvfile = join(dirpath, interval + 'm_' + filename)
+        try:
+            with open(csvfile, 'wb') as f:
+                writer = csv.writer(f)
+                for d in pdates:
+                    vdates = Series(pdates[d])
+                    vdates = vdates.unique()
+                    writer.writerow([d, ",".join([v.isoformat() for v in vdates])])
+                print("Participant dates written to: ", csvfile)
+        except Exception as e:
+            print e
+            raise ValueError("Unable to access file for writing: ", e)
 
+        finally:
+            print("Finished")
+            return csvfile
 
+# ------------------------------------------------------------------------------------
+def extractDateInfo(dirpath, ext='zip'):
+    """
+    Extract date from filenames with ext
+    :param dirpath: directory with files
+    :param ext: extension of files to filter
+    :return: list of participants with dates in sequence
+    """
+    participantdates = dict()
+    seriespattern = '*.' + ext
+    zipfiles = glob.glob(join(dirpath, seriespattern))
+    print("Total files: ", len(zipfiles))
+    # Extract date from filename - expect
+    rid = re.compile('^(\d{4}.{2})')
+    rdate = re.compile('(\d{8})\.zip$')
+    for filename in zipfiles:
+        f = basename(filename)
+
+        # some dates are in reverse
+        try:
+            if (rid.search(f) and rdate.search(f)):
+                fid = rid.search(f).group(0).upper()
+                fdate = rdate.search(f).groups()[0]
+                if (fdate[4:6]) == '20':
+                    fdateobj = date(int(fdate[4:9]), int(fdate[2:4]), int(fdate[0:2]))
+                else:
+                    fdateobj = date(int(fdate[0:4]), int(fdate[4:6]), int(fdate[6:9]))
+            else:
+                raise ValueError("Cannot parse date")
+        except ValueError as e:
+            msg = "Error: %s: %s" % (e, f)
+            raise ValueError(msg)
+            continue
+
+        if participantdates.get(fid) is not None:
+            participantdates[fid].append(fdateobj)
+        else:
+            participantdates[fid] = [fdateobj]
+
+    print "Loaded:", len(participantdates)
+    return participantdates
 ########################################################################
 
 if __name__ == "__main__":
@@ -234,40 +296,53 @@ if __name__ == "__main__":
             Reads files in a directory and extracts data ready to load to XNAT database
 
              ''')
-    parser.add_argument('--filedir', action='store', help='Directory containing files', default="..\\sampledata\\amunet")
-    parser.add_argument('--sheet', action='store', help='Sheet name to extract', default="1")
-    parser.add_argument('--datelist', action='store', help='Generate list of dates from dir', default="1")
+    parser.add_argument('--filedir', action='store', help='Directory containing files', default="..\\..\\sampledata\\amunet")
+    # parser.add_argument('--datelist', action='store', help='Generate list of dates from dir', default="1")
+
     args = parser.parse_args()
+    sheet = 0
+    topinputdir = args.filedir
+    basedatesfile = 'amunet_participantdates.csv'
+    seriespattern = '*.xlsx'
+    subdirs = listdir(topinputdir)
+    print 'Finding dates from subdirectories'
+    for inputdir in subdirs:
+        if inputdir not in ['0m', '3m', '6m', '9m', '12m']:
+            continue
+        interval = inputdir[0]
+        print 'Interval:', interval
+        inputdir = join(topinputdir, inputdir)
+        print inputdir
+        # Get dates from zip files
+        dates_uri_file = join(inputdir, 'folderpath.txt')
+        with open(dates_uri_file, "r") as dd:
+            content = dd.readlines()
+            for line in content:
+                dates_uri = line.strip()
+                break
+        if len(dates_uri) <= 0:
+            raise ValueError('No dates file found - exiting')
+        dates_csv = generateAmunetdates(dates_uri, basedatesfile, interval)
+        # copy file to this dir
+        shutil.copyfile(dates_csv, join(inputdir, basename(dates_csv)))
+        # Get xls files
+        files = glob.glob(join(inputdir, seriespattern))
+        print("Loading Files:", len(files))
+        for f2 in files:
+            print("Loading", f2)
+            dp = AmunetParser(interval,f2, sheet )
+            xsdtypes = dp.getxsd()
+            # dp.interval = interval
+            for sd in dp.subjects:
+                print '\n*****SubjectID:', sd
+                for i, row in dp.subjects[sd].iterrows():
+                    sampleid = dp.getSampleid(sd, row)
+                    row.replace(nan, '', inplace=True)
+                    print 'Sampleid:', sampleid
+                    if 'AEV_Average total error' in row:
+                        (mandata, motdata) = dp.mapAEVdata(row, i)
+                    else:
+                        (mandata, motdata) = dp.mapSCSdata(row, i)
+                    print mandata
+                    print motdata
 
-    inputdir = args.filedir
-    sheet = args.sheet
-    print("Input:", inputdir)
-    if access(inputdir, R_OK):
-        seriespattern = '*.*'
-
-        try:
-            files = glob.glob(join(inputdir, seriespattern))
-            print("Files:", len(files))
-            for f2 in files:
-                print("Loading",f2)
-                cantab = AmunetParser(f2,sheet)
-                if args.datelist is not None:
-                    cantab.extractDateInfo(args.datelist)
-                cantab.sortSubjects()
-                print('Subject summary')
-                for sd in cantab.subjects:
-                    print('ID:', sd)
-                    dob = cantab.subjects[sd]['S_Date of birth']
-                    for i, row in cantab.subjects[sd].iterrows():
-                        print(i, 'Visit:', row['S_Visit'], 'AEV_Average total error', row['AEV_Average total error'], 'DOB', cantab.formatDobNumber(row['S_Date of birth']) )
-
-
-        except ValueError as e:
-            print("Sheet not found: ", e)
-
-        except:
-            e = sys.exc_info()[0]
-            print(e)
-
-    else:
-        print("Cannot access directory: ", inputdir)

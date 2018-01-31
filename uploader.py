@@ -27,11 +27,11 @@ from os import R_OK, access, listdir, getcwd, mkdir
 from os.path import expanduser, isdir, join, basename, split, exists
 
 from numpy import isnan, nan
-from pandas import Series
+
 from requests.exceptions import ConnectionError
 
 from dataparser.AcerParser import AcerParser
-from dataparser.AmunetParser import AmunetParser
+from dataparser.AmunetParser import AmunetParser,generateAmunetdates
 from dataparser.BloodParser import BloodParser
 from dataparser.CantabParser import CantabParser
 from dataparser.CosmedParser import CosmedParser
@@ -72,6 +72,61 @@ class OPEXUploader():
     def xnatdisconnect(self):
         self.xnat.conn.disconnect()
 
+    # ------------------------------------------------------------------------------------
+    def outputChecks(self, projectcode, matches, missing, inputdir, f2):
+        """
+        Test run without actual uploading
+        :param matches: List of matched participant IDs
+        :param missing: Data rows for missing participants
+        :param inputdir: Data directory
+        :param filename: Report filename
+        :return: report filenames of missing and matched files
+        """
+        reportdir = join(inputdir, "report")
+        if not exists(reportdir):
+            mkdir(reportdir)
+        filename = basename(f2)
+        match_filename = join(reportdir, filename + "_matched.csv")
+        missing_filename = join(reportdir, filename + "_missing.csv")
+        with open(match_filename, 'wb') as csvfile:
+            spamwriter = csv.writer(csvfile, delimiter=',')
+            spamwriter.writerow(['Matched ID'])
+            for m in sorted(matches):
+                spamwriter.writerow([m])
+
+        # Missing subjects
+        with open(missing_filename, 'wb') as csvfile:
+            spamwriter = csv.writer(csvfile, delimiter=',')
+            spamwriter.writerow(['Missing participants in XNAT'])
+            sids = self.xnat.get_subjects(projectcode)
+            for m in missing:
+                rootid = m['ID'][0:4]
+                guess = [s.label() for s in sids if rootid in s.label()]
+                if len(guess) <= 0:
+                    guess = ""
+                else:
+                    guess = "Possible ID: " + ",".join(guess)
+                spamwriter.writerow([m['ID'], guess])
+                if not isinstance(m['rows'], dict):
+                    for i, row in m['rows'].iterrows():
+                        if ('Row Number' in row):
+                            spamwriter.writerow(["Row:", row['Row Number']])
+                        else:
+                            spamwriter.writerow(["Row:", i])
+
+        if self.args.checks is not None and self.args.checks:
+            msg = "*******TEST RUN ONLY*******\n"
+        else:
+            msg = "*******XNAT UPLOADED*******\n"
+
+        msg = "%sMatched participants: %d\nMissing participants: %d\n" % (
+            msg, len(matches), len(missing))
+        logging.info(msg)
+        print(msg)
+
+        return (match_filename, missing_filename)
+
+    # ------------------------------------------------------------------------------------
     def loadSampledata(self, subject, samplexsd, sampleid, mandata, sampledata):
         """ Loads sample data from CANTAB data dump
         Check if already exists - don't overwrite (allows for cumulative data files to be uploaded)
@@ -93,6 +148,7 @@ class OPEXUploader():
             msg = 'Experiment already exists: ' + sampleid
         return msg
 
+    # ------------------------------------------------------------------------------------
     def loadAMUNETdata(self, sampleid, i, row, subject, amparser):
         """ Loads AMUNET sample data from data dump
         Data is combined from two source files
@@ -133,7 +189,7 @@ class OPEXUploader():
         else:
             msg = 'Amunet experiment already exists: ' + motid
         return msg
-
+    #------------------------------------------------------------------------------------
     def uploadData(self, project, dp):
         """
         Upload data via specific Data parser
@@ -243,120 +299,6 @@ class OPEXUploader():
                     raise ValueError(e)
         return (missing, matches)
 
-    def outputChecks(self, projectcode, matches, missing, inputdir, f2):
-        """
-        Test run without actual uploading
-        :param matches: List of matched participant IDs
-        :param missing: Data rows for missing participants
-        :param inputdir: Data directory
-        :param filename: Report filename
-        :return: report filenames of missing and matched files
-        """
-        reportdir = join(inputdir, "report")
-        if not exists(reportdir):
-            mkdir(reportdir)
-        filename = basename(f2)
-        match_filename = join(reportdir, filename + "_matched.csv")
-        missing_filename = join(reportdir, filename + "_missing.csv")
-        with open(match_filename, 'wb') as csvfile:
-            spamwriter = csv.writer(csvfile, delimiter=',')
-            spamwriter.writerow(['Matched ID'])
-            for m in sorted(matches):
-                spamwriter.writerow([m])
-
-        # Missing subjects
-        with open(missing_filename, 'wb') as csvfile:
-            spamwriter = csv.writer(csvfile, delimiter=',')
-            spamwriter.writerow(['Missing participants in XNAT'])
-            sids = self.xnat.get_subjects(projectcode)
-            for m in missing:
-                rootid = m['ID'][0:4]
-                guess = [s.label() for s in sids if rootid in s.label()]
-                if len(guess) <= 0:
-                    guess = ""
-                else:
-                    guess = "Possible ID: " + ",".join(guess)
-                spamwriter.writerow([m['ID'], guess])
-                if not isinstance(m['rows'], dict):
-                    for i, row in m['rows'].iterrows():
-                        if ('Row Number' in row):
-                            spamwriter.writerow(["Row:", row['Row Number']])
-                        else:
-                            spamwriter.writerow(["Row:", i])
-
-        if self.args.checks is not None and self.args.checks:
-            msg = "*******TEST RUN ONLY*******\n"
-        else:
-            msg = "*******XNAT UPLOADED*******\n"
-
-        msg = "%sMatched participants: %d\nMissing participants: %d\n" % (
-            msg, len(matches), len(missing))
-        logging.info(msg)
-        print(msg)
-
-        return (match_filename, missing_filename)
-
-    def extractDateInfo(self, dirpath, ext='zip'):
-        """
-        Extract date from filenames with ext
-        :param dirpath: directory with files
-        :param ext: extension of files to filter
-        :return: list of participants with dates in sequence
-        """
-        participantdates = dict()
-        seriespattern = '*.' + ext
-        zipfiles = glob.glob(join(dirpath, seriespattern))
-        print("Total files: ", len(zipfiles))
-        # Extract date from filename - expect
-        rid = re.compile('^(\d{4}.{2})')
-        rdate = re.compile('(\d{8})\.zip$')
-        for filename in zipfiles:
-            f = basename(filename)
-
-            # some dates are in reverse
-            try:
-                if (rid.search(f) and rdate.search(f)):
-                    fid = rid.search(f).group(0).upper()
-                    fdate = rdate.search(f).groups()[0]
-                    if (fdate[4:6]) == '20':
-                        fdateobj = date(int(fdate[4:9]), int(fdate[2:4]), int(fdate[0:2]))
-                    else:
-                        fdateobj = date(int(fdate[0:4]), int(fdate[4:6]), int(fdate[6:9]))
-                else:
-                    raise ValueError("Cannot parse date")
-            except ValueError as e:
-                msg = "Error: %s: %s" % (e, f)
-                logging.error(msg)
-                continue
-
-            if participantdates.get(fid) is not None:
-                participantdates[fid].append(fdateobj)
-            else:
-                participantdates[fid] = [fdateobj]
-
-        print "Loaded:", len(participantdates)
-        return participantdates
-
-    def generateAmunetdates(self, dirpath, filename, interval):
-        if access(dirpath, R_OK):
-            pdates = self.extractDateInfo(dirpath, ext='zip')
-            # Output to a csvfile
-            csvfile = join(dirpath, interval + 'm_' + filename)
-            try:
-                with open(csvfile, 'wb') as f:
-                    writer = csv.writer(f)
-                    for d in pdates:
-                        vdates = Series(pdates[d])
-                        vdates = vdates.unique()
-                        writer.writerow([d, ",".join([v.isoformat() for v in vdates])])
-                    print("Participant dates written to: ", csvfile)
-            except IOError as e:
-                logging.error("Unable to access file for writing: ", e)
-                print e
-            finally:
-                print("Finished")
-                return csvfile
-
     def runDataUpload(self, projectcode,inputdir,datatype):
         """
         Data upload template
@@ -412,7 +354,7 @@ class OPEXUploader():
                             break
                     if len(dates_uri) <= 0:
                         raise ValueError('No dates file found - exiting')
-                    dates_csv = self.generateAmunetdates(dates_uri, basedatesfile, interval)
+                    dates_csv = generateAmunetdates(dates_uri, basedatesfile, interval)
                     # copy file to this dir
                     shutil.copyfile(dates_csv, join(inputdir, basename(dates_csv)))
                     # Get xls files
@@ -420,7 +362,7 @@ class OPEXUploader():
                     print("Loading Files:", len(files))
                     for f2 in files:
                         print("Loading", f2)
-                        dp = AmunetParser(f2, sheet,interval=interval)
+                        dp = AmunetParser(f2, sheet, ival=interval)
                         #dp.interval = interval
                         (missing, matches) = self.uploadData(project, dp)
                         # Output matches and missing
@@ -664,13 +606,7 @@ if __name__ == "__main__":
             # csv files with dates should be placed in the same directory to be loaded with sortSubjects
             if (uploader.args.amunet is not None and uploader.args.amunet):
                 uploader.runDataUpload(projectcode, uploader.args.amunet, 'amunet')
-                    #########################################################################################################                       ## Amunet dates only
-            # if (uploader.args.amunetdates is not None and uploader.args.amunetdates):
-            #     dirpath = uploader.args.amunetdates
-            #     basedatesfile = 'amunet_participantdates.csv'
-            #     uploader.generateAmunetdates(dirpath, basedatesfile, interval)
-
-            #########################################################################################################
+            #------------------------------------------------------------------------------------
             ### Upload ACE-R data from directory
             if (uploader.args.acer is not None and uploader.args.acer):
                 uploader.runDataUpload(projectcode, uploader.args.acer, 'acer')
