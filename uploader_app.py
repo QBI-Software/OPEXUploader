@@ -9,7 +9,7 @@ import wx
 from configobj import ConfigObj
 from requests.exceptions import ConnectionError
 
-from gui.noname import UploaderGUI, dlgScans, dlgConfig, dlgHelp, dlgIDS, dlgDownloads
+from gui.uploadergui import UploaderGUI, dlgScans, dlgConfig, dlgHelp, dlgIDS, dlgDownloads
 from report.report import OPEXReport
 from uploader import OPEXUploader
 from xnatconnect.XnatConnector import XnatConnector

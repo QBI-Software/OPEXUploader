@@ -53,18 +53,18 @@ class DexaParser(DataParser):
         else:
             raise ValueError("Cannot access fields file: %s" % fields)
 
-    def sortSubjects(self):
+    def sortSubjects(self, subjectfield='SubjectID'):
         '''Sort data into subjects by participant ID'''
         self.subjects = dict()
         if self.df is not None:
-            sids = self.df[0]['SubjectID'].unique()
+            sids = self.df[0][subjectfield].unique()
             ids = [i for i in sids if len(i) == 6]
             for sid in ids:
-                sidkey = self._DataParser__checkSID(sid)
+                sidkey = self.__checkSID(sid)
                 self.subjects[sidkey] = dict()
                 for i, intval in self.intervals.items():
                     data = self.df[i]
-                    self.subjects[sidkey][i]= data[data['SubjectID'] == sid]
+                    self.subjects[sidkey][i]= data[data[subjectfield] == sid]
                 if VERBOSE:
                     print('Subject:', sid, 'with datasets=', len(self.subjects[sid]))
             print('Subjects loaded=', len(self.subjects))
@@ -111,7 +111,8 @@ class DexaParser(DataParser):
 ########################################################################
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(prog='Parse MRI Analysis',
+    import sys
+    parser = argparse.ArgumentParser(prog=sys.argv[0],
                                      description='''\
             Reads files in a directory and extracts data for upload to XNAT
 

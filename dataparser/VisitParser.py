@@ -64,11 +64,16 @@ class VisitParser(DataParser):
 
     def updateGenders(self, projectcode=None, xnat=None):
         """
-        UPdate gender info
+        UPdate gender info if provided
         :param projectcode:
         :param xnat:
         :return:
         """
+        # Check data has required fields
+        if not 'ID' in self.data.columns or not 'Sex' in self.data.columns:
+            print 'Cannot run update genders as data is not present'
+            return 0
+
         xnatgenders={'F':'female', 'M': 'male'}
         for i, sd in self.data.iterrows():
             subject_id = sd['ID'].replace(" ", "")
@@ -150,7 +155,7 @@ class VisitParser(DataParser):
 
     def uploadDates(self, projectcode=None, xnat=None):
         """
-
+        Update dates in XNAT - if different
         :param projectcode:
         :param xnat:
         :return:
@@ -208,123 +213,6 @@ class VisitParser(DataParser):
 
             else:
                 print 'XNAT connection not available'
-
-            #Generate dict of exptids with dates
-            #
-            # # if subject in database, else skip
-            # if xnat is not None:
-            #     project = xnat.get_project(projectcode)
-            #     s = project.subject(subject_id)
-            #     if not s.exists():
-            #         continue
-            #     for expt in dateless:
-            #         prefix = self.opex['prefix'][self.opex['Expt'] == expt].values[0]
-            #         xtype = self.opex['xsitype'][self.opex['Expt'] == expt].values[0]
-
-
-                    # if expt == 'FMRI':  # IDS are OPEXNAT*
-                    #     labels = [e.label() for e in s.experiments('OPEXNAT*') if e.label().startswith(expt)]
-                    #     found = (len(labels)>0)
-                    # else:
-                    #     xexpts = s.experiments(prefix + '_*')
-                    #     found =(len(xexpts.fetchall()) >0)
-                    # if not found:
-                    #     continue
-
-                # for intval in intvals:
-                #     if xtype.startswith('opex:blood'):
-                #         subexpts = ["FASTED", "PREPOST"]
-                #         for se in subexpts:
-                #             eint = "BLOOD_" + se + "_" + intval
-                #             if eint not in sd:
-                #                 continue
-                #             #Get date
-                #             d = sd[eint]
-                #             if self.validDate(d):
-                #                 if se == "PREPOST":
-                #                     for sexpt in ['PRE','POST']:
-                #                         exptid = "%s_%s_%sm_%s_%d" % (prefix, subject_id, intval, sexpt.lower(), 1)
-                #
-                #                         msg = "Subject: %s | Type: %s | ID: %s | Date: %s | Exptid: %s" % (subject_id, xtype, eint, d, exptid)
-                #                         logging.info(msg)
-                #                         expts[exptid]=d
-
-                                            # #Get correct ID - last digit may vary
-                                            # e = s.experiment(exptid)
-                                            # if not e.exists():
-                                            #     # check for similar but difnt counter for bloods
-                                            #     expts = s.experiments(exptid[0:-2] + '*')
-                                            #     xnatexpt = expts.fetchone()
-                                            #     if xnatexpt is None or not xnatexpt.exists():
-                                            #         print "Expt not found: ", exptid
-                                            #         continue
-                                            #     else:
-                                            #         exptid = xnatexpt.id()
-                                            # xnatexpt = xnat.updateExptDate(s,exptid, d, xtype)
-                                            # if xnatexpt is not None:
-                                            #     #remove or update comment
-                                            #     xnatexpt.attrs.set(xtype + '/comments', 'Date updated')
-                                            #     msg = '%s date UPDATED %s' % (xnatexpt.id(),d)
-                                            #     logging.info(msg)
-                            # else:
-                            #     exptid = "%s_%s_%sm_%s_%d" % (prefix, subject_id, intval, se.lower(), 1)
-                            #     if self.validDate(d):
-                            #         msg = "Subject: %s | Type: %s | ID: %s | Date: %s | Exptid: %s" % (
-                            #         subject_id, xtype, eint, d, exptid)
-                            #         print msg
-                            #     if xnat is not None and s is not None:
-                            #         e = s.experiment(exptid)
-                            #         if not e.exists():
-                            #             # check for similar but difnt counter for bloods
-                            #             expts = s.experiments(exptid[0:-2] + '*')
-                            #             xnatexpt = expts.fetchone()
-                            #             if xnatexpt is None or not xnatexpt.exists():
-                            #                 print "Expt not found: ", exptid
-                            #                 continue
-                            #             else:
-                            #                 exptid = xnatexpt.id()
-                            #         xnatexpt = xnat.updateExptDate(s, exptid, d, xtype)
-                            #         if xnatexpt is not None:
-                            #             # remove or update comment
-                            #             xnatexpt.attrs.set(xtype + '/comments', 'Date updated')
-                            #             msg = '%s date UPDATED %s' % (xnatexpt.id(), d)
-                            #             logging.info(msg)
-                    # else:
-                    #     exptid = "%s_%s_%s" % (prefix, subject_id, intval)
-                    #     #Get Column from Visits
-                    #     if expt in ['MRI ASHS', 'MRI FS', 'FMRI']:
-                    #         eint = "MRI_" + intval
-                    #     # assessment B
-                    #     elif expt in ['DEXA','DASS','GODIN','PSQI']:
-                    #         eint = "DEXA_" + intval
-                    #         if expt != 'DEXA':
-                    #             exptid += 'M' #M added to some IDs
-                    #     #assessment A
-                    #     elif expt in ['CANTAB','ACER']:
-                    #         eint = "CANTAB_" + intval
-                    #     if eint not in sd:
-                    #         continue
-                    #     d = sd[eint]
-                    #
-                    #     if self.validDate(d):
-                    #         msg = "Subject: %s | Type: %s | ID: %s | Date: %s | Exptid: %s" % (
-                    #         subject_id, xtype, eint, d, exptid)
-                    #         print msg
-                    #         if xnat is not None and s is not None:
-                    #             xnatexpt = xnat.updateExptDate(s,exptid, d, xtype)
-                    #             if xnatexpt is not None:
-                    #                 # remove or update comment
-                    #                 comments = xnatexpt.attrs.get(xtype + '/comments')
-                    #                 if len(comments) > 0:
-                    #                     if not 'Date updated' in comments:
-                    #                         xnatexpt.attrs.set(xtype + '/comments', comments + '; Date updated')
-                    #                     #replace if multiple
-                    #                     elif comments.startswith('Date updated'):
-                    #                         xnatexpt.attrs.set(xtype + '/comments', 'Date updated')
-                    #                 else:
-                    #                     xnatexpt.attrs.set(xtype + '/comments', 'Date updated')
-                    #                 msg = '%s date UPDATED %s' % (xnatexpt.id(), d)
-                    #                 logging.info(msg)
 
 
 ########################################################################

@@ -62,20 +62,19 @@ class BloodParser(DataParser):
         except:
             raise ValueError("Cannot load fieldnames")
 
-    def sortSubjects(self):
+    def sortSubjects(self, subjectfield='Participant ID'):
         '''Sort data into subjects by participant ID'''
         self.subjects = dict()
         if self.data is not None:
-            participantid = 'Participant ID'
-            if not participantid in self.data.columns:
+            if not subjectfield in self.data.columns:
                msg = 'Cannot find Participant ID header in %s' % self.datafile
                raise ValueError(msg)
             else:
-                self.data[participantid] = self.data[participantid].str.replace(" ","")
-                ids = self.data[participantid].unique()
+                self.data[subjectfield] = self.data[subjectfield].str.replace(" ","")
+                ids = self.data[subjectfield].unique()
                 for sid in ids:
-                    sidkey = self._DataParser__checkSID(sid)
-                    self.subjects[sidkey] = self.data[self.data['Participant ID'] == sid]
+                    sidkey = self.__checkSID(sid)
+                    self.subjects[sidkey] = self.data[self.data[subjectfield] == sid]
                 print 'TOTAL Subjects loaded=', len(self.subjects)
 
     def getxsd(self):

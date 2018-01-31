@@ -26,6 +26,7 @@ class DataParser(object):
         self.resource_dir = self.__findResourcesdir()
         self.opex = pandas.read_csv(join(self.resource_dir, 'opex.csv'))
         self.incorrect = pandas.read_csv(join(self.resource_dir, 'incorrectIds.csv'))
+        self.subjects = None
         if (datafile is not None and len(datafile)> 0):
             (bname, extn)= splitext(basename(datafile))
             self.ftype = extn #extension - xlsx or csv
@@ -75,9 +76,21 @@ class DataParser(object):
         else:
             print('No data to load')
 
-    def sortSubjects(self):
-        '''TO implement by extending class'''
+    def sortSubjects(self, subjectfield='ID'):
+        '''
+            Sort data into subjects by participant ID
+             - this should be overwritten if the data is organized differently
+        '''
         self.subjects = dict()
+        if subjectfield not in self.data.columns:
+            raise ValueError('Subject ID field not present: ', subjectfield)
+        if self.data is not None:
+            ids = self.data[subjectfield].unique()
+            for sid in ids:
+                if len(str(sid)) == 6:
+                    sidkey = self.__checkSID(sid)
+                    self.subjects[sidkey] = self.data[self.data[subjectfield] == sid]
+            print('Subjects loaded=', len(self.subjects))
 
     def formatDobNumber(self, orig):
         """

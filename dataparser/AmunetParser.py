@@ -27,16 +27,17 @@ from dataparser.DataParser import DataParser
 VERBOSE = 0
 class AmunetParser(DataParser):
 
-    def __init__(self, *args):
+    def __init__(self, interval=None, *args):
         #super(AmunetParser, self).__init__(*args) - PYTHON V3
         DataParser.__init__(self, *args)
         self.dates = dict()
         self.subjects = dict()
+        self.interval = interval
 
-    def sortSubjects(self):
+    def sortSubjects(self, subjectfield='S_Full name'):
         '''Sort data into subjects by participant ID'''
         if self.data is not None:
-            ids = self.data['S_Full name'].unique()
+            ids = self.data[subjectfield].unique()
             #Load extra info from dir name and generated participant dates
             if self.interval is not None:
                 self.data['Visit'] = self.data.apply(lambda x: self.interval, axis=1)
@@ -46,7 +47,8 @@ class AmunetParser(DataParser):
                 pdates.columns = ['subject', 'visit']
                 self.data['Date'] = self.data.apply(lambda x: self.getRowvisit(x,pdates), axis=1)
             for sid in ids:
-                self.subjects[sid] = self.data[self.data['S_Full name'] == sid]
+                sidkey = self._DataParser__checkSID(sid)
+                self.subjects[sidkey] = self.data[self.data[subjectfield] == sid]
                 if VERBOSE:
                     print('Subject:', sid, 'with datasets=', len(self.subjects[sid]))
             print('Subjects loaded=', len(self.subjects))

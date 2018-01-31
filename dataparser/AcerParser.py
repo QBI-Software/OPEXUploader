@@ -22,17 +22,7 @@ class AcerParser(DataParser):
 
     def __init__(self, *args):
         DataParser.__init__(self, *args)
-
-    def sortSubjects(self):
-        '''Sort data into subjects by participant ID'''
-        self.subjects = dict()
-        if self.data is not None:
-            ids = self.data['ID'].unique()
-            for sid in ids:
-                self.subjects[sid] = self.data[self.data['ID'] == sid]
-                if VERBOSE:
-                    print('Subject:', sid, 'with datasets=', len(self.subjects[sid]))
-            print('Subjects loaded=', len(self.subjects))
+        self.sortSubjects()
 
     def getxsd(self):
         return {"ACER":'opex:acer'}

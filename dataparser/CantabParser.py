@@ -25,26 +25,14 @@ class CantabParser(DataParser):
 
     def __init__(self, fields,*args):
         DataParser.__init__(self, *args)
-
         try:
             access(fields, R_OK)
             self.cantabfields = pandas.read_csv(fields, header=0)
+            self.sortSubjects('Participant ID')
         except:
             raise error
 
 
-
-    def sortSubjects(self):
-        '''Sort data into subjects by participant ID'''
-        self.subjects = dict()
-        if self.data is not None:
-            ids = self.data['Participant ID'].unique()
-            for sid in ids:
-                sidkey = self._DataParser__checkSID(sid)
-                self.subjects[sidkey] = self.data[self.data['Participant ID'] == sid]
-                if VERBOSE:
-                    print('Subject:', sid, 'with datasets=', len(self.subjects[sid]))
-            print('Subjects loaded=', len(self.subjects))
 
     def formatDateString(self,orig):
         '''Reformats datetime string from yyyy.mm.dd hh:mm:ss to yyyy-mm-dd'''
@@ -220,7 +208,7 @@ if __name__ == "__main__":
             for f2 in files:
                 print("Loading",f2)
                 cantab = CantabParser(fields,f2,sheet)
-                cantab.sortSubjects()
+                #cantab.sortSubjects()
                 print('Subject summary')
                 for sd in cantab.subjects:
                     print('ID:', sd)

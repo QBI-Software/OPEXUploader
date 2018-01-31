@@ -38,6 +38,7 @@ from dataparser.CosmedParser import CosmedParser
 from dataparser.DexaParser import DexaParser
 from dataparser.MridataParser import MridataParser
 from dataparser.VisitParser import VisitParser
+from dataparser.DassParser import DassParser
 from xnatconnect.XnatConnector import XnatConnector
 
 
@@ -141,9 +142,10 @@ class OPEXUploader():
         """
         missing = []
         matches = []
-        dp.sortSubjects()
+        if dp.subjects is None:
+            dp.sortSubjects()
         for sd in dp.subjects:
-            print('ID:', sd)
+            print '\n*****SubjectID:', sd
             s = project.subject(sd)
             if not s.exists():
                 if self.args.create is not None and self.args.create:
@@ -154,7 +156,9 @@ class OPEXUploader():
                     print('Subject created: ' + sd)
                 else:
                     missing.append({"ID": sd, "rows": dp.subjects[sd]})
-                    logging.warning('Subject does not exist - skipping:' + sd)
+                    msg = 'Subject does not exist - skipping: %s' % sd
+                    print msg
+                    logging.warning(msg)
                     continue
             # Load data PER ROW
             matches.append(sd)
@@ -170,7 +174,20 @@ class OPEXUploader():
                                 (mandata, data) = dp.mapData(row, i, xsdtypes)
                                 msg = self.loadSampledata(s, xsdtypes, sampleid, mandata, data)
                                 logging.info(msg)
-                                print(msg)
+                                if 'created' in msg:
+                                    print(msg)
+                    elif 'dass' in xsdtypes:
+                        intervals = range(0, 13, 3)
+                        for i in intervals:
+                            iheaders = [c + "_" + str(i) for c in dp.fields]
+                            sampleid = dp.getSampleid(sd, i)
+                            row = dp.subjects[sd]
+                            if dp.validData(row[iheaders].values.tolist()[0]):
+                                (mandata, data) = dp.mapData(row[iheaders], i, xsdtypes)
+                                msg = self.loadSampledata(s, xsdtypes, sampleid, mandata, data)
+                                logging.info(msg)
+                                if 'created' in msg:
+                                    print(msg)
                     elif 'cosmed' in xsdtypes:
                         for i, row in dp.subjects[sd].items():
                             row.replace(nan, '', inplace=True)
@@ -181,24 +198,18 @@ class OPEXUploader():
 
                             msg = self.loadSampledata(s, xsdtypes, sampleid, mandata, data)
                             logging.info(msg)
-                            print(msg)
+                            if 'created' in msg:
+                                print(msg)
                     else:
                         for i, row in dp.subjects[sd].iterrows():
                             sampleid = dp.getSampleid(sd, row)
-                            if self.args.skiprows is not None and self.args.skiprows and \
-                                    (('NOT_RUN' in row.values) or ('ABORTED' in row.values)):
-                                msg = "Skipping due to ABORT or NOT RUN: %s" % sampleid
-                                logging.warning(msg)
-                                print(msg)
-                                continue
                             row.replace(nan, '', inplace=True)
-
-                            # Sample
 
                             if ('amunet' in xsdtypes):
                                 msg = self.loadAMUNETdata(sampleid, i, row, s, dp)
                                 logging.info(msg)
-                                print(msg)
+                                if 'created' in msg:
+                                    print(msg)
                             elif ('FS' in xsdtypes or 'COBAS' in xsdtypes):
                                 xsd = dp.getxsd()[dp.type]
                                 (mandata, data) = dp.mapData(row, i, xsd)
@@ -211,14 +222,22 @@ class OPEXUploader():
                                     prefix = dp.type
                                 msg = self.loadSampledata(s, xsd, prefix + "_" + sampleid, mandata, data)
                                 logging.info(msg)
-                                print(msg)
+                                if 'created' in msg:
+                                    print(msg)
                             else:  # cantab and ACER
+                                if self.args.skiprows is not None and self.args.skiprows and \
+                                        (('NOT_RUN' in row.values) or ('ABORTED' in row.values)):
+                                    msg = "Skipping due to ABORT or NOT RUN: %s" % sampleid
+                                    logging.warning(msg)
+                                    print(msg)
+                                    continue
                                 for type in xsdtypes.keys():
                                     (mandata, data) = dp.mapData(row, i, type)
                                     xsd = xsdtypes[type]
                                     msg = self.loadSampledata(s, xsd, type + "_" + sampleid, mandata, data)
                                     logging.info(msg)
-                                    print(msg)
+                                    if 'created' in msg:
+                                        print(msg)
                 except Exception as e:
                     logging.error(e.args[0])
                     raise ValueError(e)
@@ -401,8 +420,8 @@ class OPEXUploader():
                     print("Loading Files:", len(files))
                     for f2 in files:
                         print("Loading", f2)
-                        dp = AmunetParser(f2, sheet)
-                        dp.interval = interval
+                        dp = AmunetParser(f2, sheet,interval=interval)
+                        #dp.interval = interval
                         (missing, matches) = self.uploadData(project, dp)
                         # Output matches and missing
                         if len(matches) > 0 or len(missing) > 0:
@@ -429,14 +448,13 @@ class OPEXUploader():
                         logging.info(msg)
             # ---------------------------------------------------------------------#
             elif datatype == 'mridata':
-                fields = join(getcwd(), "resources", "MRI_fields.csv")
                 seriespattern = '*.csv'
                 sheet = 1  # "1"
                 files = glob.glob(join(inputdir, seriespattern))
                 print("Files:", len(files))
                 for f2 in files:
-                    print "Loading ", f2, "with fields: ", fields
-                    dp = MridataParser(fields, f2, sheet)
+                    print "Loading ", f2
+                    dp = MridataParser(f2, sheet)
                     (missing, matches) = self.uploadData(project, dp)
                     # Output matches and missing
                     if len(matches) > 0 or len(missing) > 0:
@@ -478,6 +496,24 @@ class OPEXUploader():
                 for f2 in files:
                     print "Loading ", f2
                     dp = DexaParser(fields, f2, sheet, skip)
+                    (missing, matches) = self.uploadData(project, dp)
+                    # Output matches and missing
+                    if len(matches) > 0 or len(missing) > 0:
+                        (out1, out2) = self.outputChecks(projectcode, matches, missing, inputdir, f2)
+                        msg = "Reports created: \n\t%s\n\t%s" % (out1, out2)
+                        print(msg)
+                        logging.info(msg)
+            # ---------------------------------------------------------------------#
+            elif datatype == 'dass':
+                sheet = 0
+                skip = 0
+                header = 2
+                seriespattern = 'DASS Data entry*.xlsx'
+                files = glob.glob(join(inputdir, seriespattern))
+                print "Files:", len(files)
+                for f2 in files:
+                    print "Loading ", f2
+                    dp = DassParser(f2, sheet, skip, header)
                     (missing, matches) = self.uploadData(project, dp)
                     # Output matches and missing
                     if len(matches) > 0 or len(missing) > 0:
@@ -566,6 +602,7 @@ if __name__ == "__main__":
     parser.add_argument('--mri', action='store',
                         help='Upload MRI scans from directory with data/subject_label/scans/session_label/[*.dcm|*.IMA]')
     parser.add_argument('--dexa', action='store', help='Upload DEXA data from directory')
+    parser.add_argument('--dass', action='store', help='Upload DASS data from directory')
     parser.add_argument('--cosmed', action='store', help='Upload COSMED data from directory')
     parser.add_argument('--visit', action='store', help='Update visit dates',
                         default='sampledata\\visit\\Visits_genders.xlsx')
@@ -640,7 +677,6 @@ if __name__ == "__main__":
 
             # Upload MRI data analysis from directory
             if (uploader.args.mridata is not None and uploader.args.mridata):
-                fields = join(getcwd(), "resources", "MRI_fields.csv")
                 uploader.runDataUpload(projectcode, uploader.args.mridata, 'mridata')
 
             # Upload BLOOD data from directory
@@ -650,6 +686,9 @@ if __name__ == "__main__":
             # Upload DEXA data from directory
             if (uploader.args.dexa is not None and uploader.args.dexa):
                 uploader.runDataUpload(projectcode, uploader.args.dexa, 'dexa')
+            # Upload DASS data from directory
+            if (uploader.args.dass is not None and uploader.args.dass):
+                uploader.runDataUpload(projectcode, uploader.args.dass, 'dass')
 
             # Upload COSMED data from directory
             if (uploader.args.cosmed is not None and uploader.args.cosmed):
@@ -658,7 +697,6 @@ if __name__ == "__main__":
             # Update dates for data not containing visit date
             if (uploader.args.visit is not None and uploader.args.visit):
                 uploader.runDataUpload(projectcode, uploader.args.visit, 'visit')
-
 
         else:
             raise ConnectionError("Connection failed - check config")
@@ -677,4 +715,4 @@ if __name__ == "__main__":
     finally:  # Processing complete
         uploader.xnatdisconnect()
         logging.info("FINISHED")
-        print("FINISHED - see xnatupload.log for details")
+        print "\n****FINISHED**** - see xnatupload.log for details"
