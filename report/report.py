@@ -18,6 +18,7 @@ from os.path import expanduser, join, abspath, dirname
 
 import numpy as np
 import pandas
+import xlsxwriter
 
 
 class OPEXReport(object):
@@ -227,8 +228,8 @@ class OPEXReport(object):
                         outputname = etype.replace(":", "_") + ".csv"
                         df_expts.to_csv(join(outputdir,outputname), index=False)
                         if deltas:
-                            df_delta = self.deltaValues(etype, df_expts)
-                            if df_delta is not None:
+                            df_delta = self.deltaValues(df_expts)
+                            if not df_delta.empty:
                                 deltaname = outputname.replace(".csv","_delta.csv")
                                 df_delta.to_csv(join(outputdir,deltaname), index=False)
                                 print 'Deltas:', deltaname
@@ -238,7 +239,7 @@ class OPEXReport(object):
             raise ValueError(e)
         return True
 
-    def deltaValues(self, etype, df_expts):
+    def deltaValues(self, df_expts):
         """
         Replace data with delta values
         ie interval data - baseline data
@@ -247,9 +248,10 @@ class OPEXReport(object):
         :return: dataframe with delta values
         """
         rtn = pandas.DataFrame()
+        df_deltas = df_expts.copy()
         df_ints = df_expts.groupby('interval')
-        excludes=['age','date','insert_date','interval','project','sample_id','xnat_subjectdata_dob']
-        deltaerror=' DELTA calculation failed due to data error '
+        excludes=['age','date','insert_date','interval','project','sample_id','data_valid','comments','xnat_subjectdata_dob','expt_id','insert_date','insert_user','interval','project','sample_id','sample_quality','status','subject_id','xnat_subjectdata_dob', 'birth','xnat_subjectdata_gender_text','xnat_subjectdata_sub_group','xnat_subjectdata_subject_label'
+]
         if len(df_ints.groups)>1:
             b = '0' #baseline
             for k in sorted(df_ints.groups.keys()):
@@ -259,16 +261,30 @@ class OPEXReport(object):
                     baseline = df_expts.iloc[df_ints.groups[b].values].loc[df_expts['subject_id'] == s]
                     data = df_expts.iloc[df_ints.groups[k].values].loc[df_expts['subject_id'] == s]
                     if len(baseline) != 1 or len(data) != 1:
-                        df_expts.iloc[df_ints.groups[k].values].loc[df_expts['subject_id'] == s]['comments'] += deltaerror
+                        #multiple lines or none - maybe Bloods
                         continue
                     for field in df_expts.columns:
-                        if field in excludes or not field in data:
+                        print 'Check field=', field
+                        if field in excludes or not field in data or 'comments' in field \
+                                or (len(baseline[field].values[0])<=0)\
+                                or (len(data[field].values[0])<=0):
+                            msg = "Exclude Field=%s val=%s" % (field,data[field].values[0])
+                            logging.debug(msg)
                             continue
-                        diff =float(data[field].values[0])- float(baseline[field].values[0])
-                        logging.debug("Field=", field, "int=", k," diff=", str(diff))
-                        df_expts.at[data.index[0], field]= str(diff)
-                    else:
-                        rtn = df_expts
+                        # %change if not zero baseline
+                        bval = float(baseline[field].values[0])
+                        if bval != 0:
+                            diff = 100 *(float(data[field].values[0])- bval)/bval
+                            msg = "PercentDiff: Field=%s int=%s diff=%s" % (field, k, str(diff))
+                            logging.debug(msg)
+                        else:
+                            diff = float(data[field].values[0]) - bval
+                            msg = "Diff: Field=%s int=%s diff=%s" % (field, k, str(diff))
+                            logging.debug(msg)
+                        df_deltas.at[data.index[0], field]= str(diff)
+                        df_deltas.at[baseline.index[0], field] = 0
+            else:
+                rtn = df_deltas
         return rtn
 
 
@@ -388,8 +404,77 @@ class OPEXReport(object):
         dt = datetime.fromordinal(dateoffset + int(orig))
         return dt.strftime("%Y-%m-%d")
 
-    def generateCantabReport(self):
-        pass
+    def generateCantabReport(self, projectcode,outputdir, deltas=None):
+        """
+        Generates combined CANTAB Report with validated data
+        :param outputdir:
+        :return:
+        """
+        etypes = ['opex:cantabDMS',
+                  'opex:cantabERT',
+                  'opex:cantabMOT',
+                  'opex:cantabPAL',
+                  'opex:cantabSWM']
+        columns = ['xnat:subjectData/SUBJECT_LABEL',
+                   'xnat:subjectData/SUB_GROUP',
+                   'xnat:subjectData/GENDER_TEXT']
+        outputname = "opex_CANTAB_ALL.xlsx"
+        cantabfields = pandas.read_csv(join(self.resource_dir,'cantab_fields.csv'))
+        cantabfields.replace(np.nan,'',inplace=True)
+        cantabcolumns={'xnat_subjectdata_sub_group':'group',
+                       'xnat_subjectdata_subject_label':'subject',
+                       'age':'age',
+                       'xnat_subjectdata_gender_text':'gender',
+                       #'xnat_subjectdata_dob':'yob','birth':'dob',
+                       'data_valid':'data_valid',
+                       'date':'date','interval':'interval'}
+
+        df_all = pandas.DataFrame()
+        writer = pandas.ExcelWriter(join(outputdir,outputname), engine='xlsxwriter')
+        try:
+            for etype in etypes:
+                if etype.startswith('opex'):
+                    fields = self.xnat.conn.inspect.datatypes(etype)
+                    fields = columns + fields
+                    #print(fields)
+                    criteria = [(etype + '/SUBJECT_ID', 'LIKE', '*'), 'AND']
+                    df_expts = self.xnat.getSubjectsDataframe(projectcode, etype, fields, criteria)
+                    #df_expts.set_index('expt_id')
+                    if df_expts is not None:
+                        df_expts = df_expts[df_expts.data_valid != 'Invalid']
+                        print "Merging Expt type:", etype, ' = ', len(df_expts), ' expts'
+                        if df_all.empty:
+                            df_expts = df_expts.rename(columns=cantabcolumns)
+                            df_all = df_expts
+                        else:
+                            df_all = pandas.merge(df_all,df_expts,how='left',
+                                        left_on=['subject_id','interval'], right_on=['subject_id','interval'], copy=False)
+            else:# save combined output
+                allcolumns = cantabcolumns.values()
+                for header in cantabfields.columns:
+                    cfields =[c.lower() for c in cantabfields[header].values.tolist() if c != '']
+                    allcolumns += cfields
+                    #print 'cantabfields', cantabfields[header]
+                df_all = df_all[allcolumns]
+                df_all.to_excel(writer, index=False, sheet_name='ALL')
+
+                # groups in tabs
+                df_grouped = df_all.groupby(by='group')
+                for group in ['AIT','MIT','LIT']:
+                    df_gp = df_grouped.get_group(group)
+                    df_gp_intervals = df_gp.groupby(by='interval')
+                    for interval in sorted(list(df_gp_intervals.groups.keys())):
+                        sheet = group+'_'+ interval
+                        #print sheet
+                        df1 = df_gp_intervals.get_group(interval)
+                        df1.to_excel(writer, index=False, sheet_name=sheet)
+
+                print "CANTAB Reports: ", outputname
+        except Exception as e:
+            logging.error(e)
+            print e
+
+
 
 ########################################################################
 
@@ -442,8 +527,8 @@ if __name__ == "__main__":
             #Download CSV files
             if args.output is not None and args.output:
                 outputdir = args.output
-                op.downloadOPEXExpts(projectcode=projectcode, outputdir=outputdir, deltas=True)
-                op.generateCantabReport(projectcode=projectcode, outputdir=outputdir)
+                #op.downloadOPEXExpts(projectcode=projectcode, outputdir=outputdir, deltas=True)
+                op.generateCantabReport(projectcode=projectcode, outputdir=outputdir, deltas=True)
                 #TODO: op.generateBloodReport(projectcode=projectcode, outputdir=outputdir)
             #Dash report test - can change
             else:

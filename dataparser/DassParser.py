@@ -79,10 +79,13 @@ class DassParser(DataParser):
             xsd + '/comments': ''
         }
         motdata = {}
+        totalcols = 0
         for field in self.fields:
             rfield = field + '_' + str(i)
             if rfield in row and not np.isnan(row[rfield].iloc[0]):
                 motdata[xsd + '/' + field] = str(row[rfield].iloc[0])
+                totalcols += row[rfield].iloc[0]
+        motdata[xsd + '/total'] = str(totalcols)
         return (mandata, motdata)
 
     def validData(self,dvalues):
