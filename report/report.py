@@ -270,7 +270,7 @@ class OPEXReport(object):
                         # multiple lines or none - maybe Bloods
                         continue
                     for field in df_expts.columns:
-                        print 'Check field=', field
+                        #print 'Check field=', field
                         if field in excludes or not field in data or 'comments' in field \
                                 or (len(baseline[field].values[0]) <= 0) \
                                 or (len(data[field].values[0]) <= 0):
@@ -453,7 +453,7 @@ class OPEXReport(object):
         """
         Generates combined CANTAB Report with validated data
         :param outputdir:
-        :return:
+        :return: true if OK
         """
         etypes = ['opex:cantabDMS',
                   'opex:cantabERT',
@@ -511,6 +511,7 @@ class OPEXReport(object):
                 outputfile = outputfile.replace('.xlsx', '_deltas.xlsx')
                 self.groupedCantabOutput(df_deltas, outputfile)
                 print "CANTAB Reports: ", outputname
+                return True
         except Exception as e:
             logging.error(e)
             print e
@@ -606,7 +607,7 @@ class OPEXReport(object):
                     df_all.rename(columns=rmths, inplace=True)
                     df_all.fillna('', axis=1, inplace=True)
                     self.plotBloodData(df_all, field, mths, outputdir)
-
+                return True
 
         except Exception as e:
             print e
@@ -727,8 +728,8 @@ if __name__ == "__main__":
         # Download CSV files
         if args.output is not None and args.output:
             outputdir = args.output
-            # op.downloadOPEXExpts(projectcode=projectcode, outputdir=outputdir, deltas=True)
-            #op.generateCantabReport(projectcode=projectcode, outputdir=outputdir, deltas=True)
+            op.downloadOPEXExpts(projectcode=projectcode, outputdir=outputdir, deltas=True)
+            op.generateCantabReport(projectcode=projectcode, outputdir=outputdir, deltas=True)
             op.generateBloodReport(projectcode=projectcode, outputdir=outputdir)
 
     except ValueError as e:

@@ -43,6 +43,20 @@ class DownloadDialog(dlgDownloads):
             else:
                 msg = "Error during download"
                 logging.error(msg)
+            if op.generateCantabReport(projectcode=self.proj, outputdir=downloaddirname, deltas=True):
+                msg = "***CANTAB report Completed: %s" % downloaddirname
+                logging.info(msg)
+            else:
+                msg = "Error during CANTAB report"
+                logging.error(msg)
+
+            if op.generateBloodReport(projectcode=self.proj, outputdir=downloaddirname):
+                msg = "***BLOOD report Completed: %s" % downloaddirname
+                logging.info(msg)
+            else:
+                msg = "Error during BLOOD report"
+                logging.error(msg)
+
             dlg = wx.MessageDialog(self, msg, "Download CSVs", wx.OK)
             dlg.ShowModal()  # Show it
             dlg.Destroy()
