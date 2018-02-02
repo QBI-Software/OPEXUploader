@@ -19,6 +19,11 @@ from collections import OrderedDict
 import numpy as np
 import pandas
 import xlsxwriter
+import plotly.plotly as py
+import plotly.graph_objs as go
+from plotly import tools
+from plotly import offline
+#import cufflinks as cf
 
 
 class OPEXReport(object):
@@ -424,6 +429,26 @@ class OPEXReport(object):
         else:
             print "Done"
 
+    # def groupedBloodOutput(self, df_all, outputfile):
+    #     """
+    #     Output grouped data into Excel
+    #     :param df_all:
+    #     :return:
+    #     """
+    #     writer = pandas.ExcelWriter(outputfile, engine='xlsxwriter')
+    #     df_all.to_excel(writer, index=False, sheet_name='ALL')
+    #     df_grouped = df_all.groupby(by='group')
+    #     for group in ['AIT', 'MIT', 'LIT']:
+    #         df_gp = df_grouped.get_group(group)
+    #         df_gp_intervals = df_gp.groupby(by='interval')
+    #         for interval in sorted(list(df_gp_intervals.groups.keys())):
+    #             sheet = group + '_' + interval
+    #             # print sheet
+    #             df1 = df_gp_intervals.get_group(interval)
+    #             df1.to_excel(writer, index=False, sheet_name=sheet)
+    #     else:
+    #         print "Done"
+
     def generateCantabReport(self, projectcode, outputdir, deltas=None):
         """
         Generates combined CANTAB Report with validated data
@@ -503,7 +528,7 @@ class OPEXReport(object):
         columns = ['xnat:subjectData/SUBJECT_LABEL',
                    'xnat:subjectData/SUB_GROUP',
                    'xnat:subjectData/GENDER_TEXT']
-        outputname = "opex_BLOOD_ALL.xlsx"
+        outputfile = join(outputdir,"opex_BLOOD_ALL.xlsx")
         datafields = pandas.read_csv(join(self.resource_dir, 'blood_fields.csv'))
         datafields.replace(np.nan, '', inplace=True)
 
@@ -523,11 +548,12 @@ class OPEXReport(object):
         all = dict()
         for hdr in datafields.keys():
             for field in datafields[hdr]:
-                all[field] = df0.copy()
+                if len(field) > 0:
+                    all[field] = df0.copy()
         #load data from xnat
         try:
-            for e in etypes.keys():
-                etype = etypes[e]
+            for ex in etypes.keys():
+                etype = etypes[ex]
                 if etype.startswith('opex'):
                     fields = self.xnat.conn.inspect.datatypes(etype)
                     fields = columns + fields
@@ -556,7 +582,7 @@ class OPEXReport(object):
                                 smth = s_ints.get_group(mth)
                                 postval = smth[smth['prepost']=='post']
                                 preval = smth[smth['prepost']=='pre']
-                                for field in datafields[e]:
+                                for field in datafields[ex]:
                                     if len(field) > 0:
                                         lfield = field.lower()
                                         if self.validBloodData(preval[lfield]) and self.validBloodData(postval[lfield]):
@@ -564,13 +590,63 @@ class OPEXReport(object):
                                             p1=float(preval[lfield].values[0])
                                             all[field].at[i,mths[mth]]=100 * (p1-p0)/p0
             else:
-                print "Complete"
-                print all
-                #TODO: Save to excel for prepost, fasted and deltas - separate tabs for each field
+                print "Compilation Complete"
+                # generate deltas
+                all = self.deltaBlood(all, mths)
+                # output to file
+                self.outputBloodData(outputfile,all)
+                #subset deltas data for plots
+                deltas = all
+                # plots per param
+                for field in deltas.keys():
+                    df_all = deltas[field]
+                    cols = [('delta_' + mth,mth) for mth in mths.values()]
+                    rmths = dict(cols)
+                    df_all.drop(mths.values(), inplace=True,axis=1)
+                    df_all.rename(columns=rmths, inplace=True)
+                    df_all.fillna('', axis=1, inplace=True)
+                    self.plotBloodData(df_all, field, mths, outputdir)
+
 
         except Exception as e:
             print e
 
+    # ---------------------------------------------------------------------- #
+    def percentchange(self,row,mth):
+        # filter absent baseline values and missing values
+        if row['baseline'] == np.nan or row['baseline'] == '' or row['baseline'] == 0.0 or row[mth] == np.nan or row[mth] == '':
+            rtn = np.nan
+        else:
+            rtn = 100* ((row[mth]-row['baseline'])/row['baseline'])
+        return rtn
+
+    def deltaBlood(self,all, mths):
+        for field in all.keys():
+            for mth in mths.values():
+                all[field]['delta_'+mth] =all[field].apply(lambda r: self.percentchange(r,mth), axis=1)
+        else:
+            print "Deltas done"
+        return all
+
+
+    # ---------------------------------------------------------------------- #
+    def outputBloodData(self, outputfile,all):
+        writer = pandas.ExcelWriter(outputfile, engine='xlsxwriter')
+        for field in all.keys():
+            df_all = all[field]
+            df_all.to_excel(writer, index=False, sheet_name=field)
+            df_grouped = df_all.groupby(by='group')
+            for group in ['AIT', 'MIT', 'LIT']:
+                df_gp = df_grouped.get_group(group)
+                sheet = field + '_' + group
+                print sheet
+                df_gp.to_excel(writer, index=False, sheet_name=sheet)
+            else:
+                print "Done: ", field
+        else:
+            print "Completed output: ", outputfile
+
+    # ---------------------------------------------------------------------- #
     def validBloodData(self,seriesdata):
         rtn = True
         if seriesdata.empty:
@@ -578,6 +654,43 @@ class OPEXReport(object):
         elif len(seriesdata.values[0])<= 0:
             rtn = False
         return rtn
+
+    # ---------------------------------------------------------------------- #
+    def plotBloodData(self, df, title,mths,outputdir):
+        """
+        Plot all fields as subplots vs time
+        :param seriesdata:
+        :return:
+        """
+        df.fillna('', inplace=True)
+        df_groups = df.groupby(by='group')
+        fig = tools.make_subplots(rows=3, cols=1,shared_xaxes=True, subplot_titles=('AIT','MIT','LIT'))
+        row = 1
+        xlabels = [int(x) for x in mths.keys()]
+
+        for group in ['AIT','MIT','LIT']:
+            df1 =df_groups.get_group(group)
+            for s in df.subject:
+                if not df1[df1['subject'] == s][mths.values()].empty:
+                    fig.append_trace(
+                        go.Scatter(
+                            x=xlabels,
+                            y=df1[df1['subject'] == s][mths.values()].values[0],
+                            name=s
+                        ),row=row,col=1)
+            else:
+                row +=1
+        fig['layout']['title']= title
+        fig['layout']['xaxis1']['title']='Interval (month)'
+        fig['layout']['yaxis2']['title'] = '% delta'
+        #Online plot (qbisoftware)
+        #py.plot(fig)
+        # Create plotly plot
+        pfilename = join(outputdir, title + '.html')
+        offline.plot(fig, filename=pfilename)
+        print "Plot output: ", pfilename
+        return pfilename
+
 
 ########################################################################
 
