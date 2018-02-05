@@ -9,7 +9,7 @@ import wx
 from configobj import ConfigObj
 from requests.exceptions import ConnectionError
 
-from gui.uploadergui import UploaderGUI, dlgScans, dlgConfig, dlgHelp, dlgIDS, dlgDownloads
+from gui.uploadergui import UploaderGUI, dlgScans, dlgConfig, dlgHelp, dlgIDS, dlgDownloads, dlgReports
 from report.report import OPEXReport
 from uploader import OPEXUploader
 from xnatconnect.XnatConnector import XnatConnector
@@ -17,7 +17,7 @@ from xnatconnect.XnatOrganizeFiles import Organizer
 
 
 class DownloadDialog(dlgDownloads):
-    def __init__(self, parent, db, proj):
+    def __init__(self, parent, db=None, proj=None):
         super(DownloadDialog, self).__init__(parent)
         self.configfile = parent.configfile
         self.db = db
@@ -43,6 +43,25 @@ class DownloadDialog(dlgDownloads):
             else:
                 msg = "Error during download"
                 logging.error(msg)
+
+            dlg = wx.MessageDialog(self, msg, "Download CSVs", wx.OK)
+            dlg.ShowModal()  # Show it
+            dlg.Destroy()
+
+    def OnGenerateReports(self, event):
+        """
+        Download CSVs
+        :param event:
+        :return:
+        """
+        downloaddirname = self.m_downloaddir.GetPath()
+        deltas = self.chDelta.GetValue()
+        if downloaddirname is not None and self.db is not None and self.proj is not None:
+            xnat = XnatConnector(self.configfile, self.db)
+            xnat.connect()
+            subjects = xnat.getSubjectsDataframe(self.proj)
+            op = OPEXReport(subjects=subjects)
+            op.xnat = xnat
             if op.generateCantabReport(projectcode=self.proj, outputdir=downloaddirname, deltas=True):
                 msg = "***CANTAB report Completed: %s" % downloaddirname
                 logging.info(msg)
@@ -64,6 +83,56 @@ class DownloadDialog(dlgDownloads):
     def OnCloseDlg(self, event):
         self.Destroy()
 
+class ReportDialog(dlgReports):
+    def __init__(self, parent, db=None, proj=None):
+        super(ReportDialog, self).__init__(parent)
+        if db is None or proj is None:
+            dlg = wx.MessageDialog(self, "XNAT Login details and project required", "Download CSVs", wx.OK)
+            dlg.ShowModal()  # Show it
+            dlg.Destroy()
+        else:
+            self.configfile = parent.configfile
+            self.db = db
+            self.proj = proj
+
+
+    def OnGenerateReports(self, event):
+        """
+        Download CSVs
+        :param event:
+        :return:
+        """
+        downloaddirname = self.m_downloaddir.GetPath()
+        deltas = self.chDelta.GetValue()
+        if downloaddirname is not None and self.db is not None and self.proj is not None:
+            xnat = XnatConnector(self.configfile, self.db)
+            xnat.connect()
+            subjects = xnat.getSubjectsDataframe(self.proj)
+            op = OPEXReport(subjects=subjects)
+            op.xnat = xnat
+            msg = "Generating CANTAB report ..."
+            logging.info(msg)
+            print msg
+            if op.generateCantabReport(projectcode=self.proj, outputdir=downloaddirname, deltas=deltas):
+                msg = "***CANTAB report Completed: %s" % downloaddirname
+                logging.info(msg)
+            else:
+                msg = "Error during CANTAB report"
+                logging.error(msg)
+            print msg
+            msg = "Generating BLOOD report ..."
+            logging.info(msg)
+            print msg
+            if op.generateBloodReport(projectcode=self.proj, outputdir=downloaddirname, deltas=deltas):
+                msg = "***BLOOD report Completed: %s" % downloaddirname
+                logging.info(msg)
+            else:
+                msg = "Error during BLOOD report"
+                logging.error(msg)
+            print msg
+
+    def OnCloseDlg(self, event):
+        self.Destroy()
 
 class IdsDialog(dlgIDS):
     def __init__(self, parent):
@@ -362,9 +431,22 @@ class OPEXUploaderGUI(UploaderGUI):
         :return:
         """
         (db, proj) = self.__loadConnection()
-        dlg = DownloadDialog(self, db, proj)
-        dlg.ShowModal()
-        dlg.Destroy()
+        if db is not None and proj is not None:
+            dlg = DownloadDialog(self, db, proj)
+            dlg.ShowModal()
+            dlg.Destroy()
+
+    def OnReport(self, event):
+        """
+        Run downloads
+        :param event:
+        :return:
+        """
+        (db, proj) = self.__loadConnection()
+        if db is not None and proj is not None:
+            dlg = ReportDialog(self, db, proj)
+            dlg.ShowModal()
+            dlg.Destroy()
 
 
     def OnSettings(self, event):

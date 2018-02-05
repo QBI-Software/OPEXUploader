@@ -87,15 +87,18 @@ class UploaderGUI ( wx.Frame ):
 		fgSizer2.Add( self.m_staticline5, 0, wx.EXPAND |wx.ALL, 5 )
 		
 		self.cbChecks = wx.CheckBox( self, wx.ID_ANY, u"TEST RUN only", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.cbChecks.SetToolTipString( u"This checks the data in the input file can be read properly by the script (not the database)." )
+		
 		fgSizer2.Add( self.cbChecks, 0, wx.ALL, 5 )
 		
 		self.cbCreateSubject = wx.CheckBox( self, wx.ID_ANY, u"Create Subjects from data", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.cbCreateSubject.SetToolTipString( u"Use only if certain that all participant IDs are valid. Mostly this is not used." )
+		
 		fgSizer2.Add( self.cbCreateSubject, 0, wx.ALL, 5 )
 		
-		self.cbSkiprows = wx.CheckBox( self, wx.ID_ANY, u"Skip ABORTED or NOT_RUN (Cantab)", wx.DefaultPosition, wx.DefaultSize, 0 )
-		fgSizer2.Add( self.cbSkiprows, 0, wx.ALL, 5 )
-		
 		self.cbUpdate = wx.CheckBox( self, wx.ID_ANY, u"Update existing data", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.cbUpdate.SetToolTipString( u"Use only if confident that all data needs to be updated for this experiment type." )
+		
 		fgSizer2.Add( self.cbUpdate, 0, wx.ALL, 5 )
 		
 		
@@ -121,7 +124,7 @@ class UploaderGUI ( wx.Frame ):
 		
 		bSizer3 = wx.BoxSizer( wx.VERTICAL )
 		
-		self.tcResults = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 400,300 ), wx.TE_MULTILINE|wx.TE_READONLY|wx.TE_WORDWRAP|wx.SIMPLE_BORDER )
+		self.tcResults = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 400,400 ), wx.TE_MULTILINE|wx.TE_READONLY|wx.TE_WORDWRAP|wx.SIMPLE_BORDER )
 		bSizer3.Add( self.tcResults, 0, wx.ALL|wx.EXPAND, 5 )
 		
 		
@@ -146,6 +149,9 @@ class UploaderGUI ( wx.Frame ):
 		
 		self.m_menuItem6 = wx.MenuItem( self.m_menu1, wx.ID_ANY, u"Download CSVs", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_menu1.AppendItem( self.m_menuItem6 )
+		
+		self.m_menuItem61 = wx.MenuItem( self.m_menu1, wx.ID_ANY, u"Generate Reports", wx.EmptyString, wx.ITEM_NORMAL )
+		self.m_menu1.AppendItem( self.m_menuItem61 )
 		
 		self.m_menubar1.Append( self.m_menu1, u"Functions" ) 
 		
@@ -174,6 +180,7 @@ class UploaderGUI ( wx.Frame ):
 		self.Bind( wx.EVT_MENU, self.OnIds, id = self.m_menuItem5.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnLaunch, id = self.m_menuItem1.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnDownload, id = self.m_menuItem6.GetId() )
+		self.Bind( wx.EVT_MENU, self.OnReport, id = self.m_menuItem61.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnHelp, id = self.m_menuItem2.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnAbout, id = self.m_menuItem3.GetId() )
 	
@@ -210,6 +217,9 @@ class UploaderGUI ( wx.Frame ):
 		event.Skip()
 	
 	def OnDownload( self, event ):
+		event.Skip()
+	
+	def OnReport( self, event ):
 		event.Skip()
 	
 	def OnHelp( self, event ):
@@ -288,6 +298,81 @@ class dlgDownloads ( wx.Dialog ):
 		event.Skip()
 	
 	def OnCSVDownload( self, event ):
+		event.Skip()
+	
+	def OnCloseDlg( self, event ):
+		event.Skip()
+	
+
+###########################################################################
+## Class dlgReports
+###########################################################################
+
+class dlgReports ( wx.Dialog ):
+	
+	def __init__( self, parent ):
+		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Reports", pos = wx.DefaultPosition, size = wx.Size( 502,470 ), style = wx.CLOSE_BOX|wx.DEFAULT_DIALOG_STYLE )
+		
+		self.SetSizeHintsSz( wx.DefaultSize, wx.DefaultSize )
+		
+		bSizer12 = wx.BoxSizer( wx.VERTICAL )
+		
+		self.m_staticText26 = wx.StaticText( self, wx.ID_ANY, u"Generate Reports from Experiment Data", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText26.Wrap( -1 )
+		bSizer12.Add( self.m_staticText26, 0, wx.ALL, 5 )
+		
+		self.chDelta = wx.CheckBox( self, wx.ID_ANY, u"Include Deltas", wx.DefaultPosition, wx.DefaultSize, 0 )
+		bSizer12.Add( self.chDelta, 0, wx.ALL, 5 )
+		
+		bSizer13 = wx.BoxSizer( wx.HORIZONTAL )
+		
+		self.m_staticText27 = wx.StaticText( self, wx.ID_ANY, u"Select directory", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText27.Wrap( -1 )
+		bSizer13.Add( self.m_staticText27, 0, wx.ALL, 5 )
+		
+		self.m_downloaddir = wx.GenericDirCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( -1,300 ), wx.DIRCTRL_3D_INTERNAL|wx.DIRCTRL_DIR_ONLY|wx.SUNKEN_BORDER, wx.EmptyString, 0 )
+		
+		self.m_downloaddir.ShowHidden( False )
+		bSizer13.Add( self.m_downloaddir, 1, wx.EXPAND |wx.ALL, 5 )
+		
+		
+		bSizer12.Add( bSizer13, 1, wx.EXPAND, 5 )
+		
+		bSizer15 = wx.BoxSizer( wx.HORIZONTAL )
+		
+		self.m_button17 = wx.Button( self, wx.ID_ANY, u"Generate", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_button17.SetFont( wx.Font( wx.NORMAL_FONT.GetPointSize(), 71, 90, 90, False, wx.EmptyString ) )
+		self.m_button17.SetForegroundColour( wx.Colour( 255, 255, 0 ) )
+		self.m_button17.SetBackgroundColour( wx.Colour( 0, 128, 64 ) )
+		
+		bSizer15.Add( self.m_button17, 0, wx.ALL, 5 )
+		
+		self.m_button18 = wx.Button( self, wx.ID_ANY, u"Cancel", wx.DefaultPosition, wx.DefaultSize, 0 )
+		bSizer15.Add( self.m_button18, 0, wx.ALL, 5 )
+		
+		
+		bSizer12.Add( bSizer15, 1, wx.EXPAND, 5 )
+		
+		
+		self.SetSizer( bSizer12 )
+		self.Layout()
+		
+		self.Centre( wx.BOTH )
+		
+		# Connect Events
+		self.Bind( wx.EVT_INIT_DIALOG, self.OnDownload )
+		self.m_button17.Bind( wx.EVT_BUTTON, self.OnGenerateReports )
+		self.m_button18.Bind( wx.EVT_BUTTON, self.OnCloseDlg )
+	
+	def __del__( self ):
+		pass
+	
+	
+	# Virtual event handlers, overide them in your derived class
+	def OnDownload( self, event ):
+		event.Skip()
+	
+	def OnGenerateReports( self, event ):
 		event.Skip()
 	
 	def OnCloseDlg( self, event ):

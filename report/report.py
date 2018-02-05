@@ -15,6 +15,7 @@ import glob
 import logging
 from datetime import datetime
 from os.path import expanduser, join, abspath, dirname
+from os import access, R_OK, mkdir
 from collections import OrderedDict
 import numpy as np
 import pandas
@@ -176,8 +177,6 @@ class OPEXReport(object):
             df_counts.replace([np.inf, -np.inf, np.nan, 'ZZZZZZZ'], 0, inplace=True)
             dfsubjects = self.formatCounts(df_counts)
             self.data = dfsubjects
-        else:
-            print("Load counts from file")  # TODO
 
         return dfsubjects
 
@@ -188,11 +187,11 @@ class OPEXReport(object):
         """
         etypes = sorted(self.xnat.conn.inspect.datatypes())
         df_subjects = self.xnat.getSubjectsDataframe(projectcode)
-        # Cannot load all at once nor can get count directly so loop through each datatype and compile counts
+        # Cannot load all at once nor can get count directly so loop through each prefix and compile counts
         for etype in etypes:
             print "Expt type:", etype
             if etype.startswith('opex') or etype == 'xnat:mrSessionData':
-                # fields = self.conn.inspect.datatypes(etype)
+                # fields = self.conn.inspect.prefixs(etype)
                 # columns = [etype + '/ID',etype + '/SUBJECT_ID',etype + '/DATE',etype + '/INTERVAL',etype + '/DATA_VALID',etype + '/SAMPLE_QUALITY']
                 columns = [etype + '/ID', etype + '/SUBJECT_ID', etype + '/DATE']
                 criteria = [(etype + '/SUBJECT_ID', 'LIKE', '*'), 'AND']
@@ -203,7 +202,7 @@ class OPEXReport(object):
                     # df_counts.columns = df_counts.index.droplevel(level=0)
                     df_counts.columns = ['subject_id', etype + '_visit', etype]
                     df_subjects = df_subjects.merge(df_counts, how='left', on='subject_id')
-                    print len(df_subjects)
+                    #print len(df_subjects)
 
         print(df_subjects.head())
 
@@ -228,7 +227,8 @@ class OPEXReport(object):
                     criteria = [(etype + '/SUBJECT_ID', 'LIKE', '*'), 'AND']
                     df_expts = self.xnat.getSubjectsDataframe(projectcode, etype, fields, criteria)
                     if df_expts is not None:
-                        print "Expt type:", etype, ' = ', len(df_expts), ' expts'
+                        msg = "Expt type: %s = %d expts" % (len(df_expts), etype)
+                        logging.info(msg)
                         outputname = etype.replace(":", "_") + ".csv"
                         df_expts.to_csv(join(outputdir, outputname), index=False)
                         if deltas:
@@ -238,7 +238,8 @@ class OPEXReport(object):
                                 df_delta.to_csv(join(outputdir, deltaname), index=False)
                                 print 'Deltas:', deltaname
                     else:
-                        print "Expt type:", etype, ' - No data'
+                        msg = "Expt type: %s - No data", etype
+                        logging.warning(msg)
         except Exception as e:
             raise ValueError(e)
         return True
@@ -487,7 +488,9 @@ class OPEXReport(object):
                     # df_expts.set_index('expt_id')
                     if df_expts is not None:
                         df_expts = df_expts[df_expts.data_valid != 'Invalid']
-                        print "Merging Expt type:", etype, ' = ', len(df_expts), ' expts'
+                        msg = "Merging Expt type: %s = %d expts" % (etype, len(df_expts))
+                        logging.info(msg)
+                        print msg
                         if df_all.empty:
                             df_expts = df_expts.rename(columns=cantabcolumns)
                             df_all = df_expts
@@ -505,21 +508,22 @@ class OPEXReport(object):
                 # output
                 outputfile = join(outputdir, outputname)
                 self.groupedCantabOutput(df_all, outputfile)
-
-                # deltas
-                df_deltas = self.deltaValues(df_all)
-                outputfile = outputfile.replace('.xlsx', '_deltas.xlsx')
-                self.groupedCantabOutput(df_deltas, outputfile)
                 print "CANTAB Reports: ", outputname
+                # deltas
+                if deltas:
+                    df_deltas = self.deltaValues(df_all)
+                    outputfile = outputfile.replace('.xlsx', '_deltas.xlsx')
+                    self.groupedCantabOutput(df_deltas, outputfile)
+                    print "CANTAB Reports (deltas): ", outputname
                 return True
         except Exception as e:
             logging.error(e)
             print e
 
 
-    def generateBloodReport(self, projectcode, outputdir):
+    def generateBloodReport(self, projectcode, outputdir,deltas):
         """
-        Create Blood Report
+        Create Blood Report - using pre and post data
         :param outputdir:
         :return:
         """
@@ -529,7 +533,7 @@ class OPEXReport(object):
         columns = ['xnat:subjectData/SUBJECT_LABEL',
                    'xnat:subjectData/SUB_GROUP',
                    'xnat:subjectData/GENDER_TEXT']
-        outputfile = join(outputdir,"opex_BLOOD_ALL.xlsx")
+        outputfile = join(outputdir,"opex_BLOOD_PREPOST.xlsx")
         datafields = pandas.read_csv(join(self.resource_dir, 'blood_fields.csv'))
         datafields.replace(np.nan, '', inplace=True)
 
@@ -570,7 +574,7 @@ class OPEXReport(object):
                         #     df_gp = df_groups.get_group(group)
                         df_subjects = df_expts.groupby('subject')
                         for subj in df_subjects.groups.keys():
-                            print subj
+                            #print subj
                             i = df0[df0['subject'] == subj].index[0]
                             srows = df_subjects.get_group(subj)
                             s_ints = srows.groupby('interval')
@@ -589,44 +593,75 @@ class OPEXReport(object):
                                         if self.validBloodData(preval[lfield]) and self.validBloodData(postval[lfield]):
                                             p0=float(postval[lfield].values[0])
                                             p1=float(preval[lfield].values[0])
-                                            all[field].at[i,mths[mth]]=100 * (p1-p0)/p0
+                                            all[field].at[i,mths[mth]]=p1-p0 #100 * (p1-p0)/p0
             else:
-                print "Compilation Complete"
-                # generate deltas
-                all = self.deltaBlood(all, mths)
-                # output to file
-                self.outputBloodData(outputfile,all)
-                #subset deltas data for plots
-                deltas = all
-                # plots per param
-                for field in deltas.keys():
-                    df_all = deltas[field]
-                    cols = [('delta_' + mth,mth) for mth in mths.values()]
-                    rmths = dict(cols)
-                    df_all.drop(mths.values(), inplace=True,axis=1)
-                    df_all.rename(columns=rmths, inplace=True)
+                print "PrePost Blood Report: Compilation Complete, generating plots ..."
+                for field in all.keys():
+                    df_all = all[field]
                     df_all.fillna('', axis=1, inplace=True)
-                    self.plotBloodData(df_all, field, mths, outputdir)
+                    subdir = join(outputdir, 'BLOOD_PREPOST_RawDiff')
+                    if not access(subdir, R_OK):
+                        mkdir(subdir)
+                    self.plotBloodData(df_all, field, mths, subdir,'Post - Pre')
+                    # subdir = join(outputdir, 'BLOOD_PREPOST_Histograms')
+                    # if not access(subdir, R_OK):
+                    #     mkdir(subdir)
+                    # self.plotHistograms(df_all, field, mths, subdir,'Post - Pre')
+                if deltas:
+                    # generate deltas
+                    percent = False
+                    all = self.deltaBlood(all, mths,percent)
+                    # output to file
+                    self.outputBloodData(outputfile, all)
+                    # subset deltas data for plots
+                    subdir = join(outputdir, 'BLOOD_PREPOST_DeltaBaseline')
+                    if not access(subdir, R_OK):
+                        mkdir(subdir)
+                    deltas = all
+                    prefix='delta'
+                    # plots per param
+                    for field in deltas.keys():
+                        df_all = deltas[field]
+                        cols = [(prefix + '_' + mth, mth) for mth in mths.values()]
+                        rmths = dict(cols)
+                        df_all.drop(mths.values(), inplace=True, axis=1)
+                        df_all.rename(columns=rmths, inplace=True)
+                        df_all.fillna('', axis=1, inplace=True)
+                        self.plotBloodData(df_all, field, mths, subdir,'Baseline delta')
+                    
                 return True
 
         except Exception as e:
             print e
 
     # ---------------------------------------------------------------------- #
-    def percentchange(self,row,mth):
+    def diffValue(self,row,mth, percent):
+        """
+        Difference of values to baseline as raw diff or percentage of baseline
+        :param row: 
+        :param mth: 
+        :param percent: 
+        :return: 
+        """
         # filter absent baseline values and missing values
         if row['baseline'] == np.nan or row['baseline'] == '' or row['baseline'] == 0.0 or row[mth] == np.nan or row[mth] == '':
             rtn = np.nan
         else:
-            rtn = 100* ((row[mth]-row['baseline'])/row['baseline'])
+            if percent:
+                rtn = 100* ((row[mth]-row['baseline'])/row['baseline'])
+            else:
+                rtn = row[mth] - row['baseline']
         return rtn
-
-    def deltaBlood(self,all, mths):
+        
+    def deltaBlood(self,all, mths, percent=False):
         for field in all.keys():
             for mth in mths.values():
-                all[field]['delta_'+mth] =all[field].apply(lambda r: self.percentchange(r,mth), axis=1)
-        else:
-            print "Deltas done"
+                if percent:
+                    subfield='percentdelta_'+mth
+                else:
+                    subfield='delta_' + mth
+                all[field][subfield] = all[field].apply(lambda r: self.diffValue(r, mth,percent), axis=1)
+
         return all
 
 
@@ -640,12 +675,11 @@ class OPEXReport(object):
             for group in ['AIT', 'MIT', 'LIT']:
                 df_gp = df_grouped.get_group(group)
                 sheet = field + '_' + group
-                print sheet
+                #print sheet
                 df_gp.to_excel(writer, index=False, sheet_name=sheet)
-            else:
-                print "Done: ", field
+
         else:
-            print "Completed output: ", outputfile
+            return outputfile
 
     # ---------------------------------------------------------------------- #
     def validBloodData(self,seriesdata):
@@ -657,7 +691,7 @@ class OPEXReport(object):
         return rtn
 
     # ---------------------------------------------------------------------- #
-    def plotBloodData(self, df, title,mths,outputdir):
+    def plotBloodData(self, df, title,mths,outputdir, ytitle):
         """
         Plot all fields as subplots vs time
         :param seriesdata:
@@ -681,17 +715,63 @@ class OPEXReport(object):
                         ),row=row,col=1)
             else:
                 row +=1
-        fig['layout']['title']= title
+        fig['layout']['title']= title + ": " + ytitle
         fig['layout']['xaxis1']['title']='Interval (month)'
-        fig['layout']['yaxis2']['title'] = '% delta'
+        fig['layout']['yaxis2']['title'] = ytitle
         #Online plot (qbisoftware)
         #py.plot(fig)
+        # Create plotly plot
+        pfilename = join(outputdir, title +'.html')
+        offline.plot(fig, filename=pfilename)
+        print "Plot output: ", pfilename
+        return pfilename
+
+        # ---------------------------------------------------------------------- #
+    def plotHistograms(self, df, title, mths, outputdir, ytitle):
+        """
+        Plot all fields as subplots vs time
+        :param seriesdata:
+        :return:
+        """
+        df.fillna('', inplace=True)
+        df_groups = df.groupby(by='group')
+        places = []
+        maxrows = 4
+        maxcols = 2
+        for i in range(1, maxrows+1):
+            for j in range(1, maxcols+1):
+                places.append((i,j))
+        colours={'AIT':'red','MIT':'green','LIT':'blue'}
+        fig = tools.make_subplots(rows=4, cols=2, shared_xaxes=True, subplot_titles=mths.values())
+        ctr = 0
+        xlabels = [int(x) for x in mths.keys()]
+        for mth in mths.values():
+
+            for group in ['AIT', 'MIT', 'LIT']:
+                df1 = df_groups.get_group(group)
+                fig.append_trace(
+                    go.Histogram(
+                        x=df1[mth],
+                        cumulative=dict(enabled=True),
+                        histnorm='probability',
+                        legendgroup=group,
+                        name=group,
+                        opacity=0.7,
+                        marker={'color':colours[group]}
+                    ), row=places[ctr][0], col=places[ctr][1])
+            else:
+                ctr += 1
+        fig['layout']['title'] = title + ": " + ytitle
+        #fig['layout']['xaxis1']['title'] = ytitle
+        #fig['layout']['yaxis2']['title'] = 'Probability'
+        fig['layout']['barmode']='overlay'
+        # Online plot (qbisoftware)
+        # py.plot(fig)
         # Create plotly plot
         pfilename = join(outputdir, title + '.html')
         offline.plot(fig, filename=pfilename)
         print "Plot output: ", pfilename
         return pfilename
-
 
 ########################################################################
 
@@ -728,9 +808,9 @@ if __name__ == "__main__":
         # Download CSV files
         if args.output is not None and args.output:
             outputdir = args.output
-            op.downloadOPEXExpts(projectcode=projectcode, outputdir=outputdir, deltas=True)
-            op.generateCantabReport(projectcode=projectcode, outputdir=outputdir, deltas=True)
-            op.generateBloodReport(projectcode=projectcode, outputdir=outputdir)
+            #op.downloadOPEXExpts(projectcode=projectcode, outputdir=outputdir, deltas=True)
+            #op.generateCantabReport(projectcode=projectcode, outputdir=outputdir, deltas=True)
+            op.generateBloodReport(projectcode=projectcode, outputdir=outputdir, deltas=True)
 
     except ValueError as e:
         print "Error: ", e
