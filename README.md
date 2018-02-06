@@ -74,6 +74,13 @@ The COSMED data is uploaded from the original COSMED data directory.
 1. An output of the compiled COSMED data is produced.
 1. Also time-series data for individual files is generated into a subdirectory in the original data directory called 'processed'.
 
+### DASS data (XnatUploaded/sampledata/dass)
+
+1. Copy data file (DASS Data Entry Plus Check_20171206.xlsx) to this directory from share drive (\DATA\DATA ENTRY\PaperBasedPdfs\PaperBasedExcelSheets\DASS)
+1. Set input directory to this directory
+1. Select 'DASS' from the Data Type dropdown
+1. Click 'RUN'
+
 ### DEXA data (XnatUploaded/sampledata/dexa)
 
 1. Copy data file (DXA Data entry_20171215.xlsx) to this directory from share drive (\DATA\DXA Data)
@@ -115,15 +122,27 @@ Both ASHS and Freesurfer hippocampal volume data can be uploaded.  (NB, Fields f
 
 ### Visits (XnatUploaded/sampledata/visit)
 
-Some experimental data is not accompanied by the visit date (eg blood, DEXA, MRIdata) so it is extracted from the participants file.  This file cannot be used directly however.
+Some experimental data is not accompanied by the visit date: 
++ all bloods
++ DEXA
++ DASS
++ MRIdata (FS or ASHS) 
++ FMRI
+
+so it is extracted from the participants file after these data have been uploaded.  This file cannot be used directly however as it is full of inconsistent data.
 
 1. Copy data file ('Participant visit record_20171110.xlsx') to this directory from share drive (\CENTRE ADMIN\PARTICIPANTS)
+1. Save to a new file called 'Visits.xlsx' (can overwrite)
 1. A new line of headers needs to be added - see the existing file 'Visits.xlsx'
-1. Some data may need cleaning up then rename the file to 'Visits.xlsx' before Running
+1. Insert a new column called BLOOD_FASTED_3 which has the same values as DEXA_3 (3mth Assessment)
+1. A LOT of data will need cleaning up which I have done via Excel "find and replace" and "formats -> date -> yyyy-mm-dd" (if in doubt, leave it out)
 
-### DASS, FMRI data (XnatUploaded\sampledata\spreadsheet_upload)
+Only experiments which exist in the database will be updated and only if the date is different so a comment "Date updated" is entered which can be checked on XNAT.
 
-When data is able to match the headings directly, it is quicker to use XNAT's Spreadsheet upload option.  Guidelines for this are in the OPEX XNAT User guide.
+### FMRI data (XnatUploaded\sampledata\spreadsheet_upload)
+
+When data is able to match the headings directly, it is quicker to use XNAT's Spreadsheet upload option.  Guidelines for this are in the OPEX XNAT User guide.  It mostly involves setting up the columns in the right order with the headers matching the template exactly.  If an ID is to be generated, it is usually:
+=CONCATENATE(prefix,subjectid, interval)
 
 
 ## General Housekeeping
@@ -135,7 +154,7 @@ When data is able to match the headings directly, it is quicker to use XNAT's Sp
 
 ### Create Subjects from Data
 
-If the subject doesn't exist, this will create it in the database. Generally, this isn't used in case there are errors in the Participant IDs and thus incorrect data entry.
+If the subject doesn't exist, this will create it in the database. Generally, this isn't used in case there are often errors in the Participant IDs and thus incorrect data entry.
 
 ### Update existing data
 
@@ -149,3 +168,12 @@ This function generates CSV files for each experiment type.  They are currently 
 1. Check the "Deltas" if you also want the changes between intervals (per individual - note that baseline data remains the same)
 1. Select the Output directory
 1. Click on **'Download'**
+
+### Generate Reports
+
+This generates reports of processed data, grouped by parameter or group (AIT,MIT,LIT) for further analysis. Currently, just Blood and CANTAB data.
+
+1. From the File Menu, Select "Generate Reports"
+1. Check the "Deltas" if you also want the changes between intervals
+1. Select the Output directory
+1. Click on **'Generate'**
