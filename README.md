@@ -141,8 +141,14 @@ Only experiments which exist in the database will be updated and only if the dat
 
 ### FMRI data (XnatUploaded\sampledata\spreadsheet_upload)
 
-When data is able to match the headings directly, it is quicker to use XNAT's Spreadsheet upload option.  Guidelines for this are in the OPEX XNAT User guide.  It mostly involves setting up the columns in the right order with the headers matching the template exactly.  If an ID is to be generated, it is usually:
-=CONCATENATE(prefix,subjectid, interval)
+When data is able to match the headings directly, it is quicker to use XNAT's Spreadsheet upload option.  Guidelines for this are in the OPEX XNAT User guide.  It mostly involves setting up the columns in the right order with the headers matching the template exactly.  
+
+If an ID is to be generated, it is usually:
+
+```
+=CONCATENATE(prefix,"_",subjectid, "_",interval)
+
+```
 
 
 ## General Housekeeping
