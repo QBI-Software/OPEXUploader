@@ -169,8 +169,8 @@ class VisitParser(DataParser):
             xtype = self.opex['xsitype'][self.opex['prefix'] == prefix].values[0]
 
             msg="Searching %s" % eid
-            print msg
-            logging.info(msg)
+            #print msg
+            logging.debug(msg)
 
             if xnat is not None:
                 project = xnat.get_project(projectcode)
@@ -191,8 +191,8 @@ class VisitParser(DataParser):
                 if e is not None and e.exists():
                     exptid = e.id()
                     msg = 'Found expt: %s %s : %s [%s]' % (subject_id,xtype, exptid,eid)
-                    print msg
-                    logging.info(msg)
+                    #print msg
+                    logging.debug(msg)
                     xnatexpt = xnat.updateExptDate(s, exptid, d, xtype)
                     if xnatexpt is not None: #not updated if not different
                         # remove or update comment
@@ -208,8 +208,8 @@ class VisitParser(DataParser):
                         logging.info(msg)
                 else:
                     msg = "Expt not found: %s" % eid
-                    logging.info(msg)
-                    print msg
+                    logging.debug(msg)
+                    #print msg
 
             else:
                 print 'XNAT connection not available'
