@@ -201,7 +201,7 @@ class OPEXUploader():
         if dp.subjects is None:
             dp.sortSubjects()
         for sd in dp.subjects:
-            print '\n*****SubjectID:', sd
+            print '*****SubjectID:', sd
             s = project.subject(sd)
             if not s.exists():
                 if self.args.create is not None and self.args.create:
@@ -280,9 +280,8 @@ class OPEXUploader():
                                 logging.info(msg)
                                 if 'created' in msg:
                                     print(msg)
-                            else:  # cantab and ACER
-                                if self.args.skiprows is not None and self.args.skiprows and \
-                                        (('NOT_RUN' in row.values) or ('ABORTED' in row.values)):
+                            else:  # cantab
+                                if  ('NOT_RUN' in row.values) or ('ABORTED' in row.values):
                                     msg = "Skipping due to ABORT or NOT RUN: %s" % sampleid
                                     logging.warning(msg)
                                     print(msg)
@@ -533,7 +532,7 @@ if __name__ == "__main__":
     parser.add_argument('--cantab', action='store', help='Upload CANTAB data from directory')
     parser.add_argument('--checks', action='store_true', help='Test run with output to files')
     parser.add_argument('--update', action='store_true', help='Also update existing data')
-    parser.add_argument('--skiprows', action='store_true', help='Skip rows in CANTAB data if NOT_RUN or ABORTED')
+    #parser.add_argument('--skiprows', action='store_true', help='Skip rows in CANTAB data if NOT_RUN or ABORTED')
     parser.add_argument('--amunet', action='store', help='Upload Water Maze (Amunet) data from directory')
     parser.add_argument('--amunetdates', action='store', help='Extract date info from orig files in this dir')
     parser.add_argument('--acer', action='store', help='Upload ACER data from directory')

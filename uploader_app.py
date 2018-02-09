@@ -492,7 +492,7 @@ class OPEXUploaderGUI(UploaderGUI):
             args.database = db
             args.projectcode = proj
             args.create = self.cbCreateSubject.GetValue()
-            args.skiprows = self.cbSkiprows.GetValue()
+            #args.skiprows = self.cbSkiprows.GetValue()
             args.checks = self.cbChecks.GetValue()
             args.update = self.cbUpdate.GetValue()
 

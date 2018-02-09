@@ -180,6 +180,6 @@ This function generates CSV files for each experiment type.  They are currently 
 This generates reports of processed data, grouped by parameter or group (AIT,MIT,LIT) for further analysis. Currently, just Blood and CANTAB data.
 
 1. From the File Menu, Select "Generate Reports"
-1. Check the "Deltas" if you also want the changes between intervals
+1. Check the "Deltas" if you also want the changes from baseline
 1. Select the Output directory
 1. Click on **'Generate'**
