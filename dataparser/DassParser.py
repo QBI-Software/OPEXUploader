@@ -114,7 +114,7 @@ if __name__ == "__main__":
             Reads files in a directory and extracts data for upload to XNAT
 
              ''')
-    parser.add_argument('--filedir', action='store', help='Directory containing files', default="Q:\\DATA\\DATA ENTRY\\XnatUploaded\\sampledata\\DASS")
+    parser.add_argument('--filedir', action='store', help='Directory containing files', default="Q:\\DATA\\DATA ENTRY\\XnatUploaded\\sampledata\\dass")
     parser.add_argument('--datafile', action='store', help='Filename of original data', default="DASS Data Entry Plus Check_20171206.xlsx")
     parser.add_argument('--sheet', action='store', help='Sheet name to extract',
                         default="0")

@@ -28,7 +28,7 @@ class Organizer():
             raise OSError("Cannot access input directory")
         else:
             self.inputdir = inputdir
-
+        print 'Input directory: ', self.inputdir
         #Set output scan directory
         if scandir is None:
             dirpath = path.dirname(inputdir)
@@ -37,7 +37,8 @@ class Organizer():
         elif not access(scandir, R_OK):
             raise OSError("Cannot access output scan directory")
         else:
-            self.datapath = inputdir
+            self.datapath = scandir
+        print 'Scan directory: ', self.datapath
 
         # Check only subject dirs processed
         self.opexid = opexid
@@ -76,12 +77,13 @@ class Organizer():
                 mkdir(join(datapath, subject))
                 mkdir(join(datapath, subject, 'scans'))
                 datapath = join(datapath, subject, 'scans')
-            except OSError:
-                msg = 'Directory exists: %s' % join(datapath, subject)
+            except OSError as e:
+                msg = 'Directory exists: %s' % e.args[0]
                 logging.info(msg)
                 print msg
                 datapath = self.datapath
                 continue
+
             for group in listdir(join(self.inputdir, subject)):
                 grouppath = join(self.inputdir, subject, group)
                 if not isdir(grouppath) or group == 'scans':
@@ -137,14 +139,16 @@ if __name__ == "__main__":
             python XnatOrganizeFiles.py "data/raw" --scandir "data/sortedscans"
 
              ''')
-    parser.add_argument('inputdir', action='store', help='Top level file directory eg SUBJECTID')
-    parser.add_argument('--scandir', action='store', help='Copy scans to this directory for upload to XNAT')
-    parser.add_argument('--opexid', action='store_true', help='SUBJECTID directories in OPEX format eg 1001DS')
+    parser.add_argument('--inputdir', action='store', help='Top level file directory eg SUBJECTID', default="sampledata\\mri")
+    parser.add_argument('--scandir', action='store', help='Copy scans to this directory for upload to XNAT', default="sampledata\\mri\\sortedscans")
+    parser.add_argument('--opexid', action='store_true', help='SUBJECTID directories in OPEX format eg 1001DS', default='True')
     parser.add_argument('--ignore', action='store', help='Ignore already processed - allows for repeated parsing over same dir (eg "done")')
     args = parser.parse_args()
 
     org = Organizer(args.inputdir,args.scandir,args.opexid,args.ignore)
+    print "ScanOrganizer loaded"
     org.run()
+    print "ScanOrganizer complete"
 
 
     # series ={}

@@ -60,7 +60,7 @@ class DexaParser(DataParser):
             sids = self.df[0][subjectfield].unique()
             ids = [i for i in sids if len(i) == 6]
             for sid in ids:
-                sidkey = self.__checkSID(sid)
+                sidkey = self._DataParser__checkSID(sid)
                 self.subjects[sidkey] = dict()
                 for i, intval in self.intervals.items():
                     data = self.df[i]
@@ -117,11 +117,11 @@ if __name__ == "__main__":
             Reads files in a directory and extracts data for upload to XNAT
 
              ''')
-    parser.add_argument('--filedir', action='store', help='Directory containing files', default="..\\..\\sampledata\\dexa")
+    parser.add_argument('--filedir', action='store', help='Directory containing files', default="Q:\\DATA\\DATA ENTRY\\XnatUploaded\\sampledata\\dexa")
     parser.add_argument('--sheet', action='store', help='Sheet name to extract',
                         default="0")
     parser.add_argument('--fields', action='store', help='Fields to extract',
-                        default="resources\\dexa_fields.xlsx")
+                        default="..\\resources\\dexa_fields.xlsx")
     args = parser.parse_args()
 
     inputdir = args.filedir
