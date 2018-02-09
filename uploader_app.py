@@ -80,6 +80,7 @@ class DownloadDialog(dlgDownloads):
             dlg.ShowModal()  # Show it
             dlg.Destroy()
 
+
     def OnCloseDlg(self, event):
         self.Destroy()
 
@@ -372,6 +373,7 @@ class OPEXUploaderGUI(UploaderGUI):
         else:
             msg = "CONNECTION FAILED - please check config"
         self.tcResults.AppendText(msg)
+
 
     def OnIds(self, event):
         """

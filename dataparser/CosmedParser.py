@@ -64,6 +64,7 @@ class CosmedParser():
         self.datafields = pd.read_excel(fieldsfile, header=0, sheetname='cosmed_data')
 
         # Get list of subjects - parse individual files
+        self.subjects = dict()
         self.files = glob.glob(join(inputsubdir, "*.xlsx"))
         # create an output dir for processed files
         pdir = join(inputsubdir, 'processed')
@@ -193,7 +194,7 @@ class CosmedParser():
         :param filename:
         :return:
         """
-        pattern = '^(\d{4}\S{2})_(\d{1}).*(\d{8})\.xlsx$'
+        pattern = '^(\d{4}\S{2})_(\d{1,2}).*(\d{8})\.xlsx$'
         m = re.search(pattern,filename)
         if m is not None:
             self.data['SubjectID'].append(m.group(1))
@@ -436,7 +437,7 @@ class CosmedParser():
 
     def sortSubjects(self):
         '''Sort data into subjects by participant ID'''
-        self.subjects = dict()
+
         if self.df is not None:
             sids = self.df['SubjectID'].unique()
             ids = [i for i in sids if len(i) == 6]
@@ -523,7 +524,7 @@ if __name__ == "__main__":
 
     print("Input:", inputdir)
     if access(inputdir, R_OK):
-        dp = CosmedParser(inputdir, inputsubdir, datafile)
+        dp = CosmedParser(inputdir, inputsubdir, datafile, True)
         if dp.df.empty:
             raise ValueError("Error during compilation - data not loaded")
         xsd = dp.getxsd()

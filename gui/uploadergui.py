@@ -153,6 +153,9 @@ class UploaderGUI ( wx.Frame ):
 		self.m_menuItem61 = wx.MenuItem( self.m_menu1, wx.ID_ANY, u"Generate Reports", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_menu1.AppendItem( self.m_menuItem61 )
 		
+		self.m_menuItem8 = wx.MenuItem( self.m_menu1, wx.ID_ANY, u"Incorrect IDs", wx.EmptyString, wx.ITEM_NORMAL )
+		self.m_menu1.AppendItem( self.m_menuItem8 )
+		
 		self.m_menubar1.Append( self.m_menu1, u"Functions" ) 
 		
 		self.m_menu2 = wx.Menu()
@@ -166,6 +169,7 @@ class UploaderGUI ( wx.Frame ):
 		
 		self.SetMenuBar( self.m_menubar1 )
 		
+		self.m_statusBar1 = self.CreateStatusBar( 1, 0, wx.ID_ANY )
 		
 		self.Centre( wx.BOTH )
 		
@@ -181,6 +185,7 @@ class UploaderGUI ( wx.Frame ):
 		self.Bind( wx.EVT_MENU, self.OnLaunch, id = self.m_menuItem1.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnDownload, id = self.m_menuItem6.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnReport, id = self.m_menuItem61.GetId() )
+		self.Bind( wx.EVT_MENU, self.OnIds, id = self.m_menuItem8.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnHelp, id = self.m_menuItem2.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnAbout, id = self.m_menuItem3.GetId() )
 	
@@ -221,6 +226,7 @@ class UploaderGUI ( wx.Frame ):
 	
 	def OnReport( self, event ):
 		event.Skip()
+	
 	
 	def OnHelp( self, event ):
 		event.Skip()
@@ -386,11 +392,15 @@ class dlgReports ( wx.Dialog ):
 class dlgIDS ( wx.Dialog ):
 	
 	def __init__( self, parent ):
-		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Incorrect IDs", pos = wx.DefaultPosition, size = wx.Size( 414,463 ), style = wx.DEFAULT_DIALOG_STYLE )
+		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Incorrect IDs", pos = wx.DefaultPosition, size = wx.Size( 434,525 ), style = wx.DEFAULT_DIALOG_STYLE )
 		
 		self.SetSizeHintsSz( wx.DefaultSize, wx.DefaultSize )
 		
 		bSizer10 = wx.BoxSizer( wx.VERTICAL )
+		
+		self.m_staticText20 = wx.StaticText( self, wx.ID_ANY, u"Replace Incorrect IDs", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText20.Wrap( -1 )
+		bSizer10.Add( self.m_staticText20, 0, wx.ALL, 5 )
 		
 		self.m_grid1 = wx.grid.Grid( self, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
 		

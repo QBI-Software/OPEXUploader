@@ -198,7 +198,7 @@ class OPEXUploader():
         """
         missing = []
         matches = []
-        if dp.subjects is None:
+        if len(dp.subjects) <=0:
             dp.sortSubjects()
         for sd in dp.subjects:
             print '*****SubjectID:', sd

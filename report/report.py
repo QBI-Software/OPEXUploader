@@ -227,8 +227,9 @@ class OPEXReport(object):
                     criteria = [(etype + '/SUBJECT_ID', 'LIKE', '*'), 'AND']
                     df_expts = self.xnat.getSubjectsDataframe(projectcode, etype, fields, criteria)
                     if df_expts is not None:
-                        msg = "Expt type: %s = %d expts" % (len(df_expts), etype)
+                        msg = "Expt type: %s = %d expts" % (etype,len(df_expts))
                         logging.info(msg)
+                        print msg
                         outputname = etype.replace(":", "_") + ".csv"
                         df_expts.to_csv(join(outputdir, outputname), index=False)
                         if deltas:

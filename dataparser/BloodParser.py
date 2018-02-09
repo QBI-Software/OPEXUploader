@@ -73,7 +73,7 @@ class BloodParser(DataParser):
                 self.data[subjectfield] = self.data[subjectfield].str.replace(" ","")
                 ids = self.data[subjectfield].unique()
                 for sid in ids:
-                    sidkey = self.__checkSID(sid)
+                    sidkey = self._DataParser__checkSID(sid)
                     self.subjects[sidkey] = self.data[self.data[subjectfield] == sid]
                 print 'TOTAL Subjects loaded=', len(self.subjects)
 
