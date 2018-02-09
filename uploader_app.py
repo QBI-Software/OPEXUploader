@@ -297,8 +297,7 @@ class OPEXUploaderGUI(UploaderGUI):
             self.dbedit.AppendItems(self.config.keys())
         redir = LogOutput(self.tcResults)
         sys.stdout = redir
-        # sys.stderr = redir
-        # print 'test'
+        self.m_statusBar1.SetStatusText('Welcome to the Uploader! Help is available from the Menu')
         self.Show()
 
     def __loadConfig(self):
@@ -481,7 +480,11 @@ class OPEXUploaderGUI(UploaderGUI):
         """
         self.tcResults.Clear()
         runoption = self.runoptions.get(self.chOptions.GetValue())[2:]
-
+        if self.cbChecks.GetValue():
+            status = 'Running %s [TEST MODE]' % self.chOptions.GetValue()
+        else:
+            status = 'Running %s' % self.chOptions.GetValue()
+        self.m_statusBar1.SetStatusText(status)
         (db, proj) = self.__loadConnection()
         if self.dirname is None or len(self.dirname) <= 0:
             dlg = wx.MessageDialog(self, "Data directory not specified", "OPEX Uploader", wx.OK)
@@ -530,6 +533,7 @@ class OPEXUploaderGUI(UploaderGUI):
                 uploader.xnatdisconnect()
                 logging.info("FINISHED")
                 print("FINISHED - see xnatupload.log for details")
+                self.m_statusBar1.SetStatusText('Done')
 
 
 def main():
