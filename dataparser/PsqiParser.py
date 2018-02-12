@@ -21,7 +21,7 @@ class PsqiParser(DataParser):
     def __init__(self, *args):
         DataParser.__init__(self, *args)
         # Maybe empty sheet
-        if len(self.data.columns) <= 1:
+        if self.data.empty or len(self.data.columns) <= 1:
             print "No data available"
             return None
         # cleanup subjects

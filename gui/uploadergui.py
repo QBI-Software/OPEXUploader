@@ -116,6 +116,9 @@ class UploaderGUI ( wx.Frame ):
 		self.m_button13 = wx.Button( self, wx.ID_ANY, u"Test Connection", wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSizer4.Add( self.m_button13, 0, wx.ALL, 5 )
 		
+		self.m_button15 = wx.Button( self, wx.ID_ANY, u"Clear Output", wx.DefaultPosition, wx.DefaultSize, 0 )
+		bSizer4.Add( self.m_button15, 0, wx.ALL, 5 )
+		
 		self.btnCancel = wx.Button( self, wx.ID_ANY, u"Close", wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSizer4.Add( self.btnCancel, 0, wx.ALL, 5 )
 		
@@ -156,6 +159,9 @@ class UploaderGUI ( wx.Frame ):
 		self.m_menuItem8 = wx.MenuItem( self.m_menu1, wx.ID_ANY, u"Incorrect IDs", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_menu1.AppendItem( self.m_menuItem8 )
 		
+		self.m_menuItem81 = wx.MenuItem( self.m_menu1, wx.ID_ANY, u"View Log", wx.EmptyString, wx.ITEM_NORMAL )
+		self.m_menu1.AppendItem( self.m_menuItem81 )
+		
 		self.m_menubar1.Append( self.m_menu1, u"Functions" ) 
 		
 		self.m_menu2 = wx.Menu()
@@ -179,6 +185,7 @@ class UploaderGUI ( wx.Frame ):
 		self.btnInputdir.Bind( wx.EVT_BUTTON, self.OnOpen )
 		self.btnRun.Bind( wx.EVT_BUTTON, self.OnSubmit )
 		self.m_button13.Bind( wx.EVT_BUTTON, self.OnTest )
+		self.m_button15.Bind( wx.EVT_BUTTON, self.OnClearOutput )
 		self.btnCancel.Bind( wx.EVT_BUTTON, self.OnClose )
 		self.Bind( wx.EVT_MENU, self.OnSettings, id = self.m_menuItem4.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnIds, id = self.m_menuItem5.GetId() )
@@ -186,6 +193,7 @@ class UploaderGUI ( wx.Frame ):
 		self.Bind( wx.EVT_MENU, self.OnDownload, id = self.m_menuItem6.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnReport, id = self.m_menuItem61.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnIds, id = self.m_menuItem8.GetId() )
+		self.Bind( wx.EVT_MENU, self.OnLog, id = self.m_menuItem81.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnHelp, id = self.m_menuItem2.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnAbout, id = self.m_menuItem3.GetId() )
 	
@@ -209,6 +217,9 @@ class UploaderGUI ( wx.Frame ):
 	def OnTest( self, event ):
 		event.Skip()
 	
+	def OnClearOutput( self, event ):
+		event.Skip()
+	
 	def OnClose( self, event ):
 		event.Skip()
 	
@@ -227,6 +238,9 @@ class UploaderGUI ( wx.Frame ):
 	def OnReport( self, event ):
 		event.Skip()
 	
+	
+	def OnLog( self, event ):
+		event.Skip()
 	
 	def OnHelp( self, event ):
 		event.Skip()
@@ -703,5 +717,34 @@ class dlgConfig ( wx.Dialog ):
 	
 	def OnRemoveConfig( self, event ):
 		event.Skip()
+	
+
+###########################################################################
+## Class dlgLogViewer
+###########################################################################
+
+class dlgLogViewer ( wx.Dialog ):
+	
+	def __init__( self, parent ):
+		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Upload Log Output", pos = wx.DefaultPosition, size = wx.DefaultSize, style = wx.DEFAULT_DIALOG_STYLE )
+		
+		self.SetSizeHintsSz( wx.Size( 400,600 ), wx.DefaultSize )
+		
+		bSizer17 = wx.BoxSizer( wx.VERTICAL )
+		
+		self.tcLog = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.TE_MULTILINE|wx.TE_READONLY|wx.TE_WORDWRAP )
+		self.tcLog.SetMinSize( wx.Size( 390,590 ) )
+		
+		bSizer17.Add( self.tcLog, 0, wx.ALL, 5 )
+		
+		
+		self.SetSizer( bSizer17 )
+		self.Layout()
+		bSizer17.Fit( self )
+		
+		self.Centre( wx.BOTH )
+	
+	def __del__( self ):
+		pass
 	
 

@@ -9,7 +9,7 @@ import wx
 from configobj import ConfigObj
 from requests.exceptions import ConnectionError
 
-from gui.uploadergui import UploaderGUI, dlgScans, dlgConfig, dlgHelp, dlgIDS, dlgDownloads, dlgReports
+from gui.uploadergui import UploaderGUI, dlgScans, dlgConfig, dlgHelp, dlgIDS, dlgDownloads, dlgReports, dlgLogViewer
 from report.report import OPEXReport
 from uploader import OPEXUploader
 from xnatconnect.XnatConnector import XnatConnector
@@ -449,6 +449,25 @@ class OPEXUploaderGUI(UploaderGUI):
             dlg.ShowModal()
             dlg.Destroy()
 
+    def OnClearOutput( self, event ):
+        """
+        Clear data output window
+        :param event:
+        :return:
+        """
+        self.tcResults.Clear()
+
+    def OnLog(self, event):
+        """
+        Load logfile into viewer
+        :param event:
+        :return:
+        """
+        dlg = dlgLogViewer(self)
+        logfile = join(expanduser('~'),'logs','xnatupload.log')
+        dlg.tcLog.LoadFile(logfile)
+        dlg.ShowModal()
+        dlg.Destroy()
 
     def OnSettings(self, event):
         """
