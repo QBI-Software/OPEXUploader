@@ -13,7 +13,7 @@
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 """
-__version__ = '1.2.0'
+__version__ = '1.3.0'
 __author__ = 'Liz Cooper-Williams'
 
 import argparse
@@ -39,6 +39,9 @@ from dataparser.DexaParser import DexaParser
 from dataparser.MridataParser import MridataParser
 from dataparser.VisitParser import VisitParser
 from dataparser.DassParser import DassParser
+from dataparser.GodinParser import GodinParser
+from dataparser.PsqiParser import PsqiParser
+from dataparser.InsomniaParser import InsomniaParser
 from xnatconnect.XnatConnector import XnatConnector
 
 
@@ -244,6 +247,30 @@ class OPEXUploader():
                                 logging.info(msg)
                                 if 'created' in msg:
                                     print(msg)
+                    elif 'godin' in xsdtypes:
+                        intervals = range(0, 11, 3)
+                        for i in intervals:
+                            iheaders = [c + "_" + str(i) for c in dp.fields]
+                            sampleid = dp.getSampleid(sd, i)
+                            row = dp.subjects[sd]
+                            if dp.validData(row[iheaders].values.tolist()[0]):
+                                (mandata, data) = dp.mapData(row[iheaders], i, xsdtypes)
+                                msg = self.loadSampledata(s, xsdtypes, sampleid, mandata, data)
+                                logging.info(msg)
+                                if 'created' in msg:
+                                    print(msg)
+
+                    elif 'insomnia' in xsdtypes or 'psqi' in xsdtypes:
+                        i = dp.interval
+                        sampleid = dp.getSampleid(sd, i)
+                        print 'Sampleid:', sampleid
+                        row = dp.subjects[sd]
+                        if dp.validData(row[dp.fields].values.tolist()[0]):
+                            (mandata, data) = dp.mapData(row, i, xsdtypes)
+                            msg = self.loadSampledata(s, xsdtypes, sampleid, mandata, data)
+                            logging.info(msg)
+                            if 'created' in msg:
+                                print(msg)
                     elif 'cosmed' in xsdtypes:
                         for i, row in dp.subjects[sd].items():
                             row.replace(nan, '', inplace=True)
@@ -463,6 +490,77 @@ class OPEXUploader():
                         print(msg)
                         logging.info(msg)
             # ---------------------------------------------------------------------#
+            elif datatype == 'godin':
+                sheet = 0
+                skip = 2
+                header = 1
+                etype = 'Godin'
+                seriespattern = 'GODIN*.xlsx'
+                files = glob.glob(join(inputdir, seriespattern))
+                print "Files:", len(files)
+                for f2 in files:
+                    print "Loading ", f2
+                    dp = GodinParser(f2, sheet, skip, header, etype)
+                    (missing, matches) = self.uploadData(project, dp)
+                    # Output matches and missing
+                    if len(matches) > 0 or len(missing) > 0:
+                        (out1, out2) = self.outputChecks(projectcode, matches, missing, inputdir, f2)
+                        msg = "Reports created: \n\t%s\n\t%s" % (out1, out2)
+                        print(msg)
+                        logging.info(msg)
+            # ---------------------------------------------------------------------#
+            elif datatype == 'psqi':
+                skip = 1
+                header = 1
+                etype = 'PSQI'
+                seriespattern = 'PSQI*.xlsx'
+                files = glob.glob(join(inputdir, seriespattern))
+                print "Files:", len(files)
+                for f2 in files:
+                    print "Loading ", f2
+                    intervals = range(0, 13, 3)
+                    for sheet in range(0, 5):
+                        i = intervals[sheet]
+                        print 'Interval:', i
+                        dp = PsqiParser(f2, sheet, skip, header, etype)
+                        if dp is None:
+                            continue
+                        else:
+                            dp.interval = i
+                        (missing, matches) = self.uploadData(project, dp)
+                        # Output matches and missing
+                        if len(matches) > 0 or len(missing) > 0:
+                            (out1, out2) = self.outputChecks(projectcode, matches, missing, inputdir, f2)
+                            msg = "Reports created: \n\t%s\n\t%s" % (out1, out2)
+                            print(msg)
+                            logging.info(msg)
+            # ---------------------------------------------------------------------#
+            elif datatype == 'insomnia':
+                skip = 1
+                header = 1
+                etype = 'Insomnia'
+                seriespattern = 'ISI*.xlsx'
+                files = glob.glob(join(inputdir, seriespattern))
+                print "Files:", len(files)
+                for f2 in files:
+                    print "Loading ", f2
+                    intervals = range(0, 13, 3)
+                    for sheet in range(0, 5):
+                        i = intervals[sheet]
+                        print 'Interval:', i
+                        dp = InsomniaParser(f2, sheet, skip, header, etype)
+                        if dp is None:
+                            continue
+                        else:
+                            dp.interval = i
+                        (missing, matches) = self.uploadData(project, dp)
+                        # Output matches and missing
+                        if len(matches) > 0 or len(missing) > 0:
+                            (out1, out2) = self.outputChecks(projectcode, matches, missing, inputdir, f2)
+                            msg = "Reports created: \n\t%s\n\t%s" % (out1, out2)
+                            print(msg)
+                            logging.info(msg)
+            # ---------------------------------------------------------------------#
             elif datatype == 'cosmed':
                 try:
                     f = open(join(inputdir, 'xnatpaths.txt'))
@@ -529,24 +627,11 @@ if __name__ == "__main__":
     parser.add_argument('--projects', action='store_true', help='list projects')
     parser.add_argument('--subjects', action='store_true', help='list subjects')
     parser.add_argument('--config', action='store', help='database configuration file (overrides ~/.xnat.cfg)')
-    parser.add_argument('--cantab', action='store', help='Upload CANTAB data from directory')
+    parser.add_argument('--expt', action='store',help='Type of experiment data (must match)')
+    parser.add_argument('--exptdata', action='store',help='directory location of experiment data')
     parser.add_argument('--checks', action='store_true', help='Test run with output to files')
     parser.add_argument('--update', action='store_true', help='Also update existing data')
-    #parser.add_argument('--skiprows', action='store_true', help='Skip rows in CANTAB data if NOT_RUN or ABORTED')
-    parser.add_argument('--amunet', action='store', help='Upload Water Maze (Amunet) data from directory')
-    parser.add_argument('--amunetdates', action='store', help='Extract date info from orig files in this dir')
-    parser.add_argument('--acer', action='store', help='Upload ACER data from directory')
-    parser.add_argument('--blood', action='store', help='Upload BLOOD data from directory')
     parser.add_argument('--create', action='store_true', help='Create Subject from input data if not exists')
-    parser.add_argument('--mridata', action='store',
-                        help='Upload MRI data from directory - detects ASHS or FreeSurf from filename')
-    parser.add_argument('--mri', action='store',
-                        help='Upload MRI scans from directory with data/subject_label/scans/session_label/[*.dcm|*.IMA]')
-    parser.add_argument('--dexa', action='store', help='Upload DEXA data from directory')
-    parser.add_argument('--dass', action='store', help='Upload DASS data from directory')
-    parser.add_argument('--cosmed', action='store', help='Upload COSMED data from directory')
-    parser.add_argument('--visit', action='store', help='Update visit dates',
-                        default='sampledata\\visit\\Visits_genders.xlsx')
 
     args = parser.parse_args()
     uploader = OPEXUploader(args)
@@ -579,59 +664,12 @@ if __name__ == "__main__":
                 projlist = uploader.xnat.list_projects()
                 for p in projlist:
                     print("Project: ", p.id())
-            # Upload MRI scans from directory
-            if (uploader.args.mri is not None and uploader.args.mri):
-                uploaddir = uploader.args.mri  # Top level DIR FOR SCANS
-                # Directory structure data/subject_label/scans/session_id/*.dcm
-                if isdir(uploaddir):
-                    fid = uploader.xnat.upload_MRIscans(projectcode, uploaddir, opexid=True)
-                    if fid == 0:
-                        msg = 'Upload not successful - 0 sessions uploaded'
-                        raise ValueError(msg)
-                    else:
-                        logging.info("Subject sessions uploaded: %d", fid)
-                else:
-                    msg = "Directory path cannot be found: %s" % uploaddir
-                    raise IOError(msg)
 
-            # Upload CANTAB data from directory
-            if (uploader.args.cantab is not None and uploader.args.cantab):
-                uploader.runDataUpload(projectcode, uploader.args.cantab,'cantab')
 
-            ### Upload Amunet data from directory
-            # Files are in 2 parts and do not contain interval or visit date so should be separated into folders:
-            # 0m, 3m, 6m, 9m
-            # Dates are generated separately below from the raw folders - path given in "folderpath.txt"
-            # csv files with dates should be placed in the same directory to be loaded with sortSubjects
-            if (uploader.args.amunet is not None and uploader.args.amunet):
-                uploader.runDataUpload(projectcode, uploader.args.amunet, 'amunet')
-            #------------------------------------------------------------------------------------
-            ### Upload ACE-R data from directory
-            if (uploader.args.acer is not None and uploader.args.acer):
-                uploader.runDataUpload(projectcode, uploader.args.acer, 'acer')
-
-            # Upload MRI data analysis from directory
-            if (uploader.args.mridata is not None and uploader.args.mridata):
-                uploader.runDataUpload(projectcode, uploader.args.mridata, 'mridata')
-
-            # Upload BLOOD data from directory
-            if (uploader.args.blood is not None and uploader.args.blood):
-                uploader.runDataUpload(projectcode, uploader.args.blood, 'blood')
-
-            # Upload DEXA data from directory
-            if (uploader.args.dexa is not None and uploader.args.dexa):
-                uploader.runDataUpload(projectcode, uploader.args.dexa, 'dexa')
-            # Upload DASS data from directory
-            if (uploader.args.dass is not None and uploader.args.dass):
-                uploader.runDataUpload(projectcode, uploader.args.dass, 'dass')
-
-            # Upload COSMED data from directory
-            if (uploader.args.cosmed is not None and uploader.args.cosmed):
-                uploader.runDataUpload(projectcode, uploader.args.cosmed, 'cosmed')
-
-            # Update dates for data not containing visit date
-            if (uploader.args.visit is not None and uploader.args.visit):
-                uploader.runDataUpload(projectcode, uploader.args.visit, 'visit')
+            ################ Upload expt data ################
+            runoption = args.expt
+            rundir = args.exptdata
+            uploader.runDataUpload(projectcode, rundir, runoption)
 
         else:
             raise ConnectionError("Connection failed - check config")

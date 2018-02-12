@@ -136,7 +136,7 @@ class VisitParser(DataParser):
                         if expt in ['MRI ASHS', 'MRI FS', 'FMRI']:
                             eint = "MRI_" + intval
                         # assessment B
-                        elif expt in ['DEXA', 'DASS', 'GODIN', 'PSQI']:
+                        elif expt in ['DEXA', 'DASS', 'GODIN', 'PSQI','Insomnia']:
                             eint = "DEXA_" + intval
                             if expt != 'DEXA':
                                 exptid += 'M'  # M added to some IDs

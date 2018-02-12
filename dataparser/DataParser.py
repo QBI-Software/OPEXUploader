@@ -21,10 +21,16 @@ import logging
 
 
 class DataParser(object):
-    def __init__(self, datafile, sheet=0,skiplines=0, header=None):
+    def __init__(self, datafile, sheet=0,skiplines=0, header=None, etype=None):
         self.datafile = datafile #full pathname to data file
         self.resource_dir = self.__findResourcesdir()
+        # Read expt info
         self.opex = pandas.read_csv(join(self.resource_dir, 'opex.csv'))
+        if etype is not None:
+            self.info = self.opex[self.opex['Expt']==etype]
+        else:
+            self.info = None
+        # Replace incorrect ids
         self.incorrect = pandas.read_csv(join(self.resource_dir, 'incorrectIds.csv'))
         self.subjects = None
         if (datafile is not None and len(datafile)> 0):
@@ -107,6 +113,21 @@ class DataParser(object):
         dateoffset = 693594
         dt = datetime.fromordinal(dateoffset + int(orig))
         return dt.strftime("%Y%m%d")
+
+
+    def getPrefix(self):
+        prefix=None
+        if self.info is not None:
+            prefix = self.info['prefix'].values[0]
+        return prefix
+
+    def getxsd(self):
+        xsd = None
+        if self.info is not None:
+            xsd = self.info['xsitype'].values[0]
+        return xsd
+
+
 
 
 def convertExcelDate(orig):
