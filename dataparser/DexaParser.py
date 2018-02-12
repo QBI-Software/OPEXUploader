@@ -20,7 +20,7 @@ import pandas as pd
 
 from dataparser.DataParser import DataParser, stripspaces
 
-VERBOSE = 0
+VERBOSE = 1
 
 class DexaParser(DataParser):
     def __init__(self, fields, *args):
@@ -49,7 +49,7 @@ class DexaParser(DataParser):
                 #self.df[i].reindex(df_subj.columns.tolist() + simplecols, fill_value='')
                 if VERBOSE:
                     print("Interval=%s \n\t%s" % (intval, self.df[i].head()))
-            #self.sortSubjects()
+            self.sortSubjects('SubjectID')
         else:
             raise ValueError("Cannot access fields file: %s" % fields)
 
@@ -77,12 +77,9 @@ class DexaParser(DataParser):
         :param row: row data with unique number
         :return: id
         """
-        id = 'DXA_' + sd + '_' + str(interval)
+        id = self.getPrefix() + '_' + sd + '_' + str(interval)
         return id
 
-    def getxsd(self):
-        xsd = 'opex:dexa'
-        return xsd
 
     def mapData(self, row, i, xsd):
         """
@@ -131,14 +128,15 @@ if __name__ == "__main__":
     print("Input:", inputdir)
     if access(inputdir, R_OK):
         seriespattern = 'DXA Data entry*.xlsx'
+        etype = 'DEXA'
         try:
             files = glob.glob(join(inputdir, seriespattern))
             print "Files:", len(files)
             for f2 in files:
                 print "Loading ", f2
-                dp = DexaParser(fields, f2, sheet, skip)
+                dp = DexaParser(fields, f2, sheet, skip, None, etype)
                 xsdtypes = dp.getxsd()
-                dp.sortSubjects()
+                #dp.sortSubjects()
                 for sd in dp.subjects:
                     print '\n***********SubjectID:', sd
                     for i, row in dp.subjects[sd].items():

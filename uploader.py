@@ -341,11 +341,15 @@ class OPEXUploader():
         logging.info(msg)
         print msg
         project = self.xnat.get_project(projectcode)
+        missing = []
+        matches = []
         if access(inputdir, R_OK):
             if datatype == 'cantab':
                 seriespattern = '*.csv'
                 sheet = 0
-                fields = join(getcwd(), "resources", 'cantab_fields.csv')
+                skip = 0
+                header = None
+                etype = 'CANTAB'
                 files = glob.glob(join(inputdir, seriespattern))
                 print "Files:", len(files)
                 for f2 in files:
@@ -353,7 +357,7 @@ class OPEXUploader():
                         msg = "\nLoading: %s" % f2
                         print msg
                         logging.info(msg)
-                        dp = CantabParser(fields, f2, sheet)
+                        dp = CantabParser(f2, sheet, skip, header, etype)
                         (missing, matches) = self.uploadData(project, dp)
                         # Output matches and missing
                         if len(matches) > 0 or len(missing) > 0:
@@ -404,13 +408,16 @@ class OPEXUploader():
 
             # ---------------------------------------------------------------------#
             elif datatype == 'acer':
-                sheet = 1  # "1"
+                sheet = 1
+                skip = 0
+                header = None
                 seriespattern = '*.*'
+                etype = 'ACER'
                 files = glob.glob(join(inputdir, seriespattern))
                 print("Files:", len(files))
                 for f2 in files:
                     print "Loading ", f2
-                    dp = AcerParser(f2, sheet)
+                    dp = AcerParser(f2, sheet,skip,header,etype)
                     (missing, matches) = self.uploadData(project, dp)
                     # Output matches and missing
                     if len(matches) > 0 or len(missing) > 0:
@@ -461,13 +468,15 @@ class OPEXUploader():
             elif datatype == 'dexa':
                 sheet = 0
                 skip = 4
+                header = None
+                etype = 'DEXA'
                 fields = join(getcwd(), "resources", "dexa_fields.xlsx")
                 seriespattern = 'DXA Data entry*.xlsx'
                 files = glob.glob(join(inputdir, seriespattern))
                 print "Files:", len(files)
                 for f2 in files:
                     print "Loading ", f2
-                    dp = DexaParser(fields, f2, sheet, skip)
+                    dp = DexaParser(fields, f2, sheet, skip, header, etype)
                     (missing, matches) = self.uploadData(project, dp)
                     # Output matches and missing
                     if len(matches) > 0 or len(missing) > 0:
@@ -520,9 +529,9 @@ class OPEXUploader():
                 seriespattern = 'PSQI*.xlsx'
                 files = glob.glob(join(inputdir, seriespattern))
                 print "Files:", len(files)
+                intervals = range(0, 13, 3)
                 for f2 in files:
                     print "Loading ", f2
-                    intervals = range(0, 13, 3)
                     for sheet in range(0, 5):
                         i = intervals[sheet]
                         print 'Interval:', i
@@ -546,9 +555,9 @@ class OPEXUploader():
                 seriespattern = 'ISI*.xlsx'
                 files = glob.glob(join(inputdir, seriespattern))
                 print "Files:", len(files)
+                intervals = range(0, 13, 3)
                 for f2 in files:
                     print "Loading ", f2
-                    intervals = range(0, 13, 3)
                     for sheet in range(0, 5):
                         i = intervals[sheet]
                         print 'Interval:', i
@@ -612,31 +621,33 @@ class OPEXUploader():
                 except Exception as e:
                     raise ValueError(e)
 
+            return (missing,matches)
         else:
             msg = "Input directory error: %s" % inputdir
             logging.error(msg)
             raise IOError(msg)
 
-
-########################################################################
-if __name__ == "__main__":
-
+def create_parser():
     parser = argparse.ArgumentParser(prog='OPEX Uploader',
                                      description='''\
-        Script for uploading scans and sample data to QBI OPEX XNAT db
-         ''')
+            Script for uploading scans and sample data to QBI OPEX XNAT db
+             ''')
     parser.add_argument('database', action='store', help='select database config from xnat.cfg to connect to')
     parser.add_argument('projectcode', action='store', help='select project by code')
-    #optional
+    # optional
     parser.add_argument('--projects', action='store_true', help='list projects')
     parser.add_argument('--subjects', action='store_true', help='list subjects')
     parser.add_argument('--config', action='store', help='database configuration file (overrides ~/.xnat.cfg)')
-    parser.add_argument('--expt', action='store',help='Type of experiment data (must match)')
-    parser.add_argument('--exptdata', action='store',help='directory location of experiment data')
+    parser.add_argument('--expt', action='store', help='Type of experiment data (must match)')
+    parser.add_argument('--exptdata', action='store', help='directory location of experiment data')
     parser.add_argument('--checks', action='store_true', help='Test run with output to files')
     parser.add_argument('--update', action='store_true', help='Also update existing data')
     parser.add_argument('--create', action='store_true', help='Create Subject from input data if not exists')
+    return parser
+########################################################################
+if __name__ == "__main__":
 
+    parser = create_parser()
     args = parser.parse_args()
     uploader = OPEXUploader(args)
     uploader.config()

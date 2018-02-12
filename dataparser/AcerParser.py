@@ -24,17 +24,16 @@ class AcerParser(DataParser):
         DataParser.__init__(self, *args)
         self.sortSubjects()
 
-    def getxsd(self):
-        return {"ACER":'opex:acer'}
 
-    def mapData(self, row, i, type=None):
+    def mapData(self, row, i, xsd=None):
         """
         Maps required fields from input rows
         :param row:
         :return:
         """
         interval = str(row['Visit']) #NB There is no visit identifier
-        xsd = self.getxsd()["ACER"]
+        if xsd is None:
+            xsd = self.getxsd()
         mandata = {
             xsd + '/interval': str(interval),
             xsd + '/sample_id': str(i),  # row number in this data file for reference
@@ -75,10 +74,10 @@ class AcerParser(DataParser):
         :param row:
         :return:
         """
-        if 'Visit' in row:
-            id = sd + "_" + str(row['Visit'])
-        else:
-            id = sd
+        try:
+            id = self.getPrefix() + "_" + sd + "_" + str(row['Visit'])
+        except:
+            raise ValueError('Cannot find Visit')
         return id
 
 
@@ -97,23 +96,28 @@ if __name__ == "__main__":
 
     inputdir = args.filedir
     sheet = args.sheet
+    skip=0
+    header=None
     print("Input:", inputdir)
     if access(inputdir, R_OK):
         seriespattern = '*.*'
-
+        etype ='ACER'
         try:
             files = glob.glob(join(inputdir, seriespattern))
             print("Files:", len(files))
             for f2 in files:
                 print("Loading",f2)
-                cantab = AcerParser(f2,sheet)
-                cantab.sortSubjects()
+                dp = AcerParser(f2,sheet,skip,header,etype)
+                xsd = dp.getxsd()
                 print('Subject summary')
-                for sd in cantab.subjects:
-                    print('ID:', sd)
-                    dob = cantab.subjects[sd]['DOB']
-                    for i, row in cantab.subjects[sd].iterrows():
-                        print(i, 'ACE-R Total', row['ACE-R Total'], 'DOB', cantab.formatDobNumber(row['DOB']) )
+                for sd in dp.subjects:
+                    print '***Subject:', sd
+                    dob = dp.subjects[sd]['DOB']
+                    for i, row in dp.subjects[sd].iterrows():
+                        print dp.getSampleid(sd,row)
+                        (mdata,data) = dp.mapData(row,i,xsd)
+                        print mdata
+                        print data
 
 
         except ValueError as e:

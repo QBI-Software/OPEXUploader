@@ -74,13 +74,6 @@ The COSMED data is uploaded from the original COSMED data directory.
 1. An output of the compiled COSMED data is produced.
 1. Also time-series data for individual files is generated into a subdirectory in the original data directory called 'processed'.
 
-### DASS data (XnatUploaded/sampledata/dass)
-
-1. Copy data file (DASS Data Entry Plus Check_20171206.xlsx) to this directory from share drive (\DATA\DATA ENTRY\PaperBasedPdfs\PaperBasedExcelSheets\DASS)
-1. Set input directory to this directory
-1. Select 'DASS' from the Data Type dropdown
-1. Click 'RUN'
-
 ### DEXA data (XnatUploaded/sampledata/dexa)
 
 1. Copy data file (DXA Data entry_20171215.xlsx) to this directory from share drive (\DATA\DXA Data)
@@ -88,6 +81,34 @@ The COSMED data is uploaded from the original COSMED data directory.
 1. Select 'DEXA' from the Data Type dropdown
 1. Click 'RUN'
 
+### DASS data (XnatUploaded/sampledata/dass)
+
+1. Copy data file (DASS Data Entry Plus Check_20171206.xlsx) to this directory from share drive (\DATA\DATA ENTRY\PaperBasedPdfs\PaperBasedExcelSheets\DASS)
+1. Set input directory to this directory
+1. Select 'DASS' from the Data Type dropdown
+1. Click 'RUN'
+
+
+### GODIN data (XnatUploaded/sampledata/godin)
+
+1. Copy data file (GODIN_Data_entry_180717.xlsx) to this directory from share drive (\DATA\DATA ENTRY\PaperBasedPdfs\PaperBasedExcelSheets\GODIN)
+1. Set input directory to this directory
+1. Select 'GODIN' from the Data Type dropdown
+1. Click 'RUN'
+
+### Insomnia (ISI) data (XnatUploaded/sampledata/insomnia)
+
+1. Copy data file (ISI Data Entry 20180206.xlsx) to this directory from share drive (\DATA\DATA ENTRY\PaperBasedPdfs\PaperBasedExcelSheets\ISI Data Entry)
+1. Set input directory to this directory
+1. Select 'Insomnia' from the Data Type dropdown
+1. Click 'RUN'
+
+### PSQI data (XnatUploaded/sampledata/psqi)
+
+1. Copy data file (PSQI data entry 20180206.xlsx) to this directory from share drive (\DATA\DATA ENTRY\PaperBasedPdfs\PaperBasedExcelSheets\PSQI Data)
+1. Set input directory to this directory
+1. Select 'PSQI' from the Data Type dropdown
+1. Click 'RUN'
 
 ### MRI Scans (XnatUploaded/sampledata/mri)
 
@@ -183,3 +204,11 @@ This generates reports of processed data, grouped by parameter or group (AIT,MIT
 1. Check the "Deltas" if you also want the changes from baseline
 1. Select the Output directory
 1. Click on **'Generate'**
+
+### View Logs
+
+View more details about the processing from the log file which is generated each run and can be viewed from locally via a text editor (under your user home directory in subdirectory 'logs') or via the File Menu.
+
+1. From the File Menu, Select "View Logs"
+1. Scroll down to the bottom for the most recent entry
+1. Close and re-open to refresh

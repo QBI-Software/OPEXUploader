@@ -23,14 +23,15 @@ from dataparser.DataParser import DataParser
 VERBOSE = 0
 class CantabParser(DataParser):
 
-    def __init__(self, fields,*args):
+    def __init__(self, *args):
         DataParser.__init__(self, *args)
         try:
-            access(fields, R_OK)
+            fields = join(self._DataParser__findResourcesdir(), 'cantab_fields.csv')
             self.cantabfields = pandas.read_csv(fields, header=0)
             self.sortSubjects('Participant ID')
-        except:
-            raise error
+        except Exception as e:
+            print e
+            raise e
 
 
 
@@ -192,22 +193,24 @@ if __name__ == "__main__":
     parser.add_argument('--filedir', action='store', help='Directory containing files', default="..\\sampledata\\cantab")
     parser.add_argument('--sheet', action='store', help='Sheet name to extract',
                         default="RowBySession_HealthyBrains")
-    parser.add_argument('--fields', action='store', help='CANTAB fields to extract',
-                        default="resources\\cantab_fields.csv")
+
     args = parser.parse_args()
 
     inputdir = args.filedir
     sheet = args.sheet
-    fields = args.fields
+
     print("Input:", inputdir)
     if access(inputdir, R_OK):
-        seriespattern = '*.*'
+        seriespattern = '*.csv'
+        skip = 0
+        header = None
+        etype = 'CANTAB'
         try:
             files = glob.glob(join(inputdir, seriespattern))
             print("Files:", len(files))
             for f2 in files:
                 print("Loading",f2)
-                cantab = CantabParser(fields,f2,sheet)
+                cantab = CantabParser(f2, sheet, skip, header, etype)
                 #cantab.sortSubjects()
                 print('Subject summary')
                 for sd in cantab.subjects:
