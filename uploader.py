@@ -47,15 +47,15 @@ from xnatconnect.XnatConnector import XnatConnector
 from logging.handlers import RotatingFileHandler
 
 class OPEXUploader():
-    def __init__(self, args):
-        logfile=join(expanduser('~'),'logs','xnatupload.log')
-        logdir = split(logfile)[0]
-        if not access(logdir, R_OK):
-            mkdir(logdir)
-        logger = logging.getLogger('opex')
-        handler = RotatingFileHandler(filename=logfile, maxBytes=4000000000, level=logging.INFO, format='%(asctime)s %(message)s', datefmt='%d-%m-%Y %I:%M:%S %p')
-        logger.addHandler(handler)
-        #logging.basicConfig(filename=logfile, level=logging.INFO, format='%(asctime)s %(message)s', datefmt='%d-%m-%Y %I:%M:%S %p')
+    def __init__(self, args, logfile=None):
+
+        if logfile is not None:
+            logging.basicConfig(filename=logfile, level=logging.INFO, format='%(asctime)s %(message)s',
+                                datefmt='%d-%m-%Y %I:%M:%S %p')
+            logger = logging.getLogger('opex')
+            handler = RotatingFileHandler(filename=logfile, maxBytes=4000000000)
+            logger.addHandler(handler)
+
         self.args = args
         self.configfile = None
         self.xnat = None

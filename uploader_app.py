@@ -2,8 +2,8 @@ import argparse
 import csv
 import logging
 import sys
-from os import access, R_OK
-from os.path import join, expanduser, dirname
+from os import access, R_OK, mkdir
+from os.path import join, expanduser, dirname,split
 
 import wx
 from configobj import ConfigObj
@@ -330,6 +330,13 @@ class OPEXUploaderGUI(UploaderGUI):
         else:
             return (db, proj)
 
+    def getLogFile(self):
+        logfile = join(expanduser('~'), 'logs', 'xnatupload.log')
+        logdir = split(logfile)[0]
+        if not access(logdir, R_OK):
+            mkdir(logdir)
+        return logfile
+
     def OnAbout(self, e):
         # A message dialog box with an OK button. wx.OK is a standard ID in wxWidgets.
         dlg = wx.MessageDialog(self, "Uploader for OPEX data to XNAT\n(c)2017 QBI Software", "About OPEX Uploader",
@@ -464,7 +471,7 @@ class OPEXUploaderGUI(UploaderGUI):
         :return:
         """
         dlg = dlgLogViewer(self)
-        logfile = join(expanduser('~'),'logs','xnatupload.log')
+        logfile = self.getLogFile()
         dlg.tcLog.LoadFile(logfile)
         dlg.ShowModal()
         dlg.Destroy()
@@ -520,7 +527,7 @@ class OPEXUploaderGUI(UploaderGUI):
             args.checks = self.cbChecks.GetValue()
             args.update = self.cbUpdate.GetValue()
 
-            uploader = OPEXUploader(args)
+            uploader = OPEXUploader(args, self.getLogFile())
             uploader.config()
             uploader.xnatconnect()
             msg = 'Connecting to Server:%s Project:%s' % (uploader.args.database, uploader.args.projectcode)
