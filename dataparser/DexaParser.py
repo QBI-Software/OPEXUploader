@@ -20,11 +20,12 @@ import pandas as pd
 
 from dataparser.DataParser import DataParser, stripspaces
 
-VERBOSE = 1
+DEBUG = 1
 
 class DexaParser(DataParser):
-    def __init__(self, fields, *args):
+    def __init__(self, *args):
         DataParser.__init__(self, *args)
+        fields = join(self.resource_dir, "dexa_fields.xlsx")
         #Replace field headers
         if access(fields, R_OK):
             self.fields = pd.read_excel(fields, header=0, sheetname='dexa_fields')
@@ -47,7 +48,7 @@ class DexaParser(DataParser):
                 self.df[i] = pd.concat([df_subj,self.data[cols]], axis=1)
                 self.df[i].columns = df_subj.columns.tolist() + simplecols
                 #self.df[i].reindex(df_subj.columns.tolist() + simplecols, fill_value='')
-                if VERBOSE:
+                if DEBUG:
                     print("Interval=%s \n\t%s" % (intval, self.df[i].head()))
             self.sortSubjects('SubjectID')
         else:
@@ -65,7 +66,7 @@ class DexaParser(DataParser):
                 for i, intval in self.intervals.items():
                     data = self.df[i]
                     self.subjects[sidkey][i]= data[data[subjectfield] == sid]
-                if VERBOSE:
+                if DEBUG:
                     print('Subject:', sid, 'with datasets=', len(self.subjects[sid]))
             print('Subjects loaded=', len(self.subjects))
 

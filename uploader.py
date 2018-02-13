@@ -205,7 +205,7 @@ class OPEXUploader():
         """
         missing = []
         matches = []
-        if len(dp.subjects) <=0:
+        if dp.subjects is None or len(dp.subjects) <=0:
             dp.sortSubjects()
         for sd in dp.subjects:
             print('*****SubjectID:', sd)
@@ -388,7 +388,15 @@ class OPEXUploader():
                             break
                     if len(dates_uri) <= 0:
                         raise ValueError('No dates file found - exiting')
+                    # Temporary replace TODO remove this
+                    if dates_uri.startswith("Q:"):
+                        dates_uri = dates_uri.replace("Q:","Z:")
                     dates_csv = generateAmunetdates(dates_uri, basedatesfile, interval)
+
+                    if dates_csv is not None:
+                        print("Dates file:", dates_csv)
+                    else:
+                        raise ValueError("Dates file not generated")
                     # copy file to this dir
                     shutil.copyfile(dates_csv, join(inputdir, basename(dates_csv)))
                     # Get xls files
@@ -396,8 +404,8 @@ class OPEXUploader():
                     print("Loading Files:", len(files))
                     for f2 in files:
                         print("Loading", f2)
-                        dp = AmunetParser(f2, sheet, ival=interval)
-                        #dp.interval = interval
+                        dp = AmunetParser(f2, sheet)
+                        dp.interval = interval
                         (missing, matches) = self.uploadData(project, dp)
                         # Output matches and missing
                         if len(matches) > 0 or len(missing) > 0:
@@ -470,13 +478,12 @@ class OPEXUploader():
                 skip = 4
                 header = None
                 etype = 'DEXA'
-                fields = join(getcwd(), "resources", "dexa_fields.xlsx")
                 seriespattern = 'DXA Data entry*.xlsx'
                 files = glob.glob(join(inputdir, seriespattern))
                 print("Files:", len(files))
                 for f2 in files:
                     print("Loading ", f2)
-                    dp = DexaParser(fields, f2, sheet, skip, header, etype)
+                    dp = DexaParser(f2, sheet, skip, header, etype)
                     (missing, matches) = self.uploadData(project, dp)
                     # Output matches and missing
                     if len(matches) > 0 or len(missing) > 0:

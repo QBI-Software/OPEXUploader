@@ -20,30 +20,30 @@ import pandas
 
 from dataparser.DataParser import DataParser
 
-VERBOSE = 0
+DEBUG = 0
 class BloodParser(DataParser):
 
     def __init__(self, *args, **kwargs):
         DataParser.__init__(self, *args)
+        if self.data is None:
+            raise ValueError('BloodParser: Data not loaded')
         self.type=''
         if 'type' in kwargs:
             self.type = kwargs.get('type')
-        if 'fields' in kwargs:
-            fields = kwargs.get('fields')
-        else:
-           fields = join(self.resource_dir, 'blood_fields.csv')
-
+        fields = join(self.resource_dir, 'blood_fields.csv')
+        if not access(fields,R_OK):
+            raise IOError('BloodParser: Cannot load fields')
         try:
             df = pandas.read_csv(fields, header=0)
             self.fields = df[self.type]
             self.fields.dropna(inplace=True)
-            #If different headers used
+            # Multiplex has different headers vs Cobas
             if self.type == 'MULTIPLEX':
                 print('Headers for ', self.type)
                 colnames = {'Date': 'A_Date', 'Participant ID ': 'Participant ID', 'Timepoint': 'Sample ID','IGFBP-7':'IGFBP7'}
                 self.data = self.data.rename(index=str, columns=colnames)
                 self.data.insert(0, 'R_No.', range(len(self.data)))
-
+            # Rename columns to field names
             if self.fields[0] not in self.data.columns:
                 colnames = {}
                 v=1
@@ -54,33 +54,28 @@ class BloodParser(DataParser):
                 df = self.data.rename(index=str, columns=colnames)
                 print("Renamed columns: ", colnames)
                 self.data = df
-                i = self.data.query('A_Date =="NaT"')
-                if not i.empty:
-                    self.data.drop(i.index[0], inplace=True)
-                    print('NaT row dropped')
+            # Remove NaT rows
+            i = self.data.query('A_Date =="NaT"')
+            if not i.empty:
+                self.data.drop(i.index[0], inplace=True)
+                print('NaT row dropped')
+            # Organize data into subjects
+            subjectfield ='Participant ID'
+            if subjectfield not in self.data.columns:
+                raise ValueError('Subject ID field not present: ', subjectfield)
+            self.data[subjectfield] = self.data[subjectfield].str.replace(" ","")
+            self.sortSubjects(subjectfield)
+            if self.subjects is not None:
+                print('BloodParser: subjects loaded successfully')
 
         except:
             raise ValueError("Cannot load fieldnames")
+   
 
-    def sortSubjects(self, subjectfield='Participant ID'):
-        '''Sort data into subjects by participant ID'''
-        self.subjects = dict()
-        if self.data is not None:
-            if not subjectfield in self.data.columns:
-               msg = 'Cannot find Participant ID header in %s' % self.datafile
-               raise ValueError(msg)
-            else:
-                self.data[subjectfield] = self.data[subjectfield].str.replace(" ","")
-                ids = self.data[subjectfield].unique()
-                for sid in ids:
-                    sidkey = self._DataParser__checkSID(sid)
-                    self.subjects[sidkey] = self.data[self.data[subjectfield] == sid]
-                print('TOTAL Subjects loaded=', len(self.subjects))
-
-    def getxsd(self):
-        return {"COBAS":'opex:bloodCobasData',
-                "MULTIPLEX": 'opex:bloodMultiplexData',
-                "ELISAS": 'opex:bloodElisasData'}
+    # def getxsd(self):
+    #     return {"COBAS":'opex:bloodCobasData',
+    #             "MULTIPLEX": 'opex:bloodMultiplexData',
+    #             "ELISAS": 'opex:bloodElisasData'}
 
     def getPrepostOptions(self,i):
         options = ['fasted', 'pre', 'post']
@@ -154,7 +149,7 @@ class BloodParser(DataParser):
         data = {}
         for ctab in self.fields:
             if ctab in row:
-                if VERBOSE:
+                if DEBUG:
                     print(ctab, ' = ', row[ctab])
                 data[xsd + '/' + ctab] = str(row[ctab])
 

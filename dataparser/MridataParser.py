@@ -31,7 +31,7 @@ class MridataParser(DataParser):
         else:
             raise ValueError("Cannot determine MRI type")
         try:
-            fields = join(self.__findResourcesdir(), "MRI_fields.csv")
+            fields = join(self.resource_dir, "MRI_fields.csv")
             access(fields, R_OK)
             df = pandas.read_csv(fields, header=0)
             self.cantabfields = df[self.type]

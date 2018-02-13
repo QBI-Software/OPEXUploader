@@ -14,62 +14,66 @@ import argparse
 import csv
 import fnmatch
 import glob
+import logging
 import re
-import sys
+import shutil
 from datetime import date
 from os import listdir, R_OK, access
 from os.path import join, isfile, split, basename
-import shutil
+
 import pandas
-from pandas import Series
 from numpy import nan
+from pandas import Series
+
 from dataparser.DataParser import DataParser
 
 VERBOSE = 0
+
+
 class AmunetParser(DataParser):
 
-    def __init__(self, ival=None, *args):
-        #super(AmunetParser, self).__init__(*args) - PYTHON V3
+    def __init__(self, *args):
+        # super(AmunetParser, self).__init__(*args) - PYTHON V3
         DataParser.__init__(self, *args)
         self.dates = dict()
         self.subjects = dict()
-        self.interval = ival
+        self.interval = None
 
     def sortSubjects(self, subjectfield='S_Full name'):
         '''Sort data into subjects by participant ID'''
         if self.data is not None:
             ids = self.data[subjectfield].unique()
-            #Load extra info from dir name and generated participant dates
+            # Load extra info from dir name and generated participant dates
             if self.interval is not None:
                 self.data['Visit'] = self.data.apply(lambda x: self.interval, axis=1)
-                pdatefile =self.interval + 'm_amunet_participantdates.csv'
+                pdatefile = self.interval + 'm_amunet_participantdates.csv'
                 self.inputdir = split(self.datafile)[0]
-                pdates = pandas.read_csv(join(self.inputdir,pdatefile), header=None)
+                pdates = pandas.read_csv(join(self.inputdir, pdatefile), header=None)
                 pdates.columns = ['subject', 'visit']
-                self.data['Date'] = self.data.apply(lambda x: self.getRowvisit(x,pdates), axis=1)
+                self.data['Date'] = self.data.apply(lambda x: self.getRowvisit(x, pdates), axis=1)
             for sid in ids:
-                sidkey = self.__checkSID(sid)
+                sidkey = self._DataParser__checkSID(sid)
                 self.subjects[sidkey] = self.data[self.data[subjectfield] == sid]
                 if VERBOSE:
                     print('Subject:', sid, 'with datasets=', len(self.subjects[sid]))
             print('Subjects loaded=', len(self.subjects))
 
-    def getRowvisit(self,row,pdates):
-        d = pdates['visit'][pdates['subject']==row['S_Full name']]
+    def getRowvisit(self, row, pdates):
+        d = pdates['visit'][pdates['subject'] == row['S_Full name']]
         if d is None or d.empty:
             rtn = ''
         else:
-            rtn =d.values[0]
+            rtn = d.values[0]
         return rtn
 
     def getxsd(self):
         return 'opex:amunet'
 
     def mapMandata(self, xsd, row, i):
-        #Get Visit if present (manual)
+        # Get Visit if present (manual)
         if ('Visit' in row and row.Visit is not None):
             interval = int(row['Visit'])
-        elif row['S_Visit'] is not None:  #No overwrite
+        elif row['S_Visit'] is not None:  # No overwrite
             visit = re.search('Visit\s(\d{1,2})', str(row['S_Visit']))
             interval = int(visit.group(1))
             if interval == 1:
@@ -88,7 +92,7 @@ class AmunetParser(DataParser):
             mandata[xsd + '/date'] = visitdate
         return mandata
 
-    def getVisitDate(self,row):
+    def getVisitDate(self, row):
         """
         Gets visit date in correct format for uploading
         :param row: reads field "Date" as yyyy-mm-dd
@@ -101,12 +105,12 @@ class AmunetParser(DataParser):
                 visitdate = int(row['Date'])
                 visitdate = self.formatDobNumber(visitdate)
             except:
-                visitdate = row['Date'] #.replace("-",".")
-                #visitdate = visitdate + " 00:00:00"
-        print( "Visit date=", visitdate)
+                visitdate = row['Date']  # .replace("-",".")
+                # visitdate = visitdate + " 00:00:00"
+        print("Visit date=", visitdate)
         return visitdate
 
-    def mapAEVdata(self, row,i):
+    def mapAEVdata(self, row, i):
         """
         Maps required fields from input rows
         :param row:
@@ -114,7 +118,7 @@ class AmunetParser(DataParser):
         """
         xsd = self.getxsd()
         mandata = self.mapMandata(xsd, row, i)
-        #visitdate = self.getVisitDate(row)
+        # visitdate = self.getVisitDate(row)
 
         data = {
             xsd + '/AEVcomments': str(row['AEV_Lexical rating']),
@@ -125,10 +129,9 @@ class AmunetParser(DataParser):
 
         }
 
+        return (mandata, data)
 
-        return (mandata,data)
-
-    def mapSCSdata(self,row,i):
+    def mapSCSdata(self, row, i):
         """
         Maps required fields from input row
         :param self:
@@ -137,7 +140,7 @@ class AmunetParser(DataParser):
         """
         xsd = self.getxsd()
         mandata = self.mapMandata(xsd, row, i)
-        #visitdate = self.getVisitDate(row)
+        # visitdate = self.getVisitDate(row)
         data = {
             xsd + '/SCScomments': str(row['SCS_Lexical rating']),
             xsd + '/SCS': str(row['SCS_Average total error']),
@@ -151,7 +154,7 @@ class AmunetParser(DataParser):
         #     data[xsd + '/date'] = visitdate
         return (mandata, data)
 
-    def getSubjectData(self,sd):
+    def getSubjectData(self, sd):
         """
         Extract subject data from input data
         :param sd:
@@ -170,25 +173,24 @@ class AmunetParser(DataParser):
 
         return skwargs
 
-    def getSampleid(self,sd, row):
+    def getSampleid(self, sd, row):
         """
         Generate a unique id for Amunet sample which can be reproduced if this data reoccurs
         :param row:
         :return:
         """
-        #visit = re.search('Visit\s(\d{1,2})', str(row['S_Visit']))
+        # visit = re.search('Visit\s(\d{1,2})', str(row['S_Visit']))
         if ('Date' in row):
             try:
                 uid = int(row['Date'])
                 uid = self.formatCondensedDate(uid)
             except:
-                uid = row['Date'].replace('-','')
+                uid = row['Date'].replace('-', '')
         else:
-            uid = sum([i for i in row if type(i) == float]) #create hash of values from row values
+            uid = sum([i for i in row if type(i) == float])  # create hash of values from row values
             uid = int(uid)
         id = "AM_" + sd + "_" + str(uid)
         return id
-
 
     def extractDateInfo(self, dirpath):
         seriespattern = '*.zip'
@@ -199,16 +201,15 @@ class AmunetParser(DataParser):
         for f in zipfiles:
             fid = rid.search(f).group(0).upper()
             fdate = rdate.search(f).groups()[0]
-            #some dates are in reverse
+            # some dates are in reverse
             try:
                 if (fdate[4:6]) == '20':
                     fdateobj = date(int(fdate[4:9]), int(fdate[2:4]), int(fdate[0:2]))
                 else:
                     fdateobj = date(int(fdate[0:4]), int(fdate[4:6]), int(fdate[6:9]))
             except ValueError:
-                print( "cannot create date from: ", fdate)
+                print("cannot create date from: ", fdate)
                 continue
-
 
             if self.dates.get(fid) is not None:
                 self.dates[fid].append(fdateobj)
@@ -216,8 +217,8 @@ class AmunetParser(DataParser):
                 self.dates[fid] = [fdateobj]
 
         print(self.dates)
-        #Output to a csvfile
-        csvfile = join(dirpath,'amunet_participantdates.csv')
+        # Output to a csvfile
+        csvfile = join(dirpath, 'amunet_participantdates.csv')
         with open(csvfile, 'wb') as f:
             writer = csv.writer(f)
             for d in self.dates:
@@ -225,8 +226,18 @@ class AmunetParser(DataParser):
                 self.dates[d] = vdates.unique()
                 writer.writerow([d, [v.isoformat() for v in self.dates[d]]])
 
+
 # ---------EXTERNAL FUNCTION------------------------------------------------------
 def generateAmunetdates(dirpath, filename, interval):
+    """
+    Generate dates for amunet data from files
+    config in txt file in local dir
+    :param dirpath:
+    :param filename:
+    :param interval:
+    :return:
+    """
+    csvfile=None
     if access(dirpath, R_OK):
         pdates = extractDateInfo(dirpath, ext='zip')
         # Output to a csvfile
@@ -238,14 +249,16 @@ def generateAmunetdates(dirpath, filename, interval):
                     vdates = Series(pdates[d])
                     vdates = vdates.unique()
                     writer.writerow([d, ",".join([v.isoformat() for v in vdates])])
-                print("Participant dates written to: ", csvfile)
+                logging.info("Participant dates written to: ", csvfile)
+                print("Generate Amunet Dates Finished")
         except Exception as e:
-            print( e)
+            print(e)
             raise ValueError("Unable to access file for writing: ", e)
+    else:
+        raise IOError("Cannot access amunet directory")
 
-        finally:
-            print("Finished")
-            return csvfile
+    return csvfile
+
 
 # ------------------------------------------------------------------------------------
 def extractDateInfo(dirpath, ext='zip'):
@@ -275,11 +288,10 @@ def extractDateInfo(dirpath, ext='zip'):
                 else:
                     fdateobj = date(int(fdate[0:4]), int(fdate[4:6]), int(fdate[6:9]))
             else:
-                raise ValueError("Cannot parse date")
+                continue
         except ValueError as e:
             msg = "Error: %s: %s" % (e, f)
             raise ValueError(msg)
-            continue
 
         if participantdates.get(fid) is not None:
             participantdates[fid].append(fdateobj)
@@ -288,6 +300,8 @@ def extractDateInfo(dirpath, ext='zip'):
 
     print("Loaded:", len(participantdates))
     return participantdates
+
+
 ########################################################################
 
 if __name__ == "__main__":
@@ -296,7 +310,8 @@ if __name__ == "__main__":
             Reads files in a directory and extracts data ready to load to XNAT database
 
              ''')
-    parser.add_argument('--filedir', action='store', help='Directory containing files', default="..\\..\\sampledata\\amunet")
+    parser.add_argument('--filedir', action='store', help='Directory containing files',
+                        default="..\\..\\sampledata\\amunet")
     # parser.add_argument('--datelist', action='store', help='Generate list of dates from dir', default="1")
 
     args = parser.parse_args()
@@ -330,7 +345,7 @@ if __name__ == "__main__":
         print("Loading Files:", len(files))
         for f2 in files:
             print("Loading", f2)
-            dp = AmunetParser(interval,f2, sheet )
+            dp = AmunetParser(interval, f2, sheet)
             xsdtypes = dp.getxsd()
             # dp.interval = interval
             for sd in dp.subjects:
@@ -345,4 +360,3 @@ if __name__ == "__main__":
                         (mandata, motdata) = dp.mapSCSdata(row, i)
                     print(mandata)
                     print(motdata)
-

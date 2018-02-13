@@ -16,8 +16,8 @@ import sys
 import re
 import glob
 import shutil
-import dicom
-from dicom.filereader import InvalidDicomError, read_file
+import pydicom as dicom
+from pydicom.filereader import InvalidDicomError, read_file
 import logging
 
 class Organizer():

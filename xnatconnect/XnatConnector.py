@@ -48,6 +48,8 @@ class XnatConnector:
         Test connection actually exists by returning some data
         :return: true or false
         """
+        if self.conn is None:
+            return False
         testconn = self.conn.inspect.datatypes('xnat:subjectData')
         return (len(testconn) > 0)
 
