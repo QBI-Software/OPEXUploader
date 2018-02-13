@@ -1,23 +1,23 @@
-Expt,interval,total,xsitype,prefix,date_provided
-Health,3,5,opex:health,MX,y
-ACER,6,3,opex:acer,AC,y
-CANTAB DMS,1,9,opex:cantabDMS,DMS,y
-CANTAB ERT,1,9,opex:cantabERT,ERT,y
-CANTAB MOT,1,9,opex:cantabMOT,MOT,y
-CANTAB PAL,1,9,opex:cantabPAL,PAL,y
-CANTAB SWM,1,9,opex:cantabSWM,SWM,y
-VWM,3,5,opex:amunet,AM,y
-PSQI,3,5,opex:psqi,PSQ,y
-DASS,3,5,opex:dass,DASS,n
-IPAQ,3,5,opex:ipaq,IPQ,y
-Insomnia,3,5,opex:insomnia,INS,y
-Godin,3,5,opex:godin,GDN,y
-COBAS,1,23,opex:bloodCobasData,COBAS,n
-ELISAS,1,23,opex:bloodElisasData,ELS,n
-MULTIPLEX,1,23,opex:bloodMultiplexData,MPX,n
-MR Sessions,6,3,xnat:mrSessionData,MR,y
-MRI ASHS,6,3,opex:mriashs,ASHS,n
-MRI FS,6,3,opex:mrifs,FS,n
-DEXA,3,5,opex:dexa,DXA,n
-COSMED,3,5,opex:cosmed,COS,y
-FMRI,6,3,opex:fmri,FMRI,n
+Expt,interval,total,xsitype,prefix,date_provided,name,option
+Health,3,5,opex:health,MX,y,,
+ACER,6,3,opex:acer,AC,y,ACE-R,--acer
+CANTAB DMS,1,9,opex:cantabDMS,DMS,y,CANTAB,--cantab
+CANTAB ERT,1,9,opex:cantabERT,ERT,y,CANTAB,--cantab
+CANTAB MOT,1,9,opex:cantabMOT,MOT,y,CANTAB,--cantab
+CANTAB PAL,1,9,opex:cantabPAL,PAL,y,CANTAB,--cantab
+CANTAB SWM,1,9,opex:cantabSWM,SWM,y,CANTAB,--cantab
+VWM,3,5,opex:amunet,AM,y,AMUNET,--amunet
+PSQI,3,5,opex:psqi,PSQ,y,PSQI,--psqi
+DASS,3,5,opex:dass,DASS,n,DASS,-dass
+IPAQ,3,5,opex:ipaq,IPQ,y,,
+Insomnia,3,5,opex:insomnia,INS,y,Insomnia(ISI),--insomnia
+Godin,3,5,opex:godin,GDN,y,GODIN,--godin
+COBAS,1,23,opex:bloodCobasData,COBAS,n,BLOOD,--blood
+ELISAS,1,23,opex:bloodElisasData,ELS,n,BLOOD,--blood
+MULTIPLEX,1,23,opex:bloodMultiplexData,MPX,n,BLOOD,--blood
+MR Sessions,6,3,xnat:mrSessionData,MR,y,MRIscans,--mri
+MRI ASHS,6,3,opex:mriashs,ASHS,n,ASHS and Freesurfer,--mridata
+MRI FS,6,3,opex:mrifs,FS,n,ASHS and Freesurfer,--mridata
+DEXA,3,5,opex:dexa,DXA,n,DEXA,--dexa
+COSMED,3,5,opex:cosmed,COS,y,COSMED,--cosmed
+FMRI,6,3,opex:fmri,FMRI,n,FMRI,--fmri

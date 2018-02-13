@@ -14,6 +14,7 @@ from report.report import OPEXReport
 from uploader import OPEXUploader
 from xnatconnect.XnatConnector import XnatConnector
 from xnatconnect.XnatOrganizeFiles import Organizer
+from resources.dbquery import DBI
 
 
 class DownloadDialog(dlgDownloads):
@@ -139,35 +140,52 @@ class IdsDialog(dlgIDS):
     def __init__(self, parent):
         super(IdsDialog, self).__init__(parent)
         self.idfile = join(dirname(__file__),'resources', 'incorrectIds.csv')
+        self.iddb = join(dirname(__file__), 'resources', 'opexconfig.db')
         self.__loadData()
 
     def __loadData(self):
-        if access(self.idfile, R_OK):
-            with open(self.idfile, 'rb') as csvfile:
-                sreader = csv.reader(csvfile, delimiter=',', quotechar='"')
-                rownum = 0
-                for row in sreader:
-                    if row[0] == 'INCORRECT':
-                        continue
-                    self.m_grid1.SetCellValue(rownum, 0, row[0])
-                    self.m_grid1.SetCellValue(rownum, 1, row[1])
-                    rownum += 1
+        dbi = DBI(self.iddb)
+        rownum =0
+        for ids in dbi.getIDs():
+            self.m_grid1.SetCellValue(rownum, 0, ids[0])
+            self.m_grid1.SetCellValue(rownum, 1, ids[1])
+            rownum += 1
+
+        # if access(self.idfile, R_OK):
+        #     with open(self.idfile, 'rb') as csvfile:
+        #         sreader = csv.reader(csvfile, delimiter=',', quotechar='"')
+        #         rownum = 0
+        #         for row in sreader:
+        #             if row[0] == 'INCORRECT':
+        #                 continue
+        #             self.m_grid1.SetCellValue(rownum, 0, row[0])
+        #             self.m_grid1.SetCellValue(rownum, 1, row[1])
+        #             rownum += 1
         # resize
         self.m_grid1.AutoSizeColumns()
         self.m_grid1.AutoSize()
 
     def OnSaveIds(self, event):
         try:
+            dbi = DBI(self.iddb)
             data = self.m_grid1.GetTable()
-            with open(self.idfile, 'wb') as csvfile:
-                swriter = csv.writer(csvfile, delimiter=',', quotechar='"')
-                swriter.writerow([data.GetColLabelValue(0), data.GetColLabelValue(1)])
-                for rownum in range(0, data.GetRowsCount()):
-                    if not data.IsEmptyCell(rownum, 0):
-                        swriter.writerow([self.m_grid1.GetCellValue(rownum, 0), self.m_grid1.GetCellValue(rownum, 0)])
+            addids = []
+            for rownum in range(0, data.GetRowsCount()):
+                if not data.IsEmptyCell(rownum, 0):
+                    addids.append((self.m_grid1.GetCellValue(rownum, 0), self.m_grid1.GetCellValue(rownum, 1)))
+            dbi.addIDs(addids)
+            # try:
+            #     data = self.m_grid1.GetTable()
+            #     with open(self.idfile, 'wb') as csvfile:
+            #         swriter = csv.writer(csvfile, delimiter=',', quotechar='"')
+            #         swriter.writerow([data.GetColLabelValue(0), data.GetColLabelValue(1)])
+            #         for rownum in range(0, data.GetRowsCount()):
+            #             if not data.IsEmptyCell(rownum, 0):
+            #                 swriter.writerow([self.m_grid1.GetCellValue(rownum, 0), self.m_grid1.GetCellValue(rownum, 1)])
             dlg = wx.MessageDialog(self, "IDs file saved", "Incorrect IDs", wx.OK)
             dlg.ShowModal()  # Show it
             dlg.Destroy()
+            self.Destroy()
         except Exception as e:
             dlg = wx.MessageDialog(self, e.args[0], "Incorrect IDs", wx.OK)
             dlg.ShowModal()  # Show it
@@ -289,11 +307,12 @@ class OPEXUploaderGUI(UploaderGUI):
         self.SetTitle("XNAT Connector App")
         self.SetPosition(wx.Point(100, 100))
         self.SetSize((700, 700))
-        self.runoptions = self.__loadOptions()
         self.configfile = join(expanduser('~'), '.xnat.cfg')
+        self.configdb = join(dirname(__file__),'resources', 'opexconfig.db')
         self.loaded = self.__loadConfig()
+        self.runoptions = self.__loadOptions()
         if self.loaded:
-            self.chOptions.SetItems(self.runoptions.keys())
+            self.chOptions.SetItems(sorted(self.runoptions.keys()))
             self.dbedit.AppendItems(self.config.keys())
         redir = LogOutput(self.tcResults)
         sys.stdout = redir
@@ -310,12 +329,17 @@ class OPEXUploaderGUI(UploaderGUI):
             raise IOError("Config file not accessible: %s", self.configfile)
 
     def __loadOptions(self):
-        optionsfile = join(dirname(__file__),'resources', 'run_options.cfg')
-        config = ConfigObj(optionsfile)
-        if 'options' in config:
-            runoptions = config['options']
-        else:
-            runoptions = {'Help': '--h'}
+        """
+        Load options for dropdown
+        :return:
+        """
+        dbi = DBI(self.configdb)
+        runoptions = dbi.getRunOptions()
+        # config = ConfigObj(optionsfile)
+        # if 'options' in config:
+        #     runoptions = config['options']
+        # else:
+        #     runoptions = {'Help': '--h'}
         return runoptions
 
     def __loadConnection(self):
