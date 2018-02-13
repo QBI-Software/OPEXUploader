@@ -53,10 +53,10 @@ class OPEXReport(object):
                 self.subjectids = self.subjects['subject_label']
             else:
                 self.subjectids = [s.label() for s in self.subjects]
-            print("Subjects loaded from database")
+            print "Subjects loaded from database"
         elif self.data is not None and 'Subject' in self.data:
             self.subjectids = self.data.Subject.unique()
-            print("Subject IDs loaded from file")
+            print "Subject IDs loaded from file"
 
     def __loadopexfile(self):
         """
@@ -189,7 +189,7 @@ class OPEXReport(object):
         df_subjects = self.xnat.getSubjectsDataframe(projectcode)
         # Cannot load all at once nor can get count directly so loop through each prefix and compile counts
         for etype in etypes:
-            print("Expt type:", etype)
+            print "Expt type:", etype
             if etype.startswith('opex') or etype == 'xnat:mrSessionData':
                 # fields = self.conn.inspect.prefixs(etype)
                 # columns = [etype + '/ID',etype + '/SUBJECT_ID',etype + '/DATE',etype + '/INTERVAL',etype + '/DATA_VALID',etype + '/SAMPLE_QUALITY']
@@ -229,7 +229,7 @@ class OPEXReport(object):
                     if df_expts is not None:
                         msg = "Expt type: %s = %d expts" % (etype,len(df_expts))
                         logging.info(msg)
-                        print(msg)
+                        print msg
                         outputname = etype.replace(":", "_") + ".csv"
                         df_expts.to_csv(join(outputdir, outputname), index=False)
                         if deltas:
@@ -237,7 +237,7 @@ class OPEXReport(object):
                             if not df_delta.empty:
                                 deltaname = outputname.replace(".csv", "_delta.csv")
                                 df_delta.to_csv(join(outputdir, deltaname), index=False)
-                                print('Deltas:', deltaname)
+                                print 'Deltas:', deltaname
                     else:
                         msg = "Expt type: %s - No data", etype
                         logging.warning(msg)
@@ -315,7 +315,7 @@ class OPEXReport(object):
             df_counts = df_counts[headers_present]
             # save to file as cache if db down
             df_counts.to_csv(self.cache, index=False)
-            print(df_counts.head())
+            print df_counts.head()
 
         return df_counts
 
@@ -394,7 +394,7 @@ class OPEXReport(object):
         :return:
         """
         expts = pandas.DataFrame([e for e in expts])
-        print(expts)
+        print expts
 
         # Group
         # df_grouped = groups.groupby(by='Group')
@@ -429,7 +429,7 @@ class OPEXReport(object):
                 df1 = df_gp_intervals.get_group(interval)
                 df1.to_excel(writer, index=False, sheet_name=sheet)
         else:
-            print("Done")
+            print "Done"
 
     # def groupedBloodOutput(self, df_all, outputfile):
     #     """
@@ -491,7 +491,7 @@ class OPEXReport(object):
                         df_expts = df_expts[df_expts.data_valid != 'Invalid']
                         msg = "Merging Expt type: %s = %d expts" % (etype, len(df_expts))
                         logging.info(msg)
-                        print(msg)
+                        print msg
                         if df_all.empty:
                             df_expts = df_expts.rename(columns=cantabcolumns)
                             df_all = df_expts
@@ -509,17 +509,17 @@ class OPEXReport(object):
                 # output
                 outputfile = join(outputdir, outputname)
                 self.groupedCantabOutput(df_all, outputfile)
-                print("CANTAB Reports: ", outputname)
+                print "CANTAB Reports: ", outputname
                 # deltas
                 if deltas:
                     df_deltas = self.deltaValues(df_all)
                     outputfile = outputfile.replace('.xlsx', '_deltas.xlsx')
                     self.groupedCantabOutput(df_deltas, outputfile)
-                    print("CANTAB Reports (deltas): ", outputname)
+                    print "CANTAB Reports (deltas): ", outputname
                 return True
         except Exception as e:
             logging.error(e)
-            print(e)
+            print e
 
 
     def generateBloodReport(self, projectcode, outputdir,deltas):
@@ -581,7 +581,7 @@ class OPEXReport(object):
                             s_ints = srows.groupby('interval')
                             baseline = s_ints.get_group('0')
                             if len(baseline) < 2:
-                                print("insufficient data - ", subj)
+                                print "insufficient data - ", subj
                                 continue
 
                             for mth in sorted(s_ints.groups.keys()):
@@ -596,7 +596,7 @@ class OPEXReport(object):
                                             p1=float(preval[lfield].values[0])
                                             all[field].at[i,mths[mth]]=p1-p0 #100 * (p1-p0)/p0
             else:
-                print("PrePost Blood Report: Compilation Complete, generating plots ...")
+                print "PrePost Blood Report: Compilation Complete, generating plots ..."
                 for field in all.keys():
                     df_all = all[field]
                     df_all.fillna('', axis=1, inplace=True)
@@ -633,7 +633,7 @@ class OPEXReport(object):
                 return True
 
         except Exception as e:
-            print(e)
+            print e
 
     # ---------------------------------------------------------------------- #
     def diffValue(self,row,mth, percent):
@@ -724,7 +724,7 @@ class OPEXReport(object):
         # Create plotly plot
         pfilename = join(outputdir, title +'.html')
         offline.plot(fig, filename=pfilename)
-        print("Plot output: ", pfilename)
+        print "Plot output: ", pfilename
         return pfilename
 
         # ---------------------------------------------------------------------- #
@@ -771,7 +771,7 @@ class OPEXReport(object):
         # Create plotly plot
         pfilename = join(outputdir, title + '.html')
         offline.plot(fig, filename=pfilename)
-        print("Plot output: ", pfilename)
+        print "Plot output: ", pfilename
         return pfilename
 
 ########################################################################
@@ -789,23 +789,23 @@ if __name__ == "__main__":
     parser.add_argument('--output', action='store', help='output directory for csv files')
 
     args = parser.parse_args()
-    print("Connecting to database")
+    print "Connecting to database"
     home = expanduser("~")
     configfile = join(home, '.xnat.cfg')
     database = args.database
     projectcode = args.projectcode
     xnat = XnatConnector(configfile, database)
-    print("Connecting to URL=", xnat.url)
+    print "Connecting to URL=", xnat.url
     xnat.connect()
     try:
-        print("...Connected")
+        print "...Connected"
         subjects = xnat.getSubjectsDataframe(projectcode)
         msg = "Loaded %d subjects from %s : %s" % (len(subjects), database, projectcode)
-        print(msg)
+        print msg
         op = OPEXReport(subjects=subjects)
         op.xnat = xnat
         df = op.getParticipants()
-        print(df)
+        print df
         # Download CSV files
         if args.output is not None and args.output:
             outputdir = args.output
@@ -814,7 +814,7 @@ if __name__ == "__main__":
             op.generateBloodReport(projectcode=projectcode, outputdir=outputdir, deltas=True)
 
     except ValueError as e:
-        print("Error: ", e)
+        print "Error: ", e
     finally:
         xnat.conn.disconnect()
         print("FINISHED")

@@ -103,7 +103,7 @@ class AmunetParser(DataParser):
             except:
                 visitdate = row['Date'] #.replace("-",".")
                 #visitdate = visitdate + " 00:00:00"
-        print "Visit date=", visitdate
+        print( "Visit date=", visitdate)
         return visitdate
 
     def mapAEVdata(self, row,i):
@@ -206,7 +206,7 @@ class AmunetParser(DataParser):
                 else:
                     fdateobj = date(int(fdate[0:4]), int(fdate[4:6]), int(fdate[6:9]))
             except ValueError:
-                print "cannot create date from: ", fdate
+                print( "cannot create date from: ", fdate)
                 continue
 
 
@@ -240,7 +240,7 @@ def generateAmunetdates(dirpath, filename, interval):
                     writer.writerow([d, ",".join([v.isoformat() for v in vdates])])
                 print("Participant dates written to: ", csvfile)
         except Exception as e:
-            print e
+            print( e)
             raise ValueError("Unable to access file for writing: ", e)
 
         finally:
@@ -286,7 +286,7 @@ def extractDateInfo(dirpath, ext='zip'):
         else:
             participantdates[fid] = [fdateobj]
 
-    print "Loaded:", len(participantdates)
+    print("Loaded:", len(participantdates))
     return participantdates
 ########################################################################
 
@@ -305,14 +305,14 @@ if __name__ == "__main__":
     basedatesfile = 'amunet_participantdates.csv'
     seriespattern = '*.xlsx'
     subdirs = listdir(topinputdir)
-    print 'Finding dates from subdirectories'
+    print('Finding dates from subdirectories')
     for inputdir in subdirs:
         if inputdir not in ['0m', '3m', '6m', '9m', '12m']:
             continue
         interval = inputdir[0]
-        print 'Interval:', interval
+        print('Interval:', interval)
         inputdir = join(topinputdir, inputdir)
-        print inputdir
+        print(inputdir)
         # Get dates from zip files
         dates_uri_file = join(inputdir, 'folderpath.txt')
         with open(dates_uri_file, "r") as dd:
@@ -334,15 +334,15 @@ if __name__ == "__main__":
             xsdtypes = dp.getxsd()
             # dp.interval = interval
             for sd in dp.subjects:
-                print '\n*****SubjectID:', sd
+                print('\n*****SubjectID:', sd)
                 for i, row in dp.subjects[sd].iterrows():
                     sampleid = dp.getSampleid(sd, row)
                     row.replace(nan, '', inplace=True)
-                    print 'Sampleid:', sampleid
+                    print('Sampleid:', sampleid)
                     if 'AEV_Average total error' in row:
                         (mandata, motdata) = dp.mapAEVdata(row, i)
                     else:
                         (mandata, motdata) = dp.mapSCSdata(row, i)
-                    print mandata
-                    print motdata
+                    print(mandata)
+                    print(motdata)
 

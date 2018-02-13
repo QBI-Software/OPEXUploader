@@ -35,7 +35,7 @@ class DassParser(DataParser):
         for n in range(3, len(self.data.columns), 12):
             start = n
             end = n + 9
-            #print 'Drop ', start, ' to ', end
+            #print('Drop ', start, ' to ', end
             #print self.data.columns.tolist()[start:end]
             dropcols += self.data.columns.tolist()[start:end]
         #print dropcols
@@ -46,7 +46,7 @@ class DassParser(DataParser):
         #sort subjects
         self.data['SubjectID'] = self.data.index
         self.sortSubjects('SubjectID')
-        print 'Data load complete'
+        print('Data load complete')
 
 
 
@@ -127,24 +127,24 @@ if __name__ == "__main__":
     print("Input:", inputfile)
     if access(inputfile, R_OK):
         try:
-            print "Loading ", inputfile
+            print("Loading ", inputfile)
             dp = DassParser(inputfile, sheet, skip, header)
             xsdtypes = dp.getxsd()
             intervals = range(0,13,3)
             for sd in dp.subjects:
-                print '\n***********SubjectID:', sd
+                print('\n***********SubjectID:', sd)
                 for i in intervals:
-                    print 'Interval:', i
+                    print('Interval:', i)
                     iheaders = [c + "_"+str(i) for c in dp.fields]
                     sampleid = dp.getSampleid(sd, i)
-                    print 'Sampleid:', sampleid
+                    print('Sampleid:', sampleid)
                     row = dp.subjects[sd]
                     if not dp.validData(row[iheaders].values.tolist()[0]):
-                        print 'empty data - skipping'
+                        print('empty data - skipping')
                         continue
                     (mandata, data) = dp.mapData(row[iheaders], i, xsdtypes)
-                    print mandata
-                    print data
+                    print(mandata)
+                    print(data)
 
         except Exception as e:
             print("Error: ", e)

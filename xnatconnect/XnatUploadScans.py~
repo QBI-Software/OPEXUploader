@@ -85,7 +85,7 @@ class XnatConnector:
             mywriter = csv.DictWriter(csvfile, fieldnames=fieldnames)
             mywriter.writeheader()
             for s in subj:
-                print("ID=", s.label(), ",SubjectID=", s.id())  # xnat subject id eg XNAT_S00006
+                print "ID=", s.label(), ",SubjectID=", s.id()  # xnat subject id eg XNAT_S00006
                 mywriter.writerow({'ID': s.label(), 'subject_ID': s.id()})
         return outfilename
 
@@ -156,7 +156,7 @@ class XnatConnector:
                 elabel = self.checkUniqueLabel(s, elabel)# eid = self.find_next_experimentID(projectcode, prefix,True)
                 message = "Uploading scans for %s: %s with expt=%s" % (s.id(), s.label(), elabel)
                 logging.info(message)
-                print(message)
+                print message
                 expt = s.experiment(elabel)
                 expt.create() #experiments='xnat:mrSessionData')
                 uploaddir = join(scandir, slabel, 'scans')
@@ -172,7 +172,7 @@ class XnatConnector:
 
                     scan_type = self.getScanType(default_scantype,scan_files[0])
                     scan_id = self.getSeriesNumber(subdr,scan_files[0])
-                    print('Scan ID: %s  Scan type=%s' % (scan_id, scan_type))
+                    print 'Scan ID: %s  Scan type=%s' % (scan_id, scan_type)
 
                     scan_pi = self.getPI(scan_files[0])
                     if DEBUG or proj_pi in scan_pi or proj_pi in owners:
@@ -215,11 +215,11 @@ class XnatConnector:
                             shutil.move(join(scandir, slabel), donepath)
                             message = "Uploaded scans moved to %s" % donepath
                             logging.info(message)
-                            print(message)
+                            print message
                         except IOError:
                             message = "Error in moving uploaded scans to %s" % donepath
                             logging.warning(message)
-                            print(message)
+                            print message
 
             else:
                 logging.warning("Subject doesn't exist in this project: %s %s" ,projectcode, sid)
@@ -311,7 +311,7 @@ if __name__ == "__main__":
     xnat.connect()
     if (xnat.conn):
         logging.info("...Connected")
-        print("Connected")
+        print "Connected"
 
         projectcode = args.projectcode
         if (args.s is not None and args.s):
@@ -322,11 +322,11 @@ if __name__ == "__main__":
             logging.info("Calling List Projects")
             projlist = xnat.list_projects()
             for p in projlist:
-                print("Project: ", p.id())
+                print "Project: ", p.id()
         if (args.g is not None and args.g):
             subjectid = args.g
             sid = xnat.get_subjectid_bylabel(projectcode, subjectid)
-            print("XNAT ID=%s for subject ID=%s" % (sid, subjectid))
+            print "XNAT ID=%s for subject ID=%s" % (sid, subjectid)
         if (args.u is not None and args.u):
             uploaddir = args.u  # Top level DIR FOR SCANS
             # Directory structure data/subject_label/scans/session_id/*.dcm
@@ -341,7 +341,7 @@ if __name__ == "__main__":
 
         xnat.conn.disconnect()
         logging.info("Complete")
-        print("FINISHED - see xnatuploadscans.log for details")
+        print "FINISHED - see xnatuploadscans.log for details"
 
     else:
         logging.warning("Failed to connect")

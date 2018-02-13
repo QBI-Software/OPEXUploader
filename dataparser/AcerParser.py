@@ -111,13 +111,13 @@ if __name__ == "__main__":
                 xsd = dp.getxsd()
                 print('Subject summary')
                 for sd in dp.subjects:
-                    print '***Subject:', sd
+                    print( '***Subject:', sd)
                     dob = dp.subjects[sd]['DOB']
                     for i, row in dp.subjects[sd].iterrows():
-                        print dp.getSampleid(sd,row)
+                        print( dp.getSampleid(sd,row))
                         (mdata,data) = dp.mapData(row,i,xsd)
-                        print mdata
-                        print data
+                        print( mdata)
+                        print( data)
 
 
         except ValueError as e:

@@ -69,7 +69,7 @@ class OPEXReportApp(object):
         try:
             xnat.connect()
             if xnat.testconnection():
-                print "...Connected"
+                print( "...Connected")
                 output = "ExptCounts.csv"
                 outputfile = join(self.cache, output)
                 if access(outputfile, R_OK):
@@ -97,7 +97,7 @@ class OPEXReportApp(object):
 
         except IOError:
             logging.error("Connection error - terminating app")
-            print "Connection error - terminating app"
+            print( "Connection error - terminating app")
             sys.exit(1)
         finally:
             xnat.conn.disconnect()

@@ -30,7 +30,7 @@ class CantabParser(DataParser):
             self.cantabfields = pandas.read_csv(fields, header=0)
             self.sortSubjects('Participant ID')
         except Exception as e:
-            print e
+            print(e)
             raise e
 
 

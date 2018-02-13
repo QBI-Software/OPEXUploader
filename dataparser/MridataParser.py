@@ -56,7 +56,7 @@ class MridataParser(DataParser):
                 #Save to new data file
                 fname_calc = self.datafile.replace(self.ftype, '_ICV.xlsx')
                 self.data.to_excel(fname_calc, sheet_name='ICV normalized',index=0)
-                print 'ICV Normalized data: ', fname_calc
+                print('ICV Normalized data: ', fname_calc)
                 #sort subjects
                 self.sortSubjects('Subject')
         except:
@@ -172,19 +172,19 @@ if __name__ == "__main__":
         seriespattern = '*.csv'
         try:
             files = glob.glob(join(inputdir, seriespattern))
-            print "Files:", len(files)
+            print("Files:", len(files))
             for f2 in files:
-                print "Loading ", f2
+                print("Loading ", f2)
                 cantab = MridataParser(fields, f2)
                 #cantab.sortSubjects()
                 for sd in cantab.subjects:
-                    print '**SubjectID:', sd
-                    print "**MRI Fields**"
+                    print('**SubjectID:', sd)
+                    print("**MRI Fields**")
                     for i, row in cantab.subjects[sd].iterrows():
                         print(i, 'Visit:', row['Visit'])
                         for ctab in cantab.cantabfields:
                             if ctab in row:
-                                print ctab, "=", row[ctab]
+                                print(ctab, "=", row[ctab])
 
 
         except ValueError as e:

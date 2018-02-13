@@ -39,7 +39,7 @@ class BloodParser(DataParser):
             self.fields.dropna(inplace=True)
             #If different headers used
             if self.type == 'MULTIPLEX':
-                print 'Headers for ', self.type
+                print('Headers for ', self.type)
                 colnames = {'Date': 'A_Date', 'Participant ID ': 'Participant ID', 'Timepoint': 'Sample ID','IGFBP-7':'IGFBP7'}
                 self.data = self.data.rename(index=str, columns=colnames)
                 self.data.insert(0, 'R_No.', range(len(self.data)))
@@ -52,7 +52,7 @@ class BloodParser(DataParser):
                     v = v + 2
 
                 df = self.data.rename(index=str, columns=colnames)
-                print "Renamed columns: ", colnames
+                print("Renamed columns: ", colnames)
                 self.data = df
                 i = self.data.query('A_Date =="NaT"')
                 if not i.empty:
@@ -75,7 +75,7 @@ class BloodParser(DataParser):
                 for sid in ids:
                     sidkey = self._DataParser__checkSID(sid)
                     self.subjects[sidkey] = self.data[self.data[subjectfield] == sid]
-                print 'TOTAL Subjects loaded=', len(self.subjects)
+                print('TOTAL Subjects loaded=', len(self.subjects))
 
     def getxsd(self):
         return {"COBAS":'opex:bloodCobasData',
@@ -155,7 +155,7 @@ class BloodParser(DataParser):
         for ctab in self.fields:
             if ctab in row:
                 if VERBOSE:
-                    print ctab, ' = ', row[ctab]
+                    print(ctab, ' = ', row[ctab])
                 data[xsd + '/' + ctab] = str(row[ctab])
 
         return (mandata,data)
@@ -192,19 +192,19 @@ if __name__ == "__main__":
             files = glob.glob(join(inputdir, seriespattern))
             print("Files:", len(files))
             for f2 in files:
-                print "\n****Loading",f2
+                print("\n****Loading",f2)
                 dp = BloodParser(f2,sheet,skip, type=type)
                 dp.sortSubjects()
 
                 for sd in dp.subjects:
-                    print 'ID:', sd
+                    print('ID:', sd)
                     for i, row in dp.subjects[sd].iterrows():
                         dob = dp.formatADate(str(dp.subjects[sd]['A_Date'][i]))
                         uid = dp.type + "_" + dp.getSampleid(sd,row)
-                        print i, 'Visit:', uid, 'Date', dob
+                        print(i, 'Visit:', uid, 'Date', dob)
                         (d1,d2) = dp.mapData(row,i)
-                        print d1
-                        print d2
+                        print(d1)
+                        print(d2)
 
 
 

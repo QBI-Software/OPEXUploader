@@ -22,7 +22,7 @@ class InsomniaParser(DataParser):
         DataParser.__init__(self, *args)
         #Maybe empty sheet
         if len(self.data.columns) <=1:
-            print "No data available"
+            print("No data available")
             return None
         # cleanup subjects
         self.data['ID'] = self.data.apply(lambda x: stripspaces(x, 0), axis=1)
@@ -43,7 +43,7 @@ class InsomniaParser(DataParser):
         self.data = df
         # sort subjects
         self.sortSubjects('SubjectID')
-        print 'Data load complete'
+        print('Data load complete')
 
 
     def nodatarow(self,row,fieldname):
@@ -127,11 +127,11 @@ if __name__ == "__main__":
     print("Input:", inputfile)
     if access(inputfile, R_OK):
         try:
-            print "Loading ", inputfile
+            print("Loading ", inputfile)
             intervals = range(0, 13, 3)
             for sheet in range(0,5):
                 i = intervals[sheet]
-                print 'Interval:', i
+                print('Interval:', i)
                 dp = InsomniaParser(inputfile, sheet, skip, header, etype)
                 if dp is None:
                     continue
@@ -141,16 +141,16 @@ if __name__ == "__main__":
 
 
                 for sd in dp.subjects:
-                    print '\n***********SubjectID:', sd
+                    print('\n***********SubjectID:', sd)
                     sampleid = dp.getSampleid(sd, i)
-                    print 'Sampleid:', sampleid
+                    print('Sampleid:', sampleid)
                     row = dp.subjects[sd]
                     if not dp.validData(row[dp.fields].values.tolist()[0]):
-                        print 'empty data - skipping'
+                        print('empty data - skipping')
                         continue
                     (mandata, data) = dp.mapData(row, i, xsdtypes)
-                    print mandata
-                    print data
+                    print(mandata)
+                    print(data)
 
         except Exception as e:
             print("Error: ", e)

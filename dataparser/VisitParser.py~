@@ -71,7 +71,7 @@ class VisitParser(DataParser):
         """
         # Check data has required fields
         if not 'ID' in self.data.columns or not 'Sex' in self.data.columns:
-            print('Cannot run update genders as data is not present')
+            print 'Cannot run update genders as data is not present'
             return 0
 
         xnatgenders={'F':'female', 'M': 'male'}
@@ -91,11 +91,11 @@ class VisitParser(DataParser):
                 if gender != xgender:
                     s.attrs.mset({'gender': gender})
                     msg = 'Subject gender updated: %s to %s' % (subject_id, gender)
-                    print(msg)
+                    print msg
                     logging.info(msg)
             else:
                 msg = 'Subject gender to update: %s to %s' % (subject_id, gender)
-                print(msg)
+                print msg
 
     def processData(self):
         """
@@ -160,7 +160,7 @@ class VisitParser(DataParser):
         :param xnat:
         :return:
         """
-        print("**Uploading dates to XNAT**")
+        print "**Uploading dates to XNAT**"
 
         for eid in self.expts.keys():
             d = self.expts.get(eid)
@@ -204,7 +204,7 @@ class VisitParser(DataParser):
                             comments = 'Date updated'
                         xnatexpt.attrs.set(xtype + '/comments', comments)
                         msg = 'UPDATED %s %s date - %s' % (subject_id, xnatexpt.id(), d)
-                        print(msg)
+                        print msg
                         logging.info(msg)
                 else:
                     msg = "Expt not found: %s" % eid
@@ -212,7 +212,7 @@ class VisitParser(DataParser):
                     #print msg
 
             else:
-                print('XNAT connection not available')
+                print 'XNAT connection not available'
 
 
 ########################################################################
@@ -237,11 +237,11 @@ if __name__ == "__main__":
         dp = VisitParser(inputfile,args.sheet,1)
         #dp.updateGenders()
         dp.processData()
-        # print(output
-        print("**Processed dates**")
+        # print output
+        print "**Processed dates**"
         for eid in dp.expts.keys():
-            print(eid, ": ", dp.expts.get(eid))
+            print eid, ": ", dp.expts.get(eid)
 
     except Exception as e:
-        print(e)
+        print e
 

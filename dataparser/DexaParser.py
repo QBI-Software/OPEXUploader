@@ -131,21 +131,21 @@ if __name__ == "__main__":
         etype = 'DEXA'
         try:
             files = glob.glob(join(inputdir, seriespattern))
-            print "Files:", len(files)
+            print("Files:", len(files))
             for f2 in files:
-                print "Loading ", f2
+                print("Loading ", f2)
                 dp = DexaParser(fields, f2, sheet, skip, None, etype)
                 xsdtypes = dp.getxsd()
                 #dp.sortSubjects()
                 for sd in dp.subjects:
-                    print '\n***********SubjectID:', sd
+                    print('\n***********SubjectID:', sd)
                     for i, row in dp.subjects[sd].items():
-                        print 'Interval:', dp.intervals[i]
+                        print('Interval:', dp.intervals[i])
                         sampleid = dp.getSampleid(sd, i)
-                        print 'Sampleid:', sampleid
+                        print('Sampleid:', sampleid)
                         (mandata, data) = dp.mapData(row, i, xsdtypes)
-                        print mandata
-                        print data
+                        print(mandata)
+                        print(data)
                         # for field in dp.fields['Field']:
                         #     if field in row and not np.isnan(row[field].iloc[0]):
                         #         print field, "=", row[field].iloc[0]

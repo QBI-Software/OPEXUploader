@@ -28,7 +28,7 @@ class Organizer():
             raise OSError("Cannot access input directory")
         else:
             self.inputdir = inputdir
-        print('Input directory: ', self.inputdir)
+        print 'Input directory: ', self.inputdir
         #Set output scan directory
         if scandir is None:
             dirpath = path.dirname(inputdir)
@@ -38,7 +38,7 @@ class Organizer():
             raise OSError("Cannot access output scan directory")
         else:
             self.datapath = scandir
-        print('Scan directory: ', self.datapath)
+        print 'Scan directory: ', self.datapath
 
         # Check only subject dirs processed
         self.opexid = opexid
@@ -51,7 +51,7 @@ class Organizer():
         if ignoredir is not None:
             self.ignorefiles = listdir(ignoredir)
             msg = 'Ignoring %d files in %s' % (len(self.ignorefiles), ignoredir)
-            print(msg)
+            print msg
             logging.info(msg)
         else:
             self.ignorefiles = []
@@ -63,7 +63,7 @@ class Organizer():
         for subject in listdir(self.inputdir):
             msg = "Subject: %s" % subject
             logging.info(msg)
-            print(msg)
+            print msg
             if self.opexid and len(subject) == 8:
                 trimsubject = subject[0:6]
             else:
@@ -71,7 +71,7 @@ class Organizer():
             if not self.pattern.match(subject) or subject in self.ignorefiles or trimsubject in self.ignorefiles:
                 msg = "Not a subject or marked for ignore - next"
                 logging.warning(msg)
-                print(msg)
+                print msg
                 continue
             try:
                 mkdir(join(datapath, subject))
@@ -80,7 +80,7 @@ class Organizer():
             except OSError as e:
                 msg = 'Directory exists: %s' % e.args[0]
                 logging.info(msg)
-                print(msg)
+                print msg
                 datapath = self.datapath
                 continue
 
@@ -95,7 +95,7 @@ class Organizer():
                     except InvalidDicomError:
                         msg = "Not DICOM - skipping: %s" % filename
                         logging.warning(msg)
-                        print(msg)
+                        print msg
                         continue
                     series_num = str(dcm.SeriesNumber)
                     if series_num not in series:
@@ -115,7 +115,7 @@ class Organizer():
                     except:
                         msg = "Error copying files: %s" % dpath
                         logging.error(msg)
-                        print(msg)
+                        print msg
                         break
                         # raise OSError
 
@@ -123,7 +123,7 @@ class Organizer():
 
             msg = "Files sorted to dir: %s" % datapath
             logging.info(msg)
-            print(msg)
+            print msg
             datapath = self.datapath
         return True
 
@@ -146,9 +146,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     org = Organizer(args.inputdir,args.scandir,args.opexid,args.ignore)
-    print("ScanOrganizer loaded")
+    print "ScanOrganizer loaded"
     org.run()
-    print("ScanOrganizer complete")
+    print "ScanOrganizer complete"
 
 
     # series ={}
@@ -175,7 +175,7 @@ if __name__ == "__main__":
     # if args.ignore is not None and args.ignore:
     #     ignorefiles = listdir(args.ignore)
     #     msg = 'Ignoring %d files in %s' % (len(ignorefiles), args.ignore)
-    #     print(msg)
+    #     print msg
     #     logging.info(msg)
     # else:
     #     ignorefiles=[]
@@ -183,7 +183,7 @@ if __name__ == "__main__":
     # for subject in listdir(inputdir):
     #     msg = "Subject: %s" % subject
     #     logging.info(msg)
-    #     print(msg)
+    #     print msg
     #     if args.opexid is not None and args.opexid and len(subject) == 8:
     #         trimsubject = subject[0:6]
     #     else:
@@ -191,7 +191,7 @@ if __name__ == "__main__":
     #     if not pattern.match(subject) or subject in ignorefiles or trimsubject in ignorefiles:
     #         msg= "Not a subject or marked for ignore - next"
     #         logging.warning(msg)
-    #         print(msg)
+    #         print msg
     #         continue
     #     try:
     #         mkdir(join(datapath, subject))
@@ -200,7 +200,7 @@ if __name__ == "__main__":
     #     except OSError:
     #         msg = 'Directory exists: %s' % join(datapath, subject)
     #         logging.info(msg)
-    #         print(msg)
+    #         print msg
     #         datapath = origdatapath
     #         continue
     #     for group in listdir(join(inputdir,subject)):
@@ -214,7 +214,7 @@ if __name__ == "__main__":
     #             except InvalidDicomError:
     #                 msg = "Not DICOM - skipping: %s" % filename
     #                 logging.warning(msg)
-    #                 print(msg)
+    #                 print msg
     #                 continue
     #             series_num = str(dcm.SeriesNumber)
     #             if series_num not in series:
@@ -234,7 +234,7 @@ if __name__ == "__main__":
     #             except:
     #                 msg = "Error copying files: %s" % dpath
     #                 logging.error(msg)
-    #                 print(msg)
+    #                 print msg
     #                 break
     #                 #raise OSError
     #
@@ -242,7 +242,7 @@ if __name__ == "__main__":
     #
     #     msg = "Files sorted to dir: %s" % datapath
     #     logging.info(msg)
-    #     print(msg)
+    #     print msg
     #     datapath = origdatapath
 
 

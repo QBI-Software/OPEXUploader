@@ -208,7 +208,7 @@ class OPEXUploader():
         if len(dp.subjects) <=0:
             dp.sortSubjects()
         for sd in dp.subjects:
-            print('*****SubjectID:', sd)
+            print '*****SubjectID:', sd
             s = project.subject(sd)
             if not s.exists():
                 if self.args.create is not None and self.args.create:
@@ -220,7 +220,7 @@ class OPEXUploader():
                 else:
                     missing.append({"ID": sd, "rows": dp.subjects[sd]})
                     msg = 'Subject does not exist - skipping: %s' % sd
-                    print(msg)
+                    print msg
                     logging.warning(msg)
                     continue
             # Load data PER ROW
@@ -232,7 +232,7 @@ class OPEXUploader():
                         checkfield = dp.fields['Field'][0]  # test if data in row
                         for i, row in dp.subjects[sd].items():
                             if checkfield in row and not isnan(row[checkfield].iloc[0]):
-                                print('Interval:', dp.intervals[i])
+                                print 'Interval:', dp.intervals[i]
                                 sampleid = dp.getSampleid(sd, i)
                                 (mandata, data) = dp.mapData(row, i, xsdtypes)
                                 msg = self.loadSampledata(s, xsdtypes, sampleid, mandata, data)
@@ -267,7 +267,7 @@ class OPEXUploader():
                     elif 'insomnia' in xsdtypes or 'psqi' in xsdtypes:
                         i = dp.interval
                         sampleid = dp.getSampleid(sd, i)
-                        print('Sampleid:', sampleid)
+                        print 'Sampleid:', sampleid
                         row = dp.subjects[sd]
                         if dp.validData(row[dp.fields].values.tolist()[0]):
                             (mandata, data) = dp.mapData(row, i, xsdtypes)
@@ -339,7 +339,7 @@ class OPEXUploader():
         """
         msg = "Running data upload for %s from %s " % (datatype, inputdir)
         logging.info(msg)
-        print(msg)
+        print msg
         project = self.xnat.get_project(projectcode)
         missing = []
         matches = []
@@ -351,11 +351,11 @@ class OPEXUploader():
                 header = None
                 etype = 'CANTAB'
                 files = glob.glob(join(inputdir, seriespattern))
-                print("Files:", len(files))
+                print "Files:", len(files)
                 for f2 in files:
                     if ("RowBySession" in f2):
                         msg = "\nLoading: %s" % f2
-                        print(msg)
+                        print msg
                         logging.info(msg)
                         dp = CantabParser(f2, sheet, skip, header, etype)
                         (missing, matches) = self.uploadData(project, dp)
@@ -372,13 +372,13 @@ class OPEXUploader():
                 basedatesfile = 'amunet_participantdates.csv'
                 seriespattern = '*.xlsx'
                 subdirs = listdir(topinputdir)
-                print('Finding dates from subdirectories')
+                print 'Finding dates from subdirectories'
                 for inputdir in subdirs:
                     if inputdir not in ['0m', '3m', '6m', '9m', '12m']:
                         continue
                     interval = inputdir[0]
                     inputdir = join(topinputdir, inputdir)
-                    print(inputdir)
+                    print inputdir
                     # Get dates from zip files
                     dates_uri_file = join(inputdir, 'folderpath.txt')
                     with open(dates_uri_file, "r") as dd:
@@ -416,7 +416,7 @@ class OPEXUploader():
                 files = glob.glob(join(inputdir, seriespattern))
                 print("Files:", len(files))
                 for f2 in files:
-                    print("Loading ", f2)
+                    print "Loading ", f2
                     dp = AcerParser(f2, sheet,skip,header,etype)
                     (missing, matches) = self.uploadData(project, dp)
                     # Output matches and missing
@@ -432,7 +432,7 @@ class OPEXUploader():
                 files = glob.glob(join(inputdir, seriespattern))
                 print("Files:", len(files))
                 for f2 in files:
-                    print("Loading ", f2)
+                    print "Loading ", f2
                     dp = MridataParser(f2, sheet)
                     (missing, matches) = self.uploadData(project, dp)
                     # Output matches and missing
@@ -454,7 +454,7 @@ class OPEXUploader():
                 files = glob.glob(join(inputdir, seriespattern))
                 print("Files:", len(files))
                 for f2 in files:
-                    print("Loading ", f2)
+                    print "Loading ", f2
                     dp = BloodParser(f2, sheet, skip, type=type)
                     (missing, matches) = self.uploadData(project, dp)
                     # Output matches and missing
@@ -473,9 +473,9 @@ class OPEXUploader():
                 fields = join(getcwd(), "resources", "dexa_fields.xlsx")
                 seriespattern = 'DXA Data entry*.xlsx'
                 files = glob.glob(join(inputdir, seriespattern))
-                print("Files:", len(files))
+                print "Files:", len(files)
                 for f2 in files:
-                    print("Loading ", f2)
+                    print "Loading ", f2
                     dp = DexaParser(fields, f2, sheet, skip, header, etype)
                     (missing, matches) = self.uploadData(project, dp)
                     # Output matches and missing
@@ -491,9 +491,9 @@ class OPEXUploader():
                 header = 2
                 seriespattern = 'DASS Data entry*.xlsx'
                 files = glob.glob(join(inputdir, seriespattern))
-                print("Files:", len(files))
+                print "Files:", len(files)
                 for f2 in files:
-                    print("Loading ", f2)
+                    print "Loading ", f2
                     dp = DassParser(f2, sheet, skip, header)
                     (missing, matches) = self.uploadData(project, dp)
                     # Output matches and missing
@@ -510,9 +510,9 @@ class OPEXUploader():
                 etype = 'Godin'
                 seriespattern = 'GODIN*.xlsx'
                 files = glob.glob(join(inputdir, seriespattern))
-                print("Files:", len(files))
+                print "Files:", len(files)
                 for f2 in files:
-                    print("Loading ", f2)
+                    print "Loading ", f2
                     dp = GodinParser(f2, sheet, skip, header, etype)
                     (missing, matches) = self.uploadData(project, dp)
                     # Output matches and missing
@@ -528,13 +528,13 @@ class OPEXUploader():
                 etype = 'PSQI'
                 seriespattern = 'PSQI*.xlsx'
                 files = glob.glob(join(inputdir, seriespattern))
-                print("Files:", len(files))
+                print "Files:", len(files)
                 intervals = range(0, 13, 3)
                 for f2 in files:
-                    print("Loading ", f2)
+                    print "Loading ", f2
                     for sheet in range(0, 5):
                         i = intervals[sheet]
-                        print('Interval:', i)
+                        print 'Interval:', i
                         dp = PsqiParser(f2, sheet, skip, header, etype)
                         if dp is None:
                             continue
@@ -554,13 +554,13 @@ class OPEXUploader():
                 etype = 'Insomnia'
                 seriespattern = 'ISI*.xlsx'
                 files = glob.glob(join(inputdir, seriespattern))
-                print("Files:", len(files))
+                print "Files:", len(files)
                 intervals = range(0, 13, 3)
                 for f2 in files:
-                    print("Loading ", f2)
+                    print "Loading ", f2
                     for sheet in range(0, 5):
                         i = intervals[sheet]
-                        print('Interval:', i)
+                        print 'Interval:', i
                         dp = InsomniaParser(f2, sheet, skip, header, etype)
                         if dp is None:
                             continue
@@ -586,7 +586,7 @@ class OPEXUploader():
                     datafile = join(paths['datadir'],paths['datafile'])  # 'VO2data_VEVCO2_20171009.xlsx'
                     msg = 'COSMED: Datafile= %s \nTime series for files in %s ' % (datafile, inputsubdir )
                     logging.info(msg)
-                    print(msg)
+                    print msg
 
                     dp = CosmedParser(inputdir, inputsubdir, datafile, self.args.checks)
                     if dp.df.empty:
@@ -613,9 +613,9 @@ class OPEXUploader():
                     dp = VisitParser(inputfile, 0, 1)
                     dp.processData()
                     if self.args.checks:
-                        print("**UPDATING dates**")
+                        print "**UPDATING dates**"
                         for eid in dp.expts.keys():
-                            print(eid, ": ", dp.expts.get(eid))
+                            print eid, ": ", dp.expts.get(eid)
                     else:
                         dp.uploadDates(projectcode, self.xnat)
                 except Exception as e:
@@ -670,7 +670,7 @@ if __name__ == "__main__":
             # List available subjects in project
             if (uploader.args.subjects is not None and uploader.args.subjects):
                 msg = "Calling List Subjects"
-                print(msg)
+                print msg
                 logging.info(msg)
                 uploader.xnat.list_subjects_all(projectcode)
             # List available projects
@@ -690,17 +690,17 @@ if __name__ == "__main__":
             raise ConnectionError("Connection failed - check config")
     except IOError as e:
         logging.error(e)
-        print("Failed IO:", e)
+        print "Failed IO:", e
     except ConnectionError as e:
         logging.error(e)
-        print("Failed connection:", e)
+        print "Failed connection:", e
     except ValueError as e:
         logging.error(e)
-        print("ValueError:", e)
+        print "ValueError:", e
     except Exception as e:
         logging.error(e)
-        print("ERROR:", e)
+        print "ERROR:", e
     finally:  # Processing complete
         uploader.xnatdisconnect()
         logging.info("FINISHED")
-        print("\n****FINISHED**** - see xnatupload.log for details")
+        print "\n****FINISHED**** - see xnatupload.log for details"

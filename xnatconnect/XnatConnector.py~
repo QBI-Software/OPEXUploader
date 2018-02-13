@@ -95,7 +95,7 @@ class XnatConnector:
             mywriter.writeheader()
             for s in subj:
                 if VERBOSE:
-                    print("ID=", s.label(), ", SubjectID=", s.id()) # xnat subject id eg XNAT_S00006
+                    print "ID=", s.label(), ", SubjectID=", s.id() # xnat subject id eg XNAT_S00006
                 #ID	group	label	dob	gender	handedness	education
                 mywriter.writerow({'ID': s.label(),
                                    'group': s.attrs.get('group'),
@@ -104,7 +104,7 @@ class XnatConnector:
                                    'handedness': s.attrs.get('handedness'),
                                    'education': s.attrs.get('education')
                                    })
-        print("Subjects written to file:", outfilename)
+        print "Subjects written to file:", outfilename
         return outfilename
 
     def get_subjectid_bylabel(self, projectcode, label):
@@ -209,7 +209,7 @@ class XnatConnector:
             if edate != exptdate.strftime("%Y-%m-%d"):
                 expt.attrs.set('xnat:experimentData/date', exptdate.strftime("%Y%m%d"))
                 expt.attrs.set('xnat:experimentData/time', exptdate.strftime("%H:%M:%S"))
-                print("Updated experiment date: ", expt.id())
+                print "Updated experiment date: ", expt.id()
                 return expt
             else:
                 return None
@@ -237,9 +237,9 @@ class XnatConnector:
                 xsd + '/data_valid': expt.attrs.get(xsd + '/data_valid'),
                 'subject_ID':expt.attrs.get('subject_ID')
             }
-            print("Old:", expt.label())
+            print "Old:", expt.label()
             expt.attrs.mset(mandata)
-            print("New:", expt.label())
+            print "New:", expt.label()
         else:
             print("No expts found with label=", oldlabel)
 
@@ -436,10 +436,10 @@ class XnatConnector:
         subj = self.get_subjects(projectcode)
         for s in subj:
             sid = s.id()
-            print("Deleting:", s.label()," ID=",sid)
+            print "Deleting:", s.label()," ID=",sid
             project.subject(sid).delete()
             if project.subject(sid).exists():
-                print("ERROR: Couldn't delete ID=", sid)
+                print "ERROR: Couldn't delete ID=", sid
 
     def delete_experiments(self, projectcode, datatype, fields):
         """
@@ -456,15 +456,15 @@ class XnatConnector:
                     ]
             self.conn.manage.search.save('deleting', row, columns, criteria) #save search
             elist = self.conn.manage.search.get('deleting') #run search
-            print(datatype, " Expts to delete:", len(elist))
+            print datatype, " Expts to delete:", len(elist)
             for e in elist:
-                print(e)
+                print e
                 expt = project.experiment(e['expt_id'])
                 expt.delete()
                 if (project.experiment(e['expt_id']).exists()):
-                    print("ERROR: Couldn't delete Expt ID=", e['expt_id'])
+                    print "ERROR: Couldn't delete Expt ID=", e['expt_id']
                 else:
-                    print("DELETED:", e['expt_id'])
+                    print "DELETED:", e['expt_id']
             xnat.conn.manage.search.delete('deleting') #remove saved search
 
 
@@ -490,12 +490,12 @@ if __name__ == "__main__":
     #Tests
     #args = parser.parse_args(['xnat-dev', 'TEST_PJ00', '--p']) #Preset
     args = parser.parse_args()
-    print(args)
+    print args
     xnat = XnatConnector(configfile, args.database)
-    print("Connecting to URL=", xnat.url)
+    print "Connecting to URL=", xnat.url
     xnat.connect()
     if (xnat.conn):
-        print("...Connected")
+        print "...Connected"
         try:
             projectcode = args.projectcode  # "QBICC"
             if (args.x is not None and args.x):
@@ -507,7 +507,7 @@ if __name__ == "__main__":
             if (args.p is not None and args.p):
                 projlist = xnat.list_projects()
                 for p in projlist:
-                    print("Project: ", p.id())
+                    print "Project: ", p.id()
 
             if (args.c1 is not None and args.c2 is not None):
                 xnat.changeExptLabel(projectcode, args.c1, args.c2)
@@ -521,11 +521,11 @@ if __name__ == "__main__":
                 # for dtype in ['opex:cantabDMS','opex:cantabERT','opex:cantabMOT','opex:cantabPAL','opex:cantabSWM']:
                 #     xnat.delete_experiments(projectcode,dtype,{'status': 'COMPLETED'}) # 'status': 'SYSTEM_ERROR'
         except ValueError as e:
-            print("Error:", e)
+            print "Error:", e
 
         finally:
             xnat.conn.disconnect()
             print("FINISHED")
 
     else:
-        print("Failed to connect")
+        print "Failed to connect"

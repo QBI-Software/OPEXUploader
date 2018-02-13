@@ -113,24 +113,24 @@ class ReportDialog(dlgReports):
             op.xnat = xnat
             msg = "Generating CANTAB report ..."
             logging.info(msg)
-            print(msg)
+            print msg
             if op.generateCantabReport(projectcode=self.proj, outputdir=downloaddirname, deltas=deltas):
                 msg = "***CANTAB report Completed: %s" % downloaddirname
                 logging.info(msg)
             else:
                 msg = "Error during CANTAB report"
                 logging.error(msg)
-            print(msg)
+            print msg
             msg = "Generating BLOOD report ..."
             logging.info(msg)
-            print(msg)
+            print msg
             if op.generateBloodReport(projectcode=self.proj, outputdir=downloaddirname, deltas=deltas):
                 msg = "***BLOOD report Completed: %s" % downloaddirname
                 logging.info(msg)
             else:
                 msg = "Error during BLOOD report"
                 logging.error(msg)
-            print(msg)
+            print msg
 
     def OnCloseDlg(self, event):
         self.Destroy()
@@ -235,7 +235,7 @@ class ConfigDialog(dlgConfig):
         if dlg.ShowModal() == wx.ID_OK:
             cfile = str(dlg.GetPath())
             self.load(cfile)
-            print('Config file loaded')
+            print 'Config file loaded'
         dlg.Destroy()
 
     def OnSaveConfig(self, event):
@@ -251,7 +251,7 @@ class ConfigDialog(dlgConfig):
             passwd = self.txtPass.GetValue()
             self.config[self.chConfig.GetValue()] = {'URL': url, 'USER': user, 'PASS': passwd}
             self.config.write()
-            print('Config file updated')
+            print 'Config file updated'
 
         self.Close()
 
@@ -265,7 +265,7 @@ class ConfigDialog(dlgConfig):
         if self.config is not None:
             del self.config[ref]
             self.config.write()
-            print('Config setting removed')
+            print 'Config setting removed'
             self.load(configfile=self.config.filename)
 
 
@@ -532,12 +532,12 @@ class OPEXUploaderGUI(UploaderGUI):
             uploader.xnatconnect()
             msg = 'Connecting to Server:%s Project:%s' % (uploader.args.database, uploader.args.projectcode)
             logging.info(msg)
-            print(msg)
+            print msg
 
             try:
                 if uploader.xnat.testconnection():
                     logging.info("...Connected")
-                    print("...Connected")
+                    print "...Connected"
                     uploader.runDataUpload(proj, self.dirname, runoption)
                 else:
                     raise ConnectionError('Not connected')
@@ -545,16 +545,16 @@ class OPEXUploaderGUI(UploaderGUI):
 
             except IOError as e:
                 logging.error(e)
-                print("Failed IO:", e)
+                print "Failed IO:", e
             except ConnectionError as e:
                 logging.error(e)
-                print("Failed connection:", e)
+                print "Failed connection:", e
             except ValueError as e:
                 logging.error(e)
-                print("ValueError:", e)
+                print "ValueError:", e
             except Exception as e:
                 logging.error(e)
-                print("ERROR:", e)
+                print "ERROR:", e
             finally:  # Processing complete
                 uploader.xnatdisconnect()
                 logging.info("FINISHED")

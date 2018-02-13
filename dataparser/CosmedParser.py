@@ -123,7 +123,7 @@ class CosmedParser():
                 else:
                     msg = 'Dyspnea column missing in %s' % filename
                     logging.error(msg)
-                    print msg
+                    print(msg)
                     df_file_data.insert(len(df_file_data.columns),'Dyspnea','')
                 df_data_ex = df_file_data[df_file_data['Phase'] == 'EXERCISE']
                 df_data_rec = df_file_data[df_file_data['Phase'] == 'RECOVERY']
@@ -140,7 +140,7 @@ class CosmedParser():
                 effdata = self.parseEfficiency(self.effdata, fdata[0], self.effdata_cols[fdata[1]])
                 recoverydata = self.calcRecovery(df_data_ex, df_data_rec)
                 row = fdata + protocoldata + metabolicdata + cardiodata + effdata + recoverydata
-                print "Row: ", row
+                print("Row: ", row)
 
                 if not self.testonly:
                     # Generate phase data as separate tab
@@ -150,7 +150,7 @@ class CosmedParser():
                 # Create dataframe with dict in one hist - more efficient
                 self.df = pd.DataFrame.from_dict(self.data)
                 msg = "COSMED Data Load completed: %d files [%d rows]" % (len(self.files),len(self.df))
-                print msg
+                print(msg)
                 logging.info(msg)
                 #output dataframe to csv
                 now = datetime.now()
@@ -162,13 +162,13 @@ class CosmedParser():
             else:
                 raise ValueError("Error: Data load failed")
         except Exception as e:
-            print len(self.data), ' files loaded'
+            print(len(self.data), ' files loaded')
             if f is not None:
                 msg = 'ERROR in File: %s - %s' % (f, e)
             else:
                 msg = e
             logging.error(msg)
-            print msg
+            print(msg)
         finally:
 
             return rtn
@@ -425,7 +425,7 @@ class CosmedParser():
         except Exception as e:
             msg = 'File: %s - %s ' % (f, e)
             logging.error(msg)
-            print msg
+            print(msg)
         finally:
             msg = 'Phase data DONE: %s' % fparts[1]
             logging.debug(msg)
@@ -531,16 +531,16 @@ if __name__ == "__main__":
         dp.sortSubjects()
 
         for sd in dp.subjects:
-            print '\n***********SubjectID:', sd
+            print('\n***********SubjectID:', sd)
             for i, row in dp.subjects[sd].items():
                 sampleid = dp.getSampleid(sd, i)
-                print 'Sampleid: ', sampleid
+                print('Sampleid: ', sampleid)
                 (mandata, data) = dp.mapData(row, i, xsd)
-                print 'MANDATA: ', mandata
-                print 'DATA: ', data
+                print('MANDATA: ', mandata)
+                print('DATA: ', data)
 
     else:
-        print "Cannot access directory: ", inputdir
+        print("Cannot access directory: ", inputdir)
         inputdir = "..\\..\\" + inputdir
         if access(inputdir, R_OK):
-            print "But can access this one: ", inputdir
+            print("But can access this one: ", inputdir)
