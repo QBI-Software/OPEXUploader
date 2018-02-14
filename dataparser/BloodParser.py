@@ -15,6 +15,7 @@ import glob
 from datetime import datetime
 from os import R_OK, access
 from os.path import join
+from resources.dbquery import DBI
 
 import pandas
 
@@ -30,13 +31,9 @@ class BloodParser(DataParser):
         self.type=''
         if 'type' in kwargs:
             self.type = kwargs.get('type')
-        fields = join(self.resource_dir, 'blood_fields.csv')
-        if not access(fields,R_OK):
-            raise IOError('BloodParser: Cannot load fields')
-        try:
-            df = pandas.read_csv(fields, header=0)
-            self.fields = df[self.type]
-            self.fields.dropna(inplace=True)
+            if self.fields is None or len(self.fields)<=0:
+                self.fields = self.getFieldsFromFile(self.type)
+
             # Multiplex has different headers vs Cobas
             if self.type == 'MULTIPLEX':
                 print('Headers for ', self.type)
@@ -68,14 +65,22 @@ class BloodParser(DataParser):
             if self.subjects is not None:
                 print('BloodParser: subjects loaded successfully')
 
-        except:
-            raise ValueError("Cannot load fieldnames")
    
-
-    # def getxsd(self):
-    #     return {"COBAS":'opex:bloodCobasData',
-    #             "MULTIPLEX": 'opex:bloodMultiplexData',
-    #             "ELISAS": 'opex:bloodElisasData'}
+    def getFieldsFromFile(self, type):
+        """
+        Get list of fields for subtype
+        :param self:
+        :return:
+        """
+        fields=[]
+        try:
+            fieldsfile = join(self.resource_dir, 'blood_fields.csv')
+            df = pandas.read_csv(fieldsfile, header=0)
+            fields = df[self.type]
+            fields.dropna(inplace=True)
+        except Exception as e:
+            raise e
+        return fields
 
     def getPrepostOptions(self,i):
         options = ['fasted', 'pre', 'post']

@@ -31,7 +31,7 @@ from numpy import isnan, nan
 from requests.exceptions import ConnectionError
 
 from dataparser.AcerParser import AcerParser
-from dataparser.AmunetParser import AmunetParser,generateAmunetdates
+from dataparser.AmunetParser import AmunetParser, generateAmunetdates
 from dataparser.BloodParser import BloodParser
 from dataparser.CantabParser import CantabParser
 from dataparser.CosmedParser import CosmedParser
@@ -45,6 +45,7 @@ from dataparser.InsomniaParser import InsomniaParser
 from xnatconnect.XnatConnector import XnatConnector
 
 from logging.handlers import RotatingFileHandler
+
 
 class OPEXUploader():
     def __init__(self, args, logfile=None):
@@ -196,7 +197,8 @@ class OPEXUploader():
         else:
             msg = 'Amunet experiment already exists: ' + motid
         return msg
-    #------------------------------------------------------------------------------------
+
+    # ------------------------------------------------------------------------------------
     def uploadData(self, project, dp):
         """
         Upload data via specific Data parser
@@ -205,7 +207,7 @@ class OPEXUploader():
         """
         missing = []
         matches = []
-        if dp.subjects is None or len(dp.subjects) <=0:
+        if dp.subjects is None or len(dp.subjects) <= 0:
             dp.sortSubjects()
         for sd in dp.subjects:
             print('*****SubjectID:', sd)
@@ -215,8 +217,9 @@ class OPEXUploader():
                     # create subject in database
                     skwargs = dp.getSubjectData(sd)
                     s = self.xnat.createSubject(projectcode, sd, skwargs)
-                    logging.info('Subject created: ' + sd)
-                    print('Subject created: ' + sd)
+                    msg = 'Subject CREATED: %s' % sd
+                    logging.info(msg)
+                    print(msg)
                 else:
                     missing.append({"ID": sd, "rows": dp.subjects[sd]})
                     msg = 'Subject does not exist - skipping: %s' % sd
@@ -302,8 +305,8 @@ class OPEXUploader():
                                 (mandata, data) = dp.mapData(row, i, xsd)
                                 # print mandata
                                 # print data
-                                if hasattr(dp,'opex'):
-                                    p = dp.opex['prefix'][dp.opex['xsitype'] == xsd] #Series
+                                if hasattr(dp, 'opex'):
+                                    p = dp.opex['prefix'][dp.opex['xsitype'] == xsd]  # Series
                                     prefix = p.values[0]
                                 else:
                                     prefix = dp.type
@@ -312,7 +315,7 @@ class OPEXUploader():
                                 if 'created' in msg:
                                     print(msg)
                             else:  # cantab
-                                if  ('NOT_RUN' in row.values) or ('ABORTED' in row.values):
+                                if ('NOT_RUN' in row.values) or ('ABORTED' in row.values):
                                     msg = "Skipping due to ABORT or NOT RUN: %s" % sampleid
                                     logging.warning(msg)
                                     print(msg)
@@ -329,7 +332,7 @@ class OPEXUploader():
                     raise ValueError(e)
         return (missing, matches)
 
-    def runDataUpload(self, projectcode,inputdir,datatype):
+    def runDataUpload(self, projectcode, inputdir, datatype):
         """
         Data upload template
         :param projectcode:
@@ -365,7 +368,7 @@ class OPEXUploader():
                             msg = "Reports created: \n\t%s\n\t%s" % (out1, out2)
                             print(msg)
                             logging.info(msg)
-            #---------------------------------------------------------------------#
+            # ---------------------------------------------------------------------#
             elif datatype == 'amunet':
                 sheet = 0
                 topinputdir = inputdir
@@ -388,9 +391,6 @@ class OPEXUploader():
                             break
                     if len(dates_uri) <= 0:
                         raise ValueError('No dates file found - exiting')
-                    # Temporary replace TODO remove this
-                    if dates_uri.startswith("Q:"):
-                        dates_uri = dates_uri.replace("Q:","Z:")
                     dates_csv = generateAmunetdates(dates_uri, basedatesfile, interval)
 
                     if dates_csv is not None:
@@ -425,7 +425,7 @@ class OPEXUploader():
                 print("Files:", len(files))
                 for f2 in files:
                     print("Loading ", f2)
-                    dp = AcerParser(f2, sheet,skip,header,etype)
+                    dp = AcerParser(f2, sheet, skip, header, etype)
                     (missing, matches) = self.uploadData(project, dp)
                     # Output matches and missing
                     if len(matches) > 0 or len(missing) > 0:
@@ -436,17 +436,26 @@ class OPEXUploader():
             # ---------------------------------------------------------------------#
             elif datatype == 'mridata':
                 seriespattern = '*.csv'
-                sheet = 1  # "1"
+                sheet = 1
+                skip = 0
+                header = None
+                etype = 'MRI '
                 files = glob.glob(join(inputdir, seriespattern))
                 print("Files:", len(files))
                 for f2 in files:
                     print("Loading ", f2)
-                    dp = MridataParser(f2, sheet)
+                    if 'ASHS' in f2:
+                        etype += 'ASHS'
+                    elif 'FreeSurf' in f2:
+                        etype += 'FS'
+                    else:
+                        raise ValueError("Cannot determine MRI type")
+                    dp = MridataParser(f2, sheet, skip, header, etype)
                     (missing, matches) = self.uploadData(project, dp)
                     # Output matches and missing
                     if len(matches) > 0 or len(missing) > 0:
                         (out1, out2) = self.outputChecks(projectcode, matches, missing, inputdir,
-                                                             f2)
+                                                         f2)
                         msg = "Reports created: \n\t%s\n\t%s" % (out1, out2)
                         print(msg)
                         logging.info(msg)
@@ -584,14 +593,14 @@ class OPEXUploader():
             elif datatype == 'cosmed':
                 try:
                     f = open(join(inputdir, 'xnatpaths.txt'))
-                    paths ={}
+                    paths = {}
                     for p in f.readlines():
                         p = p.rstrip()
-                        (k,v) = p.split('=')
+                        (k, v) = p.split('=')
                         paths[k] = v
-                    inputsubdir = join(paths['datadir'],paths['subdata'])
-                    datafile = join(paths['datadir'],paths['datafile'])  # 'VO2data_VEVCO2_20171009.xlsx'
-                    msg = 'COSMED: Datafile= %s \nTime series for files in %s ' % (datafile, inputsubdir )
+                    inputsubdir = join(paths['datadir'], paths['subdata'])
+                    datafile = join(paths['datadir'], paths['datafile'])  # 'VO2data_VEVCO2_20171009.xlsx'
+                    msg = 'COSMED: Datafile= %s \nTime series for files in %s ' % (datafile, inputsubdir)
                     logging.info(msg)
                     print(msg)
 
@@ -603,10 +612,10 @@ class OPEXUploader():
                         # Output matches and missing
                         if len(matches) > 0 or len(missing) > 0:
                             (out1, out2) = self.outputChecks(projectcode,
-                                                                 matches,
-                                                                 missing,
-                                                                 inputdir,
-                                                                 datafile)
+                                                             matches,
+                                                             missing,
+                                                             inputdir,
+                                                             datafile)
                             msg = "Reports created: \n\t%s\n\t%s" % (out1, out2)
                             print(msg)
                             logging.info(msg)
@@ -615,7 +624,7 @@ class OPEXUploader():
                     raise ValueError(msg)
             # ---------------------------------------------------------------------#
             elif datatype == 'visit':
-                inputfile = join(inputdir,'Visits.xlsx')
+                inputfile = join(inputdir, 'Visits.xlsx')
                 try:
                     dp = VisitParser(inputfile, 0, 1)
                     dp.processData()
@@ -628,11 +637,12 @@ class OPEXUploader():
                 except Exception as e:
                     raise ValueError(e)
 
-            return (missing,matches)
+            return (missing, matches)
         else:
             msg = "Input directory error: %s" % inputdir
             logging.error(msg)
             raise IOError(msg)
+
 
 def create_parser():
     parser = argparse.ArgumentParser(prog='OPEX Uploader',
@@ -651,6 +661,8 @@ def create_parser():
     parser.add_argument('--update', action='store_true', help='Also update existing data')
     parser.add_argument('--create', action='store_true', help='Create Subject from input data if not exists')
     return parser
+
+
 ########################################################################
 if __name__ == "__main__":
 
@@ -686,7 +698,6 @@ if __name__ == "__main__":
                 projlist = uploader.xnat.list_projects()
                 for p in projlist:
                     print("Project: ", p.id())
-
 
             ################ Upload expt data ################
             runoption = args.expt

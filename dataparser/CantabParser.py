@@ -26,8 +26,8 @@ class CantabParser(DataParser):
     def __init__(self, *args):
         DataParser.__init__(self, *args)
         try:
-            fields = join(self._DataParser__findResourcesdir(), 'cantab_fields.csv')
-            self.cantabfields = pandas.read_csv(fields, header=0)
+            # fields = join(self._DataParser__findResourcesdir(), 'cantab_fields.csv')
+            # self.cantabfields = pandas.read_csv(fields, header=0)
             self.sortSubjects('Participant ID')
         except Exception as e:
             print(e)
@@ -126,7 +126,8 @@ class CantabParser(DataParser):
             xsd + '/comments': str(row[self.getCommentstring()[type]])
         }
         motdata={}
-        for ctab in self.cantabfields[type].dropna():
+        cantabfields = self.dbi.getFields('CANTAB ' + type)
+        for ctab in cantabfields:
             motdata[xsd + '/' + ctab] = str(row[ctab])
         return (mandata, motdata)
 

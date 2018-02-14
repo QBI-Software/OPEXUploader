@@ -4,9 +4,9 @@
 import sqlite3
 import pandas
 
-
+DBNAME = 'opexconfig_test.db'
 def setupDB():
-    conn = sqlite3.connect('opexconfig.db')
+    conn = sqlite3.connect(DBNAME)
     c = conn.cursor()
 
     # Create table
@@ -43,7 +43,7 @@ def setupDB():
     conn.close()
 
 def setupFields():
-    conn = sqlite3.connect('opexconfig.db')
+    conn = sqlite3.connect(DBNAME)
     c = conn.cursor()
 
     # Create table
@@ -61,7 +61,7 @@ def setupFields():
     conn.close()
 
 def loadFields():
-    conn = sqlite3.connect('opexconfig.db')
+    conn = sqlite3.connect(DBNAME)
     c = conn.cursor()
     # Load fields files
     csvfiles = {'BLOOD': 'blood_fields.csv','CANTAB':'cantab_fields.csv','ASHS and Freesurfer': 'MRI_fields.csv'}
@@ -82,7 +82,7 @@ def loadFields():
     conn.close()
 
 def setupIDs():
-    conn = sqlite3.connect('opexconfig.db')
+    conn = sqlite3.connect(DBNAME)
     c = conn.cursor()
     df = pandas.read_csv('incorrectIds.csv')
     # Create table
@@ -97,7 +97,7 @@ def setupIDs():
     conn.close()
     
 def checkDB():
-    conn = sqlite3.connect('opexconfig.db')
+    conn = sqlite3.connect(DBNAME)
     c = conn.cursor()
     t = ('CANTAB',)
     c.execute('SELECT * FROM expts WHERE name=?', t)

@@ -255,7 +255,7 @@ def generateAmunetdates(dirpath, filename, interval):
             print(e)
             raise ValueError("Unable to access file for writing: ", e)
     else:
-        raise IOError("Cannot access amunet directory")
+        raise IOError("Cannot access amunet directory:",dirpath)
 
     return csvfile
 

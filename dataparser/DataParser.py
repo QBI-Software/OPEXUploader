@@ -18,28 +18,54 @@ from os.path import join, basename, splitext, dirname, abspath
 
 import pandas
 import logging
-
+from resources.dbquery import DBI
 
 class DataParser(object):
     def __init__(self, datafile, sheet=0,skiplines=0, header=None, etype=None):
         self.datafile = datafile #full pathname to data file
         self.resource_dir = self.__findResourcesdir()
+        configdb = join(self.resource_dir, 'opexconfig.db')
+        if not access(configdb,R_OK):
+            print(configdb)
+            raise IOError('Cannot find config database')
+        try:
+            self.dbi = DBI(configdb)
+            if etype is not None:
+                self.info = self.dbi.getInfo(etype)
+                self.fields = self.dbi.getFields(etype)
+            else:
+                self.info = None
+                self.fields = None
+            self.subjects = None
+            #self.incorrect = self.dbi.getIDs()
+            if (datafile is not None and len(datafile)> 0):
+                (bname, extn)= splitext(basename(datafile))
+                self.ftype = extn #extension - xlsx or csv
+                self.sheet = sheet
+                self.skiplines = skiplines
+                self.header = header
+                self._loadData()
+        except Exception as e:
+            raise e
+
+    def getInfoFromFile(self, etype):
         # Read expt info
-        self.opex = pandas.read_csv(join(self.resource_dir, 'opex.csv'))
-        if etype is not None:
-            self.info = self.opex[self.opex['Expt']==etype]
-        else:
-            self.info = None
-        # Replace incorrect ids
-        self.incorrect = pandas.read_csv(join(self.resource_dir, 'incorrectIds.csv'))
-        self.subjects = None
-        if (datafile is not None and len(datafile)> 0):
-            (bname, extn)= splitext(basename(datafile))
-            self.ftype = extn #extension - xlsx or csv
-            self.sheet = sheet
-            self.skiplines = skiplines
-            self.header = header
-            self._loadData()
+        info = None
+        try:
+            opex = pandas.read_csv(join(self.resource_dir, 'opex.csv'))
+            info = opex[opex['Expt'] == etype]
+        except Exception as e:
+            raise ValueError("Unable to get expt info from file", e)
+        return info
+
+    def getIdsFromFile(self):
+        # Read expt info
+        info = None
+        try:
+            info = pandas.read_csv(join(self.resource_dir, 'incorrectIds.csv'))
+        except Exception as e:
+            raise ValueError("Unable to get ids from file", e)
+        return info
 
     def __findResourcesdir(self):
         resource_dir = glob.glob(join(dirname(__file__), "resources"))
@@ -52,13 +78,18 @@ class DataParser(object):
         return abspath(resource_dir[0])
 
     def __checkSID(self,sid):
-        rsid = sid
-        if not self.incorrect.empty:
-            r = self.incorrect[self.incorrect.INCORRECT == sid]
-            if not r.empty:
-                rsid = r.CORRECT.values[0]
+        """
+        Replace known incorrect IDs from db
+        :param sid:
+        :return:
+        """
+        if self.dbi is not None:
+            rsid = self.dbi.getCorrectID(sid)
+            if rsid != sid:
                 msg ='Subject: %s corrected to %s' % (sid,rsid)
                 logging.warning(msg)
+        else:
+            rsid = sid
         return rsid
 
     def _loadData(self):
@@ -88,15 +119,16 @@ class DataParser(object):
              - this should be overwritten if the data is organized differently
         '''
         self.subjects = dict()
-        if subjectfield not in self.data.columns:
-            raise ValueError('Subject ID field not present: ', subjectfield)
         if self.data is not None:
+            if subjectfield not in self.data.columns:
+                raise ValueError('Subject ID field not present: ', subjectfield)
             ids = self.data[subjectfield].unique()
             for sid in ids:
                 if len(str(sid)) == 6:
                     sidkey = self.__checkSID(sid)
                     self.subjects[sidkey] = self.data[self.data[subjectfield] == sid]
-            print('Subjects loaded=', len(self.subjects))
+            msg = 'Subjects loaded=%d' % len(self.subjects)
+            print(msg)
 
     def formatDobNumber(self, orig):
         """
@@ -118,16 +150,14 @@ class DataParser(object):
     def getPrefix(self):
         prefix=None
         if self.info is not None:
-            prefix = self.info['prefix'].values[0]
+            prefix = self.info['prefix']
         return prefix
 
     def getxsd(self):
         xsd = None
         if self.info is not None:
-            xsd = self.info['xsitype'].values[0]
+            xsd = self.info['xsitype']
         return xsd
-
-
 
 
 def convertExcelDate(orig):
@@ -148,40 +178,3 @@ def stripspaces(row,column):
     """
     val = str(row[column])
     return val.replace(" ",'')
-########################################################################
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(prog='Parse Water Maze (Amunet) Files',
-                                     description='''\
-            Reads files in a directory and extracts data ready to load to XNAT database
-
-             ''')
-    parser.add_argument('--filedir', action='store', help='Directory containing files',
-                        default="..\\sampledata\\cantab")
-    parser.add_argument('--sheet', action='store', help='Sheet name to extract', default="1")
-    args = parser.parse_args()
-
-    inputdir = args.filedir
-    outputfile = args.report
-    sheet = args.sheet
-    print("Input:", inputdir)
-    if access(inputdir, R_OK):
-        seriespattern = '*.*'
-
-        try:
-            files = glob.glob(join(inputdir, seriespattern))
-            print("Files:", len(files))
-            for f2 in files:
-                print("Loading", f2)
-                dp = DataParser(f2, sheet)
-                dp.sortSubjects()
-                print('Subject summary:', len(dp.subjects))
-
-        except ValueError as e:
-            print("Sheet not found: ", e)
-
-        except:
-            raise OSError
-
-    else:
-        print("Cannot access directory: ", inputdir)

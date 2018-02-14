@@ -58,17 +58,16 @@ class DexaParser(DataParser):
         '''Sort data into subjects by participant ID'''
         self.subjects = dict()
         if self.df is not None:
-            sids = self.df[0][subjectfield].unique()
-            ids = [i for i in sids if len(i) == 6]
+            ids = self.df[0][subjectfield].unique()
             for sid in ids:
-                sidkey = self._DataParser__checkSID(sid)
-                self.subjects[sidkey] = dict()
-                for i, intval in self.intervals.items():
-                    data = self.df[i]
-                    self.subjects[sidkey][i]= data[data[subjectfield] == sid]
-                if DEBUG:
-                    print('Subject:', sid, 'with datasets=', len(self.subjects[sid]))
-            print('Subjects loaded=', len(self.subjects))
+                if len(str(sid)) == 6:
+                    sidkey = self._DataParser__checkSID(sid)
+                    self.subjects[sidkey] = dict()
+                    for i, intval in self.intervals.items():
+                        data = self.df[i]
+                        self.subjects[sidkey][i]= data[data[subjectfield] == sid]
+            msg = 'Subjects loaded=%d' % len(self.subjects)
+            print(msg)
 
 
     def getSampleid(self, sd, interval):
