@@ -118,21 +118,22 @@ if __name__ == "__main__":
             print("Loading ", inputfile)
             dp = GodinParser(inputfile, sheet, skip, header, etype)
             xsdtypes = dp.getxsd()
-            intervals = range(0, 11, 3)
+            intervals = range(0, 13, 3)
             for sd in dp.subjects:
                 print('\n***********SubjectID:', sd)
                 for i in intervals:
                     print('Interval:', i)
                     iheaders = [c + "_" + str(i) for c in dp.fields]
                     sampleid = dp.getSampleid(sd, i)
-                    print('Sampleid:', sampleid)
                     row = dp.subjects[sd]
-                    if not dp.validData(row[iheaders].values.tolist()[0]):
-                        print('empty data - skipping')
-                        continue
-                    (mandata, data) = dp.mapData(row[iheaders], i, xsdtypes)
-                    print(mandata)
-                    print(data)
+                    if iheaders[0] in row.columns:
+                        print('Sampleid:', sampleid)
+                        if not dp.validData(row[iheaders].values.tolist()[0]):
+                            print('empty data - skipping')
+                            continue
+                        (mandata, data) = dp.mapData(row[iheaders], i, xsdtypes)
+                        print(mandata)
+                        print(data)
 
         except Exception as e:
             print("Error: ", e)

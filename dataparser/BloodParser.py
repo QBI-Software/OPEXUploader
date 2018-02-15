@@ -31,8 +31,9 @@ class BloodParser(DataParser):
         self.type=''
         if 'type' in kwargs:
             self.type = kwargs.get('type')
-            if self.fields is None or len(self.fields)<=0:
-                self.fields = self.getFieldsFromFile(self.type)
+            self.fields = self.dbi.getFields(self.type)
+            self.info = self.dbi.getInfo(self.type)
+            #self.fields = self.getFieldsFromFile(self.type)
 
             # Multiplex has different headers vs Cobas
             if self.type == 'MULTIPLEX':

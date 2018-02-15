@@ -65,10 +65,26 @@ class TestDBquery(unittest.TestCase):
         data = self.dbi.getDatelessExpts()
         self.assertGreater(len(data), 0)
 
+    def test_getExpts(self):
+        data = self.dbi.getExpts()
+        self.assertGreater(len(data), 0)
+
     def test_getXsitypeFromPrefix(self):
         prefix ='MPX'
         expected ='opex:bloodMultiplexData'
         data = self.dbi.getXsitypeFromPrefix(prefix)
+        self.assertEqual(expected,data)
+
+    def test_getTotal(self):
+        expt ='Godin'
+        expected = 5
+        data = self.dbi.getTotal(expt)
+        self.assertEqual(expected,data)
+
+    def test_getInterval(self):
+        expt ='Godin'
+        expected = 5
+        data = self.dbi.getInterval(expt)
         self.assertEqual(expected,data)
 
 

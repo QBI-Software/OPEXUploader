@@ -21,7 +21,7 @@ import logging
 from resources.dbquery import DBI
 
 class DataParser(object):
-    def __init__(self, datafile, sheet=0,skiplines=0, header=None, etype=None):
+    def __init__(self, datafile=None, sheet=0,skiplines=0, header=None, etype=None):
         self.datafile = datafile #full pathname to data file
         self.resource_dir = self.__findResourcesdir()
         configdb = join(self.resource_dir, 'opexconfig.db')

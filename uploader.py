@@ -232,103 +232,91 @@ class OPEXUploader():
             matches.append(sd)
             if self.args.checks is None or not self.args.checks:  # Don't upload if checks
                 try:
-                    xsdtypes = dp.getxsd()
-                    if 'dexa' in xsdtypes:
+                    xsd = dp.getxsd()
+                    if dp.info is None: #cantab
+                        xsdtypes = xsd
+                        for i, row in dp.subjects[sd].iterrows():
+                            sampleid = dp.getSampleid(sd, row)
+                            row.replace(nan, '', inplace=True)
+                            if ('NOT_RUN' in row.values) or ('ABORTED' in row.values):
+                                msg = "Skipping due to ABORT or NOT RUN: %s" % sampleid
+                                logging.warning(msg)
+                                print(msg)
+                                continue
+                            for type in xsdtypes.keys():
+                                (mandata, data) = dp.mapData(row, i, type)
+                                xsd = xsdtypes[type]
+                                msg = self.loadSampledata(s, xsd, type + "_" + sampleid, mandata, data)
+                                logging.info(msg)
+                                if 'created' in msg:
+                                    print(msg)
+                    elif 'dexa' in xsd:
                         checkfield = dp.fields['Field'][0]  # test if data in row
                         for i, row in dp.subjects[sd].items():
                             if checkfield in row and not isnan(row[checkfield].iloc[0]):
                                 print('Interval:', dp.intervals[i])
                                 sampleid = dp.getSampleid(sd, i)
-                                (mandata, data) = dp.mapData(row, i, xsdtypes)
-                                msg = self.loadSampledata(s, xsdtypes, sampleid, mandata, data)
+                                (mandata, data) = dp.mapData(row, i, xsd)
+                                msg = self.loadSampledata(s, xsd, sampleid, mandata, data)
                                 logging.info(msg)
                                 if 'created' in msg:
                                     print(msg)
-                    elif 'dass' in xsdtypes:
-                        intervals = range(0, 13, 3)
+                    elif 'dass' in xsd or 'godin' in xsd:
+                        maxmth = 12
+                        intervals = range(0, maxmth+1, 3)
                         for i in intervals:
                             iheaders = [c + "_" + str(i) for c in dp.fields]
                             sampleid = dp.getSampleid(sd, i)
                             row = dp.subjects[sd]
-                            if dp.validData(row[iheaders].values.tolist()[0]):
-                                (mandata, data) = dp.mapData(row[iheaders], i, xsdtypes)
-                                msg = self.loadSampledata(s, xsdtypes, sampleid, mandata, data)
-                                logging.info(msg)
-                                if 'created' in msg:
-                                    print(msg)
-                    elif 'godin' in xsdtypes:
-                        intervals = range(0, 11, 3)
-                        for i in intervals:
-                            iheaders = [c + "_" + str(i) for c in dp.fields]
-                            sampleid = dp.getSampleid(sd, i)
-                            row = dp.subjects[sd]
-                            if dp.validData(row[iheaders].values.tolist()[0]):
-                                (mandata, data) = dp.mapData(row[iheaders], i, xsdtypes)
-                                msg = self.loadSampledata(s, xsdtypes, sampleid, mandata, data)
-                                logging.info(msg)
-                                if 'created' in msg:
-                                    print(msg)
+                            if iheaders[0] in row.columns:
+                                if dp.validData(row[iheaders].values.tolist()[0]):
+                                    (mandata, data) = dp.mapData(row[iheaders], i, xsd)
+                                    msg = self.loadSampledata(s, xsd, sampleid, mandata, data)
+                                    logging.info(msg)
+                                    if 'created' in msg:
+                                        print(msg)
 
-                    elif 'insomnia' in xsdtypes or 'psqi' in xsdtypes:
+                    elif 'insomnia' in xsd or 'psqi' in xsd:
                         i = dp.interval
                         sampleid = dp.getSampleid(sd, i)
                         print('Sampleid:', sampleid)
                         row = dp.subjects[sd]
                         if dp.validData(row[dp.fields].values.tolist()[0]):
-                            (mandata, data) = dp.mapData(row, i, xsdtypes)
-                            msg = self.loadSampledata(s, xsdtypes, sampleid, mandata, data)
+                            (mandata, data) = dp.mapData(row, i, xsd)
+                            msg = self.loadSampledata(s, xsd, sampleid, mandata, data)
                             logging.info(msg)
                             if 'created' in msg:
                                 print(msg)
-                    elif 'cosmed' in xsdtypes:
+                    elif 'cosmed' in xsd:
                         for i, row in dp.subjects[sd].items():
                             row.replace(nan, '', inplace=True)
                             sampleid = dp.getSampleid(sd, i)
                             if sampleid in ['COS_1021LB_0', 'COS_1021LB_3']:
                                 continue
-                            (mandata, data) = dp.mapData(row, i, xsdtypes)
+                            (mandata, data) = dp.mapData(row, i, xsd)
 
-                            msg = self.loadSampledata(s, xsdtypes, sampleid, mandata, data)
+                            msg = self.loadSampledata(s, xsd, sampleid, mandata, data)
                             logging.info(msg)
                             if 'created' in msg:
                                 print(msg)
-                    else:
+                    elif 'amunet' in xsd:
                         for i, row in dp.subjects[sd].iterrows():
                             sampleid = dp.getSampleid(sd, row)
                             row.replace(nan, '', inplace=True)
+                            msg = self.loadAMUNETdata(sampleid, i, row, s, dp)
+                            logging.info(msg)
+                            if 'created' in msg:
+                                print(msg)
+                    elif ('mrifs' in xsd or 'blood' in xsd):
+                        for i, row in dp.subjects[sd].iterrows():
+                            sampleid = dp.getPrefix() + "_" + dp.getSampleid(sd, row)
+                            row.replace(nan, '', inplace=True)
+                            (mandata, data) = dp.mapData(row, i, xsd)
+                            msg = self.loadSampledata(s, xsd, sampleid, mandata, data)
+                            logging.info(msg)
+                            if 'created' in msg:
+                                print(msg)
 
-                            if ('amunet' in xsdtypes):
-                                msg = self.loadAMUNETdata(sampleid, i, row, s, dp)
-                                logging.info(msg)
-                                if 'created' in msg:
-                                    print(msg)
-                            elif ('FS' in xsdtypes or 'COBAS' in xsdtypes):
-                                xsd = dp.getxsd()[dp.type]
-                                (mandata, data) = dp.mapData(row, i, xsd)
-                                # print mandata
-                                # print data
-                                if hasattr(dp, 'opex'):
-                                    p = dp.opex['prefix'][dp.opex['xsitype'] == xsd]  # Series
-                                    prefix = p.values[0]
-                                else:
-                                    prefix = dp.type
-                                msg = self.loadSampledata(s, xsd, prefix + "_" + sampleid, mandata, data)
-                                logging.info(msg)
-                                if 'created' in msg:
-                                    print(msg)
-                            else:  # cantab
-                                if ('NOT_RUN' in row.values) or ('ABORTED' in row.values):
-                                    msg = "Skipping due to ABORT or NOT RUN: %s" % sampleid
-                                    logging.warning(msg)
-                                    print(msg)
-                                    continue
-                                for type in xsdtypes.keys():
-                                    (mandata, data) = dp.mapData(row, i, type)
-                                    xsd = xsdtypes[type]
-                                    msg = self.loadSampledata(s, xsd, type + "_" + sampleid, mandata, data)
-                                    logging.info(msg)
-                                    if 'created' in msg:
-                                        print(msg)
                 except Exception as e:
                     logging.error(e.args[0])
                     raise ValueError(e)
@@ -507,12 +495,13 @@ class OPEXUploader():
                 sheet = 0
                 skip = 0
                 header = 2
+                etype='DASS'
                 seriespattern = 'DASS Data entry*.xlsx'
                 files = glob.glob(join(inputdir, seriespattern))
                 print("Files:", len(files))
                 for f2 in files:
                     print("Loading ", f2)
-                    dp = DassParser(f2, sheet, skip, header)
+                    dp = DassParser(f2, sheet, skip, header,etype)
                     (missing, matches) = self.uploadData(project, dp)
                     # Output matches and missing
                     if len(matches) > 0 or len(missing) > 0:

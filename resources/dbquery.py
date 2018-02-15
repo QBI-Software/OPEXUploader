@@ -116,6 +116,13 @@ class DBI():
 
         return info
 
+    def getExpts(self):
+        if self.c is None:
+            self.getconn()
+        self.c.execute("SELECT expt FROM expts")
+        data = [d[0] for d in self.c.fetchall()]
+        return data
+
     def getDatelessExpts(self):
         if self.c is None:
             self.getconn()
@@ -130,6 +137,19 @@ class DBI():
         data = self.c.fetchone()[0]
         return data
 
+    def getTotal(self,exptname):
+        if self.c is None:
+            self.getconn()
+        self.c.execute("SELECT total FROM expts WHERE expt=?",(exptname,))
+        data = self.c.fetchone()[0]
+        return data
+
+    def getInterval(self,exptname):
+        if self.c is None:
+            self.getconn()
+        self.c.execute("SELECT intervals FROM expts WHERE expt=?",(exptname,))
+        data = self.c.fetchone()[0]
+        return data
 
 
 if __name__ == "__main__":

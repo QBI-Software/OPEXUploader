@@ -48,13 +48,14 @@ import pandas as pd
 from openpyxl import load_workbook
 
 from dataparser.DataParser import stripspaces
-
-VERBOSE = 1
+from dataparser.DataParser import DataParser, stripspaces
+DEBUG = 0
 
 
 # Not using DataParser as too complex
-class CosmedParser():
+class CosmedParser(DataParser):
     def __init__(self, inputdir, inputsubdir, datafile, testonly=False):
+        DataParser.__init__(self,etype='COSMED')
         self.inputdir = inputdir
         self.testonly = testonly
         # Load fields
@@ -462,12 +463,8 @@ class CosmedParser():
         :param row: row data with unique number
         :return: id
         """
-        id = 'COS_' + sd + '_' + str(interval)
+        id = self.getPrefix() +'_' + sd + '_' + str(interval)
         return id
-
-    def getxsd(self):
-        xsd = 'opex:cosmed'
-        return xsd
 
     def mapData(self, row, i, xsd):
         """
@@ -512,7 +509,7 @@ if __name__ == "__main__":
             Reads files in a directory and extracts data for upload to XNAT
 
              ''')
-    parser.add_argument('--filedir', action='store', help='Directory containing xnatpaths.txt (paths for COSMED)', default="sampledata\\cosmed")
+    parser.add_argument('--filedir', action='store', help='Directory containing xnatpaths.txt (paths for COSMED)', default="..\\sampledata\\cosmed")
     parser.add_argument('--subdir', action='store', help='Full Subdirectory for individual files')
     parser.add_argument('--datafile', action='store', help='Full path to VEVCO2 file')
 

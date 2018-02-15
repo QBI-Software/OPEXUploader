@@ -24,30 +24,31 @@ import plotly.plotly as py
 import plotly.graph_objs as go
 from plotly import tools
 from plotly import offline
+from resources.dbquery import DBI
 #import cufflinks as cf
 
 
 class OPEXReport(object):
-    def __init__(self, subjects=None, csvfile=None):
+    def __init__(self, subjects=None):
         """
         List of subjects from XNAT as collection
         :param subjects:
         :param csvfile: spreadsheet export from OPEX subjects tab (with counts)
         """
         self.subjects = subjects
-        self.csvfile = csvfile
         self.subjectids = None
         self.data = None
         self.minmth = 0
         self.maxmth = 12
-        self.cache = csvfile
-        self.opex = self.__loadopexfile()
+        configdb = join(self.__findResourcesdir(), 'opexconfig.db')
+        if not access(configdb,R_OK):
+            raise IOError('Cannot find config database')
+        self.dbi = DBI(configdb)
+        self.expts = self.dbi.getExpts()
         self.xnat = None
         self.__loaddata()
 
     def __loaddata(self):
-        if self.csvfile is not None:
-            self.data = pandas.read_csv(self.csvfile)
         if self.subjects is not None:
             if isinstance(self.subjects, pandas.DataFrame):
                 self.subjectids = self.subjects['subject_label']
@@ -136,7 +137,8 @@ class OPEXReport(object):
         else:
             df = df.sort_values('CANTAB DMS', ascending=True)
         # plot - exclude Subject, m/f,hand,yob
-        cols = ['Group', 'Subject'] + list(self.opex['Expt'])
+        #cols = ['Group', 'Subject'] + list(self.opex['Expt'])
+        cols = ['Group', 'Subject'] + self.expts
         cols_present = [h for h in cols if h in df.columns]
         df = df[cols_present]
 
@@ -150,11 +152,11 @@ class OPEXReport(object):
         """
         result = []
         if subj is not None:
-            etypes = list(self.opex['xsitype'])  # self._expt_types()
+            #etypes = self._expt_types()
             result = [subj.attrs.get('group'), subj.label(), subj.attrs.get('gender')]
             counts = self.xnat.getExptCounts(subj)
-            for expt in list(self.opex['Expt']):
-                etype = etypes[expt]
+            for expt in self.expts:
+                etype = self.dbi.getInfo(expt)['xsitype']
                 if (etype in counts):
                     result.append(counts[etype])
                 else:
@@ -227,6 +229,8 @@ class OPEXReport(object):
                     criteria = [(etype + '/SUBJECT_ID', 'LIKE', '*'), 'AND']
                     df_expts = self.xnat.getSubjectsDataframe(projectcode, etype, fields, criteria)
                     if df_expts is not None:
+                        #Filter out invalid
+                        df_expts = df_expts[df_expts['data_valid'] != 'invalid']
                         msg = "Expt type: %s = %d expts" % (etype,len(df_expts))
                         logging.info(msg)
                         print(msg)
@@ -307,14 +311,12 @@ class OPEXReport(object):
             # rename columns
             df_counts.rename(columns={'sub_group': 'Group', 'subject_label': 'Subject', 'gender_text': 'M/F'},
                              inplace=True)
-            for i in range(len(self.opex)):
-                df_counts.rename(columns={self.opex['xsitype'].iloc[i]: self.opex['Expt'].iloc[i]}, inplace=True)
+            for expt in self.expts:
+                df_counts.rename(columns={self.dbi.getInfo(expt)['xsitype']: expt}, inplace=True)
             # reorder columns
-            headers = ['MONTH', 'Subject', 'Group', 'M/F'] + list(self.opex['Expt'])
+            headers = ['MONTH', 'Subject', 'Group', 'M/F'] + self.expts
             headers_present = [h for h in headers if h in df_counts.columns]
             df_counts = df_counts[headers_present]
-            # save to file as cache if db down
-            df_counts.to_csv(self.cache, index=False)
             print(df_counts.head())
 
         return df_counts
@@ -353,15 +355,13 @@ class OPEXReport(object):
         :param row:
         :return:
         """
-        for i, info in self.opex.iterrows():
-            # print row
-            hdr = info['Expt']
+        for hdr in self.expts:
             if hdr in row:
                 # if reached max - none missing
-                if row[hdr] >= info['total']:
+                if row[hdr] >= self.dbi.getTotal(hdr):#['total']:
                     row[hdr] = 0
                 else:
-                    row[hdr] = len(range(self.minmth, row['MONTH'], info['interval'])) - row[hdr]
+                    row[hdr] = len(range(self.minmth, row['MONTH'], self.dbi.getInterval(hdr))) - row[hdr]
         return row
 
     def printMissingExpts(self, projectcode=None):
@@ -376,7 +376,7 @@ class OPEXReport(object):
         # Filter groups
         if 'Group' in data.columns:
             data = data[data.Group != 'withdrawn']
-        headers = ['MONTH', 'Subject'] + list(self.opex['Expt'])
+        headers = ['MONTH', 'Subject'] + self.expts
         headers_present = [h for h in headers if h in data.columns]
         report = data[headers_present]
         if 'MONTH' not in report:
@@ -431,25 +431,6 @@ class OPEXReport(object):
         else:
             print("Done")
 
-    # def groupedBloodOutput(self, df_all, outputfile):
-    #     """
-    #     Output grouped data into Excel
-    #     :param df_all:
-    #     :return:
-    #     """
-    #     writer = pandas.ExcelWriter(outputfile, engine='xlsxwriter')
-    #     df_all.to_excel(writer, index=False, sheet_name='ALL')
-    #     df_grouped = df_all.groupby(by='group')
-    #     for group in ['AIT', 'MIT', 'LIT']:
-    #         df_gp = df_grouped.get_group(group)
-    #         df_gp_intervals = df_gp.groupby(by='interval')
-    #         for interval in sorted(list(df_gp_intervals.groups.keys())):
-    #             sheet = group + '_' + interval
-    #             # print sheet
-    #             df1 = df_gp_intervals.get_group(interval)
-    #             df1.to_excel(writer, index=False, sheet_name=sheet)
-    #     else:
-    #         print "Done"
 
     def generateCantabReport(self, projectcode, outputdir, deltas=None):
         """
@@ -457,17 +438,19 @@ class OPEXReport(object):
         :param outputdir:
         :return: true if OK
         """
-        etypes = ['opex:cantabDMS',
-                  'opex:cantabERT',
-                  'opex:cantabMOT',
-                  'opex:cantabPAL',
-                  'opex:cantabSWM']
+        self.dbi.c.execute("SELECT xsitype FROM expts WHERE name='CANTAB'")
+        etypes = [d[0] for d in self.dbi.c.fetchall()]
+        # ['opex:cantabDMS',
+        #           'opex:cantabERT',
+        #           'opex:cantabMOT',
+        #           'opex:cantabPAL',
+        #           'opex:cantabSWM']
         columns = ['xnat:subjectData/SUBJECT_LABEL',
                    'xnat:subjectData/SUB_GROUP',
                    'xnat:subjectData/GENDER_TEXT']
         outputname = "opex_CANTAB_ALL.xlsx"
-        cantabfields = pandas.read_csv(join(self.resource_dir, 'cantab_fields.csv'))
-        cantabfields.replace(np.nan, '', inplace=True)
+        # cantabfields = self.dbi.getFields(pandas.read_csv(join(self.resource_dir, 'cantab_fields.csv'))
+        # cantabfields.replace(np.nan, '', inplace=True)
         cantabcolumns = {'xnat_subjectdata_sub_group': 'group',
                          'xnat_subjectdata_subject_label': 'subject',
                          'age': 'age',
@@ -501,8 +484,10 @@ class OPEXReport(object):
                                                   right_on=['subject_id', 'interval'], copy=False)
             else:  # save combined output
                 allcolumns = cantabcolumns.values()
-                for header in cantabfields.columns:
-                    cfields = [c.lower() for c in cantabfields[header].values.tolist() if c != '']
+
+                for etype in etypes:
+                    cfields = self.dbi.getFields(etype)
+                    # [c.lower() for c in cantabfields[header].values.tolist() if c != '']
                     allcolumns += cfields
                     # print 'cantabfields', cantabfields[header]
                 df_all = df_all[allcolumns]
@@ -529,14 +514,14 @@ class OPEXReport(object):
         :return:
         """
         etypes = {'COBAS':'opex:bloodCobasData',
-                  'ELISAS':'opex:bloodElisasData',
+                  #'ELISAS':'opex:bloodElisasData',
                   'MULTIPLEX':'opex:bloodMultiplexData'}
         columns = ['xnat:subjectData/SUBJECT_LABEL',
                    'xnat:subjectData/SUB_GROUP',
                    'xnat:subjectData/GENDER_TEXT']
         outputfile = join(outputdir,"opex_BLOOD_PREPOST.xlsx")
-        datafields = pandas.read_csv(join(self.resource_dir, 'blood_fields.csv'))
-        datafields.replace(np.nan, '', inplace=True)
+        # datafields = self.dbi.getFields(etype)pandas.read_csv(join(self.resource_dir, 'blood_fields.csv'))
+        # datafields.replace(np.nan, '', inplace=True)
 
         datacolumns = {'xnat_subjectdata_sub_group': 'group',
                        'xnat_subjectdata_subject_label': 'subject',
@@ -552,8 +537,9 @@ class OPEXReport(object):
         df0['subject'] = self.subjects['subject_label'].values.tolist()
         df0['group'] = self.subjects['sub_group'].values.tolist()
         all = dict()
-        for hdr in datafields.keys():
-            for field in datafields[hdr]:
+        for hdr in etypes.keys():
+            fields = self.dbi.getFields(hdr)
+            for field in fields:
                 if len(field) > 0:
                     all[field] = df0.copy()
         #load data from xnat
@@ -588,7 +574,8 @@ class OPEXReport(object):
                                 smth = s_ints.get_group(mth)
                                 postval = smth[smth['prepost']=='post']
                                 preval = smth[smth['prepost']=='pre']
-                                for field in datafields[ex]:
+                                fields = self.dbi.getFields(ex)
+                                for field in fields:
                                     if len(field) > 0:
                                         lfield = field.lower()
                                         if self.validBloodData(preval[lfield]) and self.validBloodData(postval[lfield]):
@@ -785,7 +772,6 @@ if __name__ == "__main__":
              ''')
     parser.add_argument('database', action='store', help='select database config from xnat.cfg to connect to')
     parser.add_argument('projectcode', action='store', help='select project by code')
-    parser.add_argument('--cache', action='store', help='use a downloaded csv file - no connection')
     parser.add_argument('--output', action='store', help='output directory for csv files')
 
     args = parser.parse_args()
@@ -809,8 +795,8 @@ if __name__ == "__main__":
         # Download CSV files
         if args.output is not None and args.output:
             outputdir = args.output
-            #op.downloadOPEXExpts(projectcode=projectcode, outputdir=outputdir, deltas=True)
-            #op.generateCantabReport(projectcode=projectcode, outputdir=outputdir, deltas=True)
+            op.downloadOPEXExpts(projectcode=projectcode, outputdir=outputdir, deltas=True)
+            op.generateCantabReport(projectcode=projectcode, outputdir=outputdir, deltas=True)
             op.generateBloodReport(projectcode=projectcode, outputdir=outputdir, deltas=True)
 
     except ValueError as e:
