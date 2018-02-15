@@ -22,8 +22,8 @@ class PsqiParser(DataParser):
         DataParser.__init__(self, *args)
         # Maybe empty sheet
         if self.data.empty or len(self.data.columns) <= 1:
-            print("No data available")
-            return None
+            msg = "No data available"
+            raise ValueError(msg)
         # cleanup subjects
         self.data['ID'] = self.data.apply(lambda x: stripspaces(x, 0), axis=1)
         if self.info is None:
@@ -118,29 +118,33 @@ if __name__ == "__main__":
     if access(inputfile, R_OK):
         try:
             print("Loading ", inputfile)
-            intervals = range(0, 13, 3)
-            for sheet in range(0, 5):
+            intervals = range(0, 10, 3)
+            for sheet in range(0, 4):
                 i = intervals[sheet]
                 print('Interval:', i)
-                dp = PsqiParser(inputfile, sheet, skip, header, etype)
-                if dp is None:
+                try:
+                    dp = PsqiParser(inputfile, sheet, skip, header, etype)
+                except ValueError as e:
+                    print(e.args[0])
                     continue
                 xsdtypes = dp.getxsd()
 
                 for sd in dp.subjects:
                     print('\n***********SubjectID:', sd)
                     sampleid = dp.getSampleid(sd, i)
-                    print('Sampleid:', sampleid)
+
                     row = dp.subjects[sd]
                     if not dp.validData(row[dp.fields].values.tolist()[0]):
-                        print('empty data - skipping')
+                        #print('empty data - skipping')
                         continue
+                    print('Sampleid:', sampleid)
                     (mandata, data) = dp.mapData(row, i, xsdtypes)
                     print(mandata)
                     print(data)
-
+            print("Complete")
         except Exception as e:
             print("Error: ", e)
+
 
     else:
         print("Cannot access file: ", inputfile)

@@ -219,7 +219,7 @@ if __name__ == "__main__":
                     for i, row in cantab.subjects[sd].iterrows():
                         dob = cantab.formatDob(str(cantab.subjects[sd]['Date of Birth'][i]))
                         print(i, 'Visit:', row['Visit Identifier'], 'DOB', dob)
-                        for ctab in cantab.cantabfields['MOT']:
+                        for ctab in cantab.fields:
                             print(ctab, row[ctab]) #'MOTML', row['MOTML'],'MOTSDL',row['MOTSDL'] )
 
 

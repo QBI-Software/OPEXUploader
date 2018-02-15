@@ -8,7 +8,7 @@ CANTAB PAL,1,9,opex:cantabPAL,PAL,y,CANTAB,--cantab
 CANTAB SWM,1,9,opex:cantabSWM,SWM,y,CANTAB,--cantab
 VWM,3,5,opex:amunet,AM,y,AMUNET,--amunet
 PSQI,3,5,opex:psqi,PSQ,y,PSQI,--psqi
-DASS,3,5,opex:dass,DASS,n,DASS,-dass
+DASS,3,5,opex:dass,DASS,n,DASS,--dass
 IPAQ,3,5,opex:ipaq,IPQ,y,,
 Insomnia,3,5,opex:insomnia,INS,y,Insomnia(ISI),--insomnia
 Godin,3,5,opex:godin,GDN,y,GODIN,--godin

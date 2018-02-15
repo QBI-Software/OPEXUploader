@@ -61,3 +61,15 @@ class TestDBquery(unittest.TestCase):
         cid = self.dbi.getCorrectID(incorrectid)
         self.assertEqual(incorrectid,cid)
 
+    def test_getDatelessExpts(self):
+        data = self.dbi.getDatelessExpts()
+        self.assertGreater(len(data), 0)
+
+    def test_getXsitypeFromPrefix(self):
+        prefix ='MPX'
+        expected ='opex:bloodMultiplexData'
+        data = self.dbi.getXsitypeFromPrefix(prefix)
+        self.assertEqual(expected,data)
+
+
+

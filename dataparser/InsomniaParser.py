@@ -21,9 +21,9 @@ class InsomniaParser(DataParser):
     def __init__(self, *args,**kwargs):
         DataParser.__init__(self, *args)
         #Maybe empty sheet
-        if len(self.data.columns) <=1:
-            print("No data available")
-            return None
+        if self.data.empty or len(self.data.columns) <=1:
+            msg ="No data available"
+            raise ValueError(msg)
         # cleanup subjects
         self.data['ID'] = self.data.apply(lambda x: stripspaces(x, 0), axis=1)
 
@@ -138,8 +138,6 @@ if __name__ == "__main__":
                 else:
                     dp.interval = i
                 xsdtypes = dp.getxsd()
-
-
                 for sd in dp.subjects:
                     print('\n***********SubjectID:', sd)
                     sampleid = dp.getSampleid(sd, i)

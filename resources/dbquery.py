@@ -116,6 +116,21 @@ class DBI():
 
         return info
 
+    def getDatelessExpts(self):
+        if self.c is None:
+            self.getconn()
+        self.c.execute("SELECT expt FROM expts WHERE hasdates=0")
+        data = [d[0] for d in self.c.fetchall()]
+        return data
+
+    def getXsitypeFromPrefix(self,prefix):
+        if self.c is None:
+            self.getconn()
+        self.c.execute("SELECT xsitype FROM expts WHERE prefix=?",(prefix,))
+        data = self.c.fetchone()[0]
+        return data
+
+
 
 if __name__ == "__main__":
     configdb = join('..','resources', 'opexconfig.db')
@@ -130,6 +145,8 @@ if __name__ == "__main__":
             print info
             fields = dbi.getFields(etype)
             print fields
+        visitdata = dbi.getDatelessExpts()
+        print visitdata
 
     else:
         raise IOError("cannot access db")

@@ -1,3 +1,4 @@
+from __future__ import print_function
 """
     Control module for OPEX upload application
     *******************************************************************************
@@ -208,6 +209,7 @@ class OPEXUploader():
         missing = []
         matches = []
         if dp.subjects is None or len(dp.subjects) <= 0:
+            print("Uploader - loading subjects")
             dp.sortSubjects()
         for sd in dp.subjects:
             print('*****SubjectID:', sd)
@@ -545,17 +547,19 @@ class OPEXUploader():
                 seriespattern = 'PSQI*.xlsx'
                 files = glob.glob(join(inputdir, seriespattern))
                 print("Files:", len(files))
-                intervals = range(0, 13, 3)
+                maxmth = 9
+                intervals = range(0, maxmth+1, 3)
                 for f2 in files:
                     print("Loading ", f2)
-                    for sheet in range(0, 5):
+                    for sheet in range(0, len(intervals)):
                         i = intervals[sheet]
                         print('Interval:', i)
-                        dp = PsqiParser(f2, sheet, skip, header, etype)
-                        if dp is None:
+                        try:
+                            dp = PsqiParser(f2, sheet, skip, header, etype)
+                        except ValueError as e:
+                            logging.warning(e)
                             continue
-                        else:
-                            dp.interval = i
+                        dp.interval = i
                         (missing, matches) = self.uploadData(project, dp)
                         # Output matches and missing
                         if len(matches) > 0 or len(missing) > 0:
@@ -571,17 +575,19 @@ class OPEXUploader():
                 seriespattern = 'ISI*.xlsx'
                 files = glob.glob(join(inputdir, seriespattern))
                 print("Files:", len(files))
-                intervals = range(0, 13, 3)
+                maxmth = 12
+                intervals = range(0, maxmth + 1, 3)
                 for f2 in files:
                     print("Loading ", f2)
-                    for sheet in range(0, 5):
+                    for sheet in range(0, len(intervals)):
                         i = intervals[sheet]
                         print('Interval:', i)
-                        dp = InsomniaParser(f2, sheet, skip, header, etype)
-                        if dp is None:
+                        try:
+                            dp = InsomniaParser(f2, sheet, skip, header, etype)
+                        except ValueError as e:
+                            logging.warning(e)
                             continue
-                        else:
-                            dp.interval = i
+                        dp.interval = i
                         (missing, matches) = self.uploadData(project, dp)
                         # Output matches and missing
                         if len(matches) > 0 or len(missing) > 0:
@@ -630,10 +636,11 @@ class OPEXUploader():
                     dp.processData()
                     if self.args.checks:
                         print("**UPDATING dates**")
+                        matches =dp.expts.keys()
                         for eid in dp.expts.keys():
-                            print(eid, ": ", dp.expts.get(eid))
+                            print(eid, dp.expts.get(eid))
                     else:
-                        dp.uploadDates(projectcode, self.xnat)
+                        (missing, matches) = dp.uploadDates(projectcode, self.xnat)
                 except Exception as e:
                     raise ValueError(e)
 

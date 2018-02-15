@@ -20,7 +20,7 @@ import pandas as pd
 
 from dataparser.DataParser import DataParser, stripspaces
 
-DEBUG = 1
+DEBUG = 0
 
 class DexaParser(DataParser):
     def __init__(self, *args):
@@ -49,7 +49,8 @@ class DexaParser(DataParser):
                 self.df[i].columns = df_subj.columns.tolist() + simplecols
                 #self.df[i].reindex(df_subj.columns.tolist() + simplecols, fill_value='')
                 if DEBUG:
-                    print("Interval=%s \n\t%s" % (intval, self.df[i].head()))
+                    msg ="Interval=%s data=%d" % (intval, len(self.df[i]))
+                    print(msg)
             self.sortSubjects('SubjectID')
         else:
             raise ValueError("Cannot access fields file: %s" % fields)

@@ -1,3 +1,4 @@
+from __future__ import print_function
 # -*- coding: utf-8 -*-
 """
 Utility script: VisitParser
@@ -26,7 +27,7 @@ class VisitParser(DataParser):
 
     def __init__(self, *args):
         DataParser.__init__(self, *args)
-        self.opex = pd.read_csv(join(self.resource_dir, 'opex.csv'))
+        #self.opex = pd.read_csv(join(self.resource_dir, 'opex.csv'))
         self.expts = dict()
 
     def getSubjectData(self,sd):
@@ -97,6 +98,14 @@ class VisitParser(DataParser):
                 msg = 'Subject gender to update: %s to %s' % (subject_id, gender)
                 print(msg)
 
+    def getValidSid(self, sid):
+        checksid = sid.replace(" ", "")
+        if len(str(checksid)) > 6:
+            checksid = checksid[0:6]
+        checksid = self._DataParser__checkSID(checksid)
+
+        return checksid
+
     def processData(self):
         """
         Process data file and compile exptids with dates
@@ -105,13 +114,15 @@ class VisitParser(DataParser):
         intvals = [str(i) for i in range(0, 13)]
         # get each experiment and check date matches - these are upload dates by default as dates were not provided with the data
         #  ['DEXA', 'COBAS', 'ELISAS', 'MULTIPLEX', 'MRI ASHS', 'MRI FS', 'FMRI', 'DASS']
-        dateless = self.opex['Expt'][self.opex['date_provided'] == 'n'].values
-
+        dateless = self.dbi.getDatelessExpts() #opex['Expt'][self.opex['date_provided'] == 'n'].values
+        print("Dateless expts: ",dateless)
         for i, sd in self.data.iterrows():
-            subject_id = sd['ID'].replace(" ", "")
+            subject_id = self.getValidSid(sd['ID'])
+
             for expt in dateless:
-                prefix = self.opex['prefix'][self.opex['Expt'] == expt].values[0]
-                xtype = self.opex['xsitype'][self.opex['Expt'] == expt].values[0]
+                info = self.dbi.getInfo(expt)
+                prefix = info['prefix']
+                xtype = info['xsitype']
                 for intval in intvals:
                     if xtype.startswith('opex:blood'):
                         subexpts = ["FASTED", "PREPOST"]
@@ -161,15 +172,15 @@ class VisitParser(DataParser):
         :return:
         """
         print("**Uploading dates to XNAT**")
+        missing =[]
+        matches=[]
 
         for eid in self.expts.keys():
             d = self.expts.get(eid)
             prefix = eid.split('_')[0]
             subject_id = eid.split('_')[1]
-            xtype = self.opex['xsitype'][self.opex['prefix'] == prefix].values[0]
-
+            xtype = self.dbi.getXsitypeFromPrefix(prefix)
             msg="Searching %s" % eid
-            #print msg
             logging.debug(msg)
 
             if xnat is not None:
@@ -203,6 +214,7 @@ class VisitParser(DataParser):
                         else:
                             comments = 'Date updated'
                         xnatexpt.attrs.set(xtype + '/comments', comments)
+                        matches.append(xnatexpt.id())
                         msg = 'UPDATED %s %s date - %s' % (subject_id, xnatexpt.id(), d)
                         print(msg)
                         logging.info(msg)
@@ -213,6 +225,8 @@ class VisitParser(DataParser):
 
             else:
                 print('XNAT connection not available')
+            print("Total updates: ", len(matches))
+            return (missing,matches)
 
 
 ########################################################################
