@@ -15,6 +15,7 @@ from uploader import OPEXUploader
 from xnatconnect.XnatConnector import XnatConnector
 from xnatconnect.XnatOrganizeFiles import Organizer
 from resources.dbquery import DBI
+from bulk_uploader import BulkUploader
 
 
 class DownloadDialog(dlgDownloads):
@@ -335,6 +336,8 @@ class OPEXUploaderGUI(UploaderGUI):
         """
         dbi = DBI(self.configdb)
         runoptions = dbi.getRunOptions()
+        runoptions['Visit']='--visit'
+        runoptions['Bulk upload'] = '--bulk'
         # config = ConfigObj(optionsfile)
         # if 'options' in config:
         #     runoptions = config['options']
@@ -562,7 +565,13 @@ class OPEXUploaderGUI(UploaderGUI):
                 if uploader.xnat.testconnection():
                     logging.info("...Connected")
                     print("...Connected")
-                    uploader.runDataUpload(proj, self.dirname, runoption)
+                    if runoption == 'bulk':
+                        bulk = BulkUploader(uploader)
+                        bulk.run(proj,self.dirname)
+                        bulk.close()
+                        print("***BULK LOAD COMPLETED**")
+                    else:
+                        uploader.runDataUpload(proj, self.dirname, runoption)
                 else:
                     raise ConnectionError('Not connected')
 

@@ -68,8 +68,8 @@ class PsqiParser(DataParser):
         totalcols = 0
         for field in self.fields:
             if field in row and not np.isnan(row[field].iloc[0]):
-                motdata[xsd + '/' + field] = str(row[field].iloc[0])
-                totalcols += row[field].iloc[0]
+                motdata[xsd + '/' + field] = str(int(row[field].iloc[0]))
+                totalcols += int(row[field].iloc[0])
         motdata[xsd + '/total'] = str(totalcols)
         return (mandata, motdata)
 
@@ -104,7 +104,7 @@ if __name__ == "__main__":
     parser.add_argument('--filedir', action='store', help='Directory containing files',
                         default="Q:\\DATA\\DATA ENTRY\\XnatUploaded\\sampledata\\psqi")
     parser.add_argument('--datafile', action='store', help='Filename of original data',
-                        default="PSQI data entry 20180206.xlsx")
+                        default="PSQI data entry_withcalcs.xlsx")
     parser.add_argument('--sheet', action='store', help='Sheet name to extract',
                         default="0")
     args = parser.parse_args()

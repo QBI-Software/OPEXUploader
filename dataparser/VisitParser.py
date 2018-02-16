@@ -174,59 +174,57 @@ class VisitParser(DataParser):
         print("**Uploading dates to XNAT**")
         missing =[]
         matches=[]
+        if xnat is not None:
+            project = xnat.get_project(projectcode)
+        else:
+            raise IOError("XNAT not connected")
 
         for eid in self.expts.keys():
             d = self.expts.get(eid)
             prefix = eid.split('_')[0]
             subject_id = eid.split('_')[1]
             xtype = self.dbi.getXsitypeFromPrefix(prefix)
-            msg="Searching %s" % eid
-            logging.debug(msg)
-
-            if xnat is not None:
-                project = xnat.get_project(projectcode)
-                s = project.subject(subject_id)
-                if not s.exists():
-                    continue
-                e = s.experiment(eid)
-                if xtype.startswith('opex:blood'):
-                    expts = s.experiments(eid[0:-2] + '*')
-                    e = expts.fetchone()
-                # elif xtype == 'opex:fmri':
-                #     expts = [e.id() for e in s.experiments('OPEXNAT*') if e.label() == eid]
-                #     if len(expts) > 0:
-                #         eid = expts[0]
-                #         e = s.experiment(eid)
-                #     else:
-                #         continue
-                if e is not None and e.exists():
-                    exptid = e.id()
-                    msg = 'Found expt: %s %s : %s [%s]' % (subject_id,xtype, exptid,eid)
-                    #print msg
-                    logging.debug(msg)
-                    xnatexpt = xnat.updateExptDate(s, exptid, d, xtype)
-                    if xnatexpt is not None: #not updated if not different
-                        # remove or update comment
-                        comments = xnatexpt.attrs.get(xtype + '/comments')
-                        if len(comments) > 0:
-                            if comments != 'Date analysed not collected' and not 'Date updated' in comments:
-                                comments = comments + '; Date updated'
-                        else:
-                            comments = 'Date updated'
-                        xnatexpt.attrs.set(xtype + '/comments', comments)
-                        matches.append(xnatexpt.id())
-                        msg = 'UPDATED %s %s date - %s' % (subject_id, xnatexpt.id(), d)
-                        print(msg)
-                        logging.info(msg)
-                else:
-                    msg = "Expt not found: %s" % eid
-                    logging.debug(msg)
-                    #print msg
-
+            s = project.subject(subject_id)
+            if not s.exists():
+                continue
+            e = s.experiment(eid)
+            if xtype.startswith('opex:blood'):
+                expts = s.experiments(eid[0:-2] + '*')
+                e = expts.fetchone()
+            # elif xtype == 'opex:fmri':
+            #     expts = [e.id() for e in s.experiments('OPEXNAT*') if e.label() == eid]
+            #     if len(expts) > 0:
+            #         eid = expts[0]
+            #         e = s.experiment(eid)
+            #     else:
+            #         continue
+            if e is not None and e.exists():
+                exptid = e.id()
+                msg = 'Found expt: %s %s : %s [%s]' % (subject_id,xtype, exptid,eid)
+                #print(msg)
+                logging.debug(msg)
+                xnatexpt = xnat.updateExptDate(s, exptid, d, xtype)
+                if xnatexpt is not None: #not updated if not different
+                    # remove or update comment
+                    comments = xnatexpt.attrs.get(xtype + '/comments')
+                    if len(comments) > 0:
+                        if comments != 'Date analysed not collected' and not 'Date updated' in comments:
+                            comments = comments + '; Date updated'
+                    else:
+                        comments = 'Date updated'
+                    xnatexpt.attrs.set(xtype + '/comments', comments)
+                    matches.append(xnatexpt.id())
+                    msg = 'UPDATED %s %s date - %s' % (subject_id, xnatexpt.id(), d)
+                    print(msg)
+                    logging.info(msg)
             else:
-                print('XNAT connection not available')
-            print("Total updates: ", len(matches))
-            return (missing,matches)
+                msg = "Expt not found: %s" % eid
+                logging.debug(msg)
+                #print msg
+
+
+        print("Total updates: ", len(matches))
+        return (missing,matches)
 
 
 ########################################################################

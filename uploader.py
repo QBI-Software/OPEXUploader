@@ -623,8 +623,9 @@ class OPEXUploader():
                 try:
                     dp = VisitParser(inputfile, 0, 1)
                     dp.processData()
+
                     if self.args.checks:
-                        print("**UPDATING dates**")
+                        print("**UPDATING dates [TEST]**")
                         matches =dp.expts.keys()
                         for eid in dp.expts.keys():
                             print(eid, dp.expts.get(eid))
