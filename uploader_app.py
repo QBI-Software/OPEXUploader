@@ -34,6 +34,7 @@ class DownloadDialog(dlgDownloads):
         downloaddirname = self.m_downloaddir.GetPath()
         deltas = self.chDelta.GetValue()
         if downloaddirname is not None and self.db is not None and self.proj is not None:
+            self.Destroy() #close window
             xnat = XnatConnector(self.configfile, self.db)
             xnat.connect()
             subjects = xnat.getSubjectsDataframe(self.proj)
@@ -59,6 +60,7 @@ class DownloadDialog(dlgDownloads):
         downloaddirname = self.m_downloaddir.GetPath()
         deltas = self.chDelta.GetValue()
         if downloaddirname is not None and self.db is not None and self.proj is not None:
+            self.Destroy()  # close window
             xnat = XnatConnector(self.configfile, self.db)
             xnat.connect()
             subjects = xnat.getSubjectsDataframe(self.proj)
@@ -86,6 +88,7 @@ class DownloadDialog(dlgDownloads):
     def OnCloseDlg(self, event):
         self.Destroy()
 
+############################################################################################################
 class ReportDialog(dlgReports):
     def __init__(self, parent, db=None, proj=None):
         super(ReportDialog, self).__init__(parent)
@@ -137,6 +140,7 @@ class ReportDialog(dlgReports):
     def OnCloseDlg(self, event):
         self.Destroy()
 
+############################################################################################################
 class IdsDialog(dlgIDS):
     def __init__(self, parent):
         super(IdsDialog, self).__init__(parent)
@@ -151,18 +155,6 @@ class IdsDialog(dlgIDS):
             self.m_grid1.SetCellValue(rownum, 0, ids[0])
             self.m_grid1.SetCellValue(rownum, 1, ids[1])
             rownum += 1
-
-        # if access(self.idfile, R_OK):
-        #     with open(self.idfile, 'rb') as csvfile:
-        #         sreader = csv.reader(csvfile, delimiter=',', quotechar='"')
-        #         rownum = 0
-        #         for row in sreader:
-        #             if row[0] == 'INCORRECT':
-        #                 continue
-        #             self.m_grid1.SetCellValue(rownum, 0, row[0])
-        #             self.m_grid1.SetCellValue(rownum, 1, row[1])
-        #             rownum += 1
-        # resize
         self.m_grid1.AutoSizeColumns()
         self.m_grid1.AutoSize()
 
@@ -175,14 +167,6 @@ class IdsDialog(dlgIDS):
                 if not data.IsEmptyCell(rownum, 0):
                     addids.append((self.m_grid1.GetCellValue(rownum, 0), self.m_grid1.GetCellValue(rownum, 1)))
             dbi.addIDs(addids)
-            # try:
-            #     data = self.m_grid1.GetTable()
-            #     with open(self.idfile, 'wb') as csvfile:
-            #         swriter = csv.writer(csvfile, delimiter=',', quotechar='"')
-            #         swriter.writerow([data.GetColLabelValue(0), data.GetColLabelValue(1)])
-            #         for rownum in range(0, data.GetRowsCount()):
-            #             if not data.IsEmptyCell(rownum, 0):
-            #                 swriter.writerow([self.m_grid1.GetCellValue(rownum, 0), self.m_grid1.GetCellValue(rownum, 1)])
             dlg = wx.MessageDialog(self, "IDs file saved", "Incorrect IDs", wx.OK)
             dlg.ShowModal()  # Show it
             dlg.Destroy()
@@ -203,7 +187,7 @@ class IdsDialog(dlgIDS):
     def OnCloseDlg(self, event):
         self.Destroy()
 
-
+############################################################################################################
 class ConfigDialog(dlgConfig):
     def __init__(self, parent):
         super(ConfigDialog, self).__init__(parent)

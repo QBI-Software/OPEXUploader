@@ -33,6 +33,22 @@ The following steps refer to the **XnatUploaded** directory on the share drive. 
 
 All data upload is recorded in a log file in your user directory called logs/xnatupload.log.
 
+### Batch Upload
+
+There is now an option to combine regular data uploads.  Follow the guidelines in the sections below to put the correct data files in the ```XnatUploaded/sampledata``` folders (this should then be entered in the Input directory field).  Select the **Bulk Upload** option from the Data Type dropdown and click 'RUN'.
+
+These datasets are currently included:
+
+1. CANTAB
+1. COSMED
+1. DEXA
+1. DASS
+1. GODIN
+1. INSOMNIA
+1. PSQI
+1. BLOODS (all)
+1. Visits (final)
+
 ### CANTAB data (XnatUploaded/sampledata/cantab)
 
 Downloaded excel sheet called 'RowBySession' should be copied into this directory.
