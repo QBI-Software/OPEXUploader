@@ -40,7 +40,6 @@ There is now an option to combine regular data uploads.  Follow the guidelines i
 These datasets are currently included:
 
 1. CANTAB
-1. COSMED
 1. DEXA
 1. DASS
 1. GODIN

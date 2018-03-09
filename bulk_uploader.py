@@ -14,7 +14,7 @@ class BulkUploader():
         configdb = join('resources', 'opexconfig.db')
         dbi = DBI(configdb)
         self.expts = dbi.getRunOptions()
-        self.excludes = ['mridata', 'mri', 'blood', 'acer', 'amunet', 'fmri', 'visit']
+        self.excludes = ['mridata', 'mri', 'blood', 'acer', 'amunet', 'fmri', 'visit','cosmed']
 
     def close(self):
         self.uploader.xnatdisconnect()
