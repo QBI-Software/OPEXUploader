@@ -107,6 +107,7 @@ class CosmedParser(DataParser):
                 filename = basename(f)
                 #exclude certain files
                 if "MonthA" in filename or "_10s" in filename or filename.startswith('~') or filename.startswith('VO2'):
+                    f = None #prevent incorrect error reporting
                     continue
                 fdata = self.parseFilename(filename)
                 if fdata is None:
