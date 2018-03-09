@@ -4,7 +4,7 @@ from os import mkdir,access,R_OK,W_OK
 from resources.dbquery import DBI
 from uploader import OPEXUploader, create_parser
 
-ROOTDATADIR = "Q:\\DATA\\DATA ENTRY\\XnatUploaded\\sampledata"
+#ROOTDATADIR = "Q:\\DATA\\DATA ENTRY\\XnatUploaded\\sampledata"
 
 
 class BulkUploader():
@@ -20,7 +20,7 @@ class BulkUploader():
         self.uploader.xnatdisconnect()
 
 
-    def run(self, project,datadir):
+    def run(self, project,rootdatadir):
         """
         Runs through all available expt except those in excludes
         :param datadir:
@@ -34,7 +34,7 @@ class BulkUploader():
             if runoption in self.excludes:
                 continue
             print("\n\n****** BULK LOAD: ", runoption)
-            datadir = join(datadir, runoption)
+            datadir = join(rootdatadir, runoption)
             (missing, matches) = self.uploader.runDataUpload(project, datadir, runoption)
             msg = 'Bulk load Finished %s: matches=%d' % (runoption.upper(), len(matches))
             print(msg)
@@ -42,12 +42,12 @@ class BulkUploader():
         # Run Bloods separately
         matches = []
         for blood in ['COBAS', 'MULTIPLEX']:
-            datadir = join(datadir, 'blood', blood)
+            datadir = join(rootdatadir, 'blood', blood)
             (missing, matches) = self.uploader.runDataUpload(project, datadir, 'blood')
         msg = 'Bulk load Finished BLOOD: matches=%d' % len(matches)
         print(msg)
         # Run Visits
-        datadir = join(datadir, 'visit')
+        datadir = join(rootdatadir, 'visit')
         runoption = 'visit'
         (missing, matches) = self.uploader.runDataUpload(project, datadir, runoption)
         msg = 'Bulk load Finished VISIT: matches=%d' % len(matches)
