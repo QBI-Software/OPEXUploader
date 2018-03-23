@@ -114,7 +114,7 @@ if __name__ == "__main__":
     parser.add_argument('--filedir', action='store', help='Directory containing files',
                         default="Q:\\DATA\\DATA ENTRY\\XnatUploaded\\sampledata\\insomnia")
     parser.add_argument('--datafile', action='store', help='Filename of original data',
-                        default="ISI Data Entry 20180206.xlsx")
+                        default="ISI Data Entry 20180323.xlsx")
     parser.add_argument('--sheet', action='store', help='Sheet name to extract',
                         default="0")
     args = parser.parse_args()

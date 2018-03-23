@@ -30,7 +30,7 @@ class OPEXReportApp(object):
         self.df_report = {}
         self.df_expts = {}
         self.__loadParams()
-        logging.basicConfig(filename=join(self.logs,'xnatreport.log'), level=logging.DEBUG,
+        logging.basicConfig(filename=self.logs, level=logging.DEBUG,
                             format='%(asctime)s %(message)s', datefmt='%d-%m-%Y %I:%M:%S %p')
 
     def __loadParams(self):
@@ -51,7 +51,7 @@ class OPEXReportApp(object):
             self.cache = 'cache'
             self.resources = 'resources'
             self.dbconfig = join(home,'.xnat.cfg')
-            self.logs = 'logs'
+            self.logs = join(home,'logs','xnatreport.log')
 
     def loadData(self):
         output = "RefreshCounts_%s.csv" % datetime.today().strftime("%Y%m%d")
@@ -71,16 +71,15 @@ class OPEXReportApp(object):
             if xnat.testconnection():
                 print( "...Connected")
                 output = "ExptCounts.csv"
-                outputfile = join(self.cache, output)
-                if access(outputfile, R_OK):
-                    csv = outputfile
-                else:
-                    csv = None
+                # outputfile = join(self.cache, output)
+                # if access(outputfile, R_OK):
+                #     csv = outputfile
+                # else:
+                #     csv = None
                 subjects = xnat.getSubjectsDataframe(self.project)
                 msg = "Loaded %d subjects from %s : %s" % (len(subjects), self.database, self.project)
                 logging.info(msg)
-                report = OPEXReport(subjects=subjects,csvfile=csv,opexfile=join(getcwd()
-, self.resources,'opex.csv'))
+                report = OPEXReport(subjects=subjects)
                 report.xnat = xnat
                 # Generate dataframes for display
                 self.df_participants = report.getParticipants()

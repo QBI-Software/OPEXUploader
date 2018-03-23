@@ -249,13 +249,15 @@ def generateAmunetdates(dirpath, filename, interval):
                     vdates = Series(pdates[d])
                     vdates = vdates.unique()
                     writer.writerow([d, ",".join([v.isoformat() for v in vdates])])
-                logging.info("Participant dates written to: ", csvfile)
+                msg = "Participant dates written to: %s" % csvfile
+                logging.info(msg)
                 print("Generate Amunet Dates Finished")
         except Exception as e:
             print(e)
-            raise ValueError("Unable to access file for writing: ", e)
+            raise ValueError( e)
     else:
-        raise IOError("Cannot access amunet directory:",dirpath)
+        msg = "Cannot access amunet directory: %s" % dirpath
+        raise IOError(msg)
 
     return csvfile
 
@@ -324,7 +326,7 @@ if __name__ == "__main__":
     for inputdir in subdirs:
         if inputdir not in ['0m', '3m', '6m', '9m', '12m']:
             continue
-        interval = inputdir[0]
+        interval = inputdir[0:-1]
         print('Interval:', interval)
         inputdir = join(topinputdir, inputdir)
         print(inputdir)

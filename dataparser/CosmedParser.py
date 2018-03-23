@@ -73,7 +73,7 @@ class CosmedParser(DataParser):
             mkdir(pdir)
 
         # Load efficiency data from single file
-        self.effdata_cols = {'0': [5, 8], '3': [9, 12], '6': [13, 16], '9': [17, 20], '12': [21, 24]}
+        self.effdata_cols = {'0': [9, 12], '3': [13, 16], '6': [17, 20], '9': [21, 24],'12':[25,28]}
         self.effdata = self.__loadEfficiencydata(datafile)
         # Load data from files
         self.loaded = self.__loadData()
@@ -150,6 +150,13 @@ class CosmedParser(DataParser):
 
             if len(self.data)> 0:
                 # Create dataframe with dict in one hist - more efficient
+                # check equal lengths or will bug out
+                num = len(self.data['SubjectID'])
+                for c in self.data.keys():
+                    if len(self.data[c]) != num:
+                        msg = "Missing data - unable to compile: %s = %d (expected %d)" % (c, len(self.data[c]), num)
+                        print msg
+                        raise ValueError(msg)
                 self.df = pd.DataFrame.from_dict(self.data)
                 msg = "COSMED Data Load completed: %d files [%d rows]" % (len(self.files),len(self.df))
                 print(msg)
@@ -162,7 +169,7 @@ class CosmedParser(DataParser):
                 logging.info(msg)
                 rtn = True
             else:
-                raise ValueError("Error: Data load failed")
+                raise ValueError("Error: Data load failed - empty data")
         except Exception as e:
             print(len(self.data), ' files loaded')
             if f is not None:
@@ -214,7 +221,8 @@ class CosmedParser(DataParser):
             msg = 'Filedata: %s' % ",".join(results)
             logging.debug(msg)
         else:
-            logging.error('Filename syntax is different: %s', filename)
+            msg = 'Filename syntax is different: %s' % filename
+            logging.error(msg)
             results= None
         return results
 
@@ -240,7 +248,7 @@ class CosmedParser(DataParser):
         dataval = df_data_ex[field].iloc[-1]
         self.data[field].append(dataval)
         loadeddata = [self.data[f][-1] for f in fieldnames]
-        # logging.debug("Proto:",loadeddata)
+        logging.debug("Proto: %s",loadeddata)
         return loadeddata
 
     def parseMetabolic(self, df_data, fieldnames):
@@ -256,7 +264,7 @@ class CosmedParser(DataParser):
                 max = ''
             self.data[field].append(max)
         loadeddata = [self.data[f][-1] for f in fieldnames]
-        # logging.debug("Metab:",loadeddata)
+        logging.debug("Metab: %s",loadeddata)
         return loadeddata
 
     def parseCardio(self, df_data, fieldnames):
@@ -272,12 +280,12 @@ class CosmedParser(DataParser):
                 max = ''
             self.data[field].append(max)
         loadeddata = [self.data[f][-1] for f in fieldnames]
-        # logging.debug('Cardio:', loadeddata)
+        logging.debug('Cardio: %s', loadeddata)
         return loadeddata
 
     def calcRecovery(self, df_ex, df_data):
         """
-        Get Recovery data fields
+        Get Recovery data fields - at 2min intervals
         :param df_ex: Exercise data subset
         :param df_data: Recover data subset
         :return: [HRR1,HRR3,HRR5]
@@ -294,9 +302,13 @@ class CosmedParser(DataParser):
                 tvals = [1, 5, 9]
             elif dt ==60:
                 tvals = [1,3,5]
+            elif dt == 10:
+                logging.warning('HRR time diff is 10s - check file')
+                tvals = [1,12, 24]
             else:
-                print('time diff=', dt, 's')
-                tvals = [1,3,5] * int(dt/60)
+                logging.error('HRR ERROR, Unable to get intervals as time diff=%s s', dt)
+                tvals = [0,0,0]
+
 
             d0 = df_ex['HR'].iloc[-1]
             for i in tvals:
@@ -312,7 +324,14 @@ class CosmedParser(DataParser):
 
     def parseEfficiency(self, df_data, sid, intervals):
         """
-        Get Efficiency data fields
+        Get Efficiency data fields from file: VO2data_VEVCO2_30sec_yyyymmdd.xls
+        AxA is a familiarisation – don’t worry about importing this data
+        AxB is baseline
+        AxC is 3-month
+        AxD is 6-month
+        AxE is 9-month
+        AxF is 12-month
+
         :param df_data: Separate file VO2data
         :param sid: subject id
         :param intervals: [col_start, col_end]
@@ -321,7 +340,7 @@ class CosmedParser(DataParser):
         row = df_data[df_data['SubjectID'] == sid]
         if not row.empty:
             data = row.iloc[:, intervals[0]:intervals[1]].values.tolist()[0]
-            if len(data) == 0:
+            if len(data) == 0 or np.nan in data:
                 data = ['', '', '']
         else:
             data = ['', '', '']
@@ -510,7 +529,7 @@ if __name__ == "__main__":
             Reads files in a directory and extracts data for upload to XNAT
 
              ''')
-    parser.add_argument('--filedir', action='store', help='Directory containing xnatpaths.txt (paths for COSMED)', default="..\\sampledata\\cosmed")
+    parser.add_argument('--filedir', action='store', help='Directory containing xnatpaths.txt (paths for COSMED)', default="Q:\\DATA\\DATA ENTRY\\XnatUploaded\\sampledata\\cosmed")
     parser.add_argument('--subdir', action='store', help='Full Subdirectory for individual files')
     parser.add_argument('--datafile', action='store', help='Full path to VEVCO2 file')
 

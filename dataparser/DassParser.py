@@ -32,14 +32,19 @@ class DassParser(DataParser):
             ncols += [c + '_'+str(ix) for c in self.fields]
 
         dropcols=[] #remove check columns
+
         for n in range(3, len(self.data.columns), 12):
             start = n
             end = n + 9
             #print('Drop ', start, ' to ', end
             #print self.data.columns.tolist()[start:end]
             dropcols += self.data.columns.tolist()[start:end]
-        #print dropcols
+        print('Selecting Totals columns for ', dropcols)
         df = self.data.drop(columns=dropcols)
+        #check num cols match and delete end cols in case blank ones have been included
+        if len(ncols) < len(df.columns):
+            df = df[df.columns[0:len(ncols)]]
+
         df.columns=ncols
         df.reindex()
         self.data=df

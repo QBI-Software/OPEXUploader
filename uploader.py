@@ -52,7 +52,7 @@ class OPEXUploader():
     def __init__(self, args, logfile=None):
 
         if logfile is not None:
-            logging.basicConfig(filename=logfile, level=logging.INFO, format='%(asctime)s %(message)s',
+            logging.basicConfig(filename=logfile, level=logging.DEBUG, format='%(asctime)s [%(filename)s %(lineno)d] %(message)s',
                                 datefmt='%d-%m-%Y %I:%M:%S %p')
             logger = logging.getLogger('opex')
             handler = RotatingFileHandler(filename=logfile, maxBytes=4000000000)
@@ -107,10 +107,10 @@ class OPEXUploader():
         with open(missing_filename, 'wb') as csvfile:
             spamwriter = csv.writer(csvfile, delimiter=',')
             spamwriter.writerow(['Missing participants in XNAT'])
-            sids = self.xnat.get_subjects(projectcode)
+            df_sids = self.xnat.getSubjectsDataframe(projectcode)
             for m in missing:
-                rootid = m['ID'][0:4]
-                guess = [s.label() for s in sids if rootid in s.label()]
+                rid = m['ID'][0:4]
+                guess = [sid for sid in df_sids['subject_label'] if rid in sid]
                 if len(guess) <= 0:
                     guess = ""
                 else:
@@ -211,8 +211,11 @@ class OPEXUploader():
         if dp.subjects is None or len(dp.subjects) <= 0:
             print("Uploader - loading subjects")
             dp.sortSubjects()
+        #get list of subjects - single call
+        #df_xnatsubjects = self.xnat.getSubjectsDataframe(project)
         for sd in dp.subjects:
             print('*****SubjectID:', sd)
+            sd = str(sd) #prevent unicode
             s = project.subject(sd)
             if not s.exists():
                 if self.args.create is not None and self.args.create:
@@ -231,9 +234,11 @@ class OPEXUploader():
             # Load data PER ROW
             matches.append(sd)
             if self.args.checks is None or not self.args.checks:  # Don't upload if checks
+
                 try:
                     xsd = dp.getxsd()
-                    if dp.info is None: #cantab
+                    if isinstance(xsd,dict) and 'opex:cantabMOT' in xsd.values(): #cantab
+                        print('Running cantab upload')
                         xsdtypes = xsd
                         for i, row in dp.subjects[sd].iterrows():
                             sampleid = dp.getSampleid(sd, row)
@@ -262,6 +267,7 @@ class OPEXUploader():
                                 if 'created' in msg:
                                     print(msg)
                     elif 'dass' in xsd or 'godin' in xsd:
+                        #print('Loading dass or godin')
                         maxmth = 12
                         intervals = range(0, maxmth+1, 3)
                         for i in intervals:
@@ -300,6 +306,7 @@ class OPEXUploader():
                             if 'created' in msg:
                                 print(msg)
                     elif 'amunet' in xsd:
+                        print('Running amunet upload')
                         for i, row in dp.subjects[sd].iterrows():
                             sampleid = dp.getSampleid(sd, row)
                             row.replace(nan, '', inplace=True)
@@ -369,11 +376,13 @@ class OPEXUploader():
                 for inputdir in subdirs:
                     if inputdir not in ['0m', '3m', '6m', '9m', '12m']:
                         continue
-                    interval = inputdir[0]
+                    interval = inputdir[0:-1]
                     inputdir = join(topinputdir, inputdir)
                     print(inputdir)
                     # Get dates from zip files
                     dates_uri_file = join(inputdir, 'folderpath.txt')
+                    if not exists(dates_uri_file):
+                        continue
                     with open(dates_uri_file, "r") as dd:
                         content = dd.readlines()
                         for line in content:
@@ -392,17 +401,23 @@ class OPEXUploader():
                     # Get xls files
                     files = glob.glob(join(inputdir, seriespattern))
                     print("Loading Files:", len(files))
+                    if len(files)==1:
+                        sheets=[0,1]
+                    else:
+                        sheets=[0]
                     for f2 in files:
-                        print("Loading", f2)
-                        dp = AmunetParser(f2, sheet)
-                        dp.interval = interval
-                        (missing, matches) = self.uploadData(project, dp)
-                        # Output matches and missing
-                        if len(matches) > 0 or len(missing) > 0:
-                            (out1, out2) = self.outputChecks(projectcode, matches, missing, inputdir, f2)
-                            msg = "Reports created: \n\t%s\n\t%s" % (out1, out2)
-                            print(msg)
-                            logging.info(msg)
+                        print("Loading: ", f2)
+                        for sheet in sheets:
+                            print('Reading sheet:', sheet)
+                            dp = AmunetParser(f2, sheet)
+                            dp.interval = interval
+                            (missing, matches) = self.uploadData(project, dp)
+                            # Output matches and missing
+                            if len(matches) > 0 or len(missing) > 0:
+                                (out1, out2) = self.outputChecks(projectcode, matches, missing, inputdir, f2 + "_" + str(sheet))
+                                msg = "Reports created: \n\t%s\n\t%s" % (out1, out2)
+                                print(msg)
+                                logging.info(msg)
 
             # ---------------------------------------------------------------------#
             elif datatype == 'acer':
@@ -496,7 +511,7 @@ class OPEXUploader():
                 skip = 0
                 header = 2
                 etype='DASS'
-                seriespattern = 'DASS Data entry*.xlsx'
+                seriespattern = 'DASS Data*.xlsx'
                 files = glob.glob(join(inputdir, seriespattern))
                 print("Files:", len(files))
                 for f2 in files:
