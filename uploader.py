@@ -52,7 +52,7 @@ class OPEXUploader():
     def __init__(self, args, logfile=None):
 
         if logfile is not None:
-            logging.basicConfig(filename=logfile, level=logging.DEBUG, format='%(asctime)s [%(filename)s %(lineno)d] %(message)s',
+            logging.basicConfig(filename=logfile, level=logging.INFO, format='%(asctime)s [%(filename)s %(lineno)d] %(message)s',
                                 datefmt='%d-%m-%Y %I:%M:%S %p')
             logger = logging.getLogger('opex')
             handler = RotatingFileHandler(filename=logfile, maxBytes=4000000000)

@@ -93,7 +93,7 @@ class CosmedParser(DataParser):
         effdata = pd.read_excel(datafile, sheetname=0, header=1)
         effdata.drop(effdata.index[0], inplace=True)
         effdata['SubjectID'] = effdata.apply(lambda x: stripspaces(x, 'ID'), axis=1)
-        logging.debug("Loaded Efficiency: %d", len(effdata))
+        logging.info("Loaded Efficiency: %d", len(effdata))
         return effdata
 
     def __loadData(self):
@@ -219,7 +219,7 @@ class CosmedParser(DataParser):
         #     self.data['filename'].append(filename)
             results = [self.data[f][-1] for f in ['SubjectID', 'interval', 'date', 'filename']]
             msg = 'Filedata: %s' % ",".join(results)
-            logging.debug(msg)
+            logging.info(msg)
         else:
             msg = 'Filename syntax is different: %s' % filename
             logging.error(msg)
@@ -248,7 +248,7 @@ class CosmedParser(DataParser):
         dataval = df_data_ex[field].iloc[-1]
         self.data[field].append(dataval)
         loadeddata = [self.data[f][-1] for f in fieldnames]
-        logging.debug("Proto: %s",loadeddata)
+        logging.info("Proto: %s",loadeddata)
         return loadeddata
 
     def parseMetabolic(self, df_data, fieldnames):
@@ -264,7 +264,7 @@ class CosmedParser(DataParser):
                 max = ''
             self.data[field].append(max)
         loadeddata = [self.data[f][-1] for f in fieldnames]
-        logging.debug("Metab: %s",loadeddata)
+        logging.info("Metab: %s",loadeddata)
         return loadeddata
 
     def parseCardio(self, df_data, fieldnames):
@@ -280,7 +280,7 @@ class CosmedParser(DataParser):
                 max = ''
             self.data[field].append(max)
         loadeddata = [self.data[f][-1] for f in fieldnames]
-        logging.debug('Cardio: %s', loadeddata)
+        logging.info('Cardio: %s', loadeddata)
         return loadeddata
 
     def calcRecovery(self, df_ex, df_data):
@@ -319,7 +319,7 @@ class CosmedParser(DataParser):
                     d=''
                 self.data[fields[i]].append(d)
         loadeddata = [self.data[f][-1] for f in fields.itervalues()]
-        logging.debug('Recovery: %s', loadeddata)
+        logging.info('Recovery: %s', loadeddata)
         return loadeddata
 
     def parseEfficiency(self, df_data, sid, intervals):
@@ -348,7 +348,7 @@ class CosmedParser(DataParser):
         self.data['VeVCO2 Slope'].append(data[0])
         self.data['VEVCO2 intercept'].append(data[1])
         self.data['OUES'].append(data[2])
-        logging.debug("Efficiency: %s",data)
+        logging.info("Efficiency: %s",data)
         return data
 
     def getTimesIntervals(self, row, n):
@@ -472,7 +472,7 @@ class CosmedParser(DataParser):
                         self.subjects[sid][i] = idata
 
                 logging.debug('Subject: %s with %d datasets', sid, len(self.subjects[sid]))
-            logging.debug('Subjects loaded=%d', len(self.subjects))
+            logging.info('Subjects loaded=%d', len(self.subjects))
         else:
             logging.error('Subjects not loaded')
 
