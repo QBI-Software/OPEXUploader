@@ -152,6 +152,8 @@ class CosmedParser(DataParser):
                 # Create dataframe with dict in one hist - more efficient
                 # check equal lengths or will bug out
                 num = len(self.data['SubjectID'])
+                # Check SubjectIDs are correct
+                self.data['SubjectID'] = [self._DataParser__checkSID(sid) for sid in self.data['SubjectID']]
                 for c in self.data.keys():
                     if len(self.data[c]) != num:
                         msg = "Missing data - unable to compile: %s = %d (expected %d)" % (c, len(self.data[c]), num)
@@ -464,12 +466,13 @@ class CosmedParser(DataParser):
             ids = [i for i in sids if len(i) == 6]
             intervals = range(0, 13, 3)
             for sid in ids:
-                self.subjects[sid] = dict()
+                sidkey = self._DataParser__checkSID(sid)
+                self.subjects[sidkey] = dict()
                 data = self.df[self.df['SubjectID'] == sid]
                 for i in intervals:
                     idata = data[data['interval'] == str(i)]
                     if not idata.empty:
-                        self.subjects[sid][i] = idata
+                        self.subjects[sidkey][i] = idata
 
                 logging.debug('Subject: %s with %d datasets', sid, len(self.subjects[sid]))
             logging.info('Subjects loaded=%d', len(self.subjects))

@@ -209,7 +209,7 @@ class OPEXUploader():
         missing = []
         matches = []
         if dp.subjects is None or len(dp.subjects) <= 0:
-            print("Uploader - loading subjects")
+            print("Uploader - sorting subjects")
             dp.sortSubjects()
         #get list of subjects - single call
         #df_xnatsubjects = self.xnat.getSubjectsDataframe(project)
