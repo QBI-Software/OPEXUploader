@@ -4,9 +4,6 @@ from os import mkdir,access,R_OK,W_OK
 from resources.dbquery import DBI
 from uploader import OPEXUploader, create_parser
 
-#ROOTDATADIR = "Q:\\DATA\\DATA ENTRY\\XnatUploaded\\sampledata"
-
-
 class BulkUploader():
     def __init__(self, uploader):
         self.uploader = uploader
@@ -69,6 +66,7 @@ if __name__ == '__main__':
     # Run through all reliable datasets
     db ='opex' #'xnat-dev-opex'
     project ='P1'
+    ROOTDATADIR = "Q:\\DATA\\DATA ENTRY\\XnatUploaded\\sampledata"
     #checks='--checks'   #TESTonly
     checks = ''
     parser = create_parser()
