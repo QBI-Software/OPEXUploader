@@ -221,7 +221,7 @@ class OPEXUploader():
                 if self.args.create is not None and self.args.create:
                     # create subject in database
                     skwargs = dp.getSubjectData(sd)
-                    s = self.xnat.createSubject(projectcode, sd, skwargs)
+                    s = self.xnat.createSubject(project.id(), sd, skwargs)
                     msg = 'Subject CREATED: %s' % sd
                     logging.info(msg)
                     print(msg)

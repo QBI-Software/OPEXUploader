@@ -16,8 +16,77 @@ from xnatconnect.XnatConnector import XnatConnector
 from xnatconnect.XnatOrganizeFiles import Organizer
 from resources.dbquery import DBI
 from bulk_uploader import BulkUploader
+import threading
+from multiprocessing import freeze_support, Pool
+# Required for dist
+freeze_support()
+########################################################################
+# Threading support
+EVT_RESULT_ID = wx.NewId()
+
+logger = logging.getLogger()
+lock = threading.Lock()
+event = threading.Event()
+
+def EVT_RESULT(win, func):
+    """Define Result Event."""
+    win.Connect(-1, -1, EVT_RESULT_ID, func)
 
 
+class ResultEvent(wx.PyEvent):
+    """Simple event to carry arbitrary result data."""
+
+    def __init__(self, data):
+        """Init Result Event."""
+        wx.PyEvent.__init__(self)
+        self.SetEventType(EVT_RESULT_ID)
+        self.data = data
+
+
+class UploadThread(threading.Thread):
+
+    def __init__(self,wxObject,uploader, proj, rootdirname,runoption):
+        threading.Thread.__init__(self)
+        self.runoption = runoption
+        self.wxObject = wxObject
+        self.uploader = uploader
+        self.proj = proj
+        self.rootdirname = rootdirname
+        #Test connection
+        if self.uploader.xnat.testconnection():
+            print('UploadThread: connection OK')
+        else:
+            print('UploadThread: connection failed')
+
+    def run(self):
+        print('UploadThread: Starting thread run')
+        try:
+            event.set()
+            lock.acquire(True)
+            if self.runoption == 'bulk':
+                bulk = BulkUploader(self.uploader)
+                bulk.run(self.proj, self.rootdirname)
+                bulk.close()
+                print("***BULK LOAD COMPLETED**")
+            else:
+                self.uploader.runDataUpload(self.proj, self.rootdirname, self.runoption)
+        except Exception as e:
+            print("ERROR:", e.args[0])
+            # wx.PostEvent(self.wxObject, ResultEvent((self.row, -1, self.uuid, self.processname,e.args[0])))
+
+        finally:
+            # wx.PostEvent(self.wxObject, ResultEvent((self.row,100, self.uuid, self.processname,'Done')))
+            logger.info('FINISHED UploadThread')
+            # self.terminate()
+            lock.release()
+            event.clear()
+            # Processing complete
+            self.uploader.xnatdisconnect()
+            print("FINISHED - see Log for details")
+
+
+
+####################################################################################
 class DownloadDialog(dlgDownloads):
     def __init__(self, parent, db=None, proj=None):
         super(DownloadDialog, self).__init__(parent)
@@ -299,6 +368,7 @@ class OPEXUploaderGUI(UploaderGUI):
         if self.loaded:
             self.chOptions.SetItems(sorted(self.runoptions.keys()))
             self.dbedit.AppendItems(self.config.keys())
+
         redir = LogOutput(self.tcResults)
         sys.stdout = redir
         self.m_statusBar1.SetStatusText('Welcome to the Uploader! Help is available from the Menu')
@@ -549,13 +619,9 @@ class OPEXUploaderGUI(UploaderGUI):
                 if uploader.xnat.testconnection():
                     logging.info("...Connected")
                     print("...Connected")
-                    if runoption == 'bulk':
-                        bulk = BulkUploader(uploader)
-                        bulk.run(proj,self.dirname)
-                        bulk.close()
-                        print("***BULK LOAD COMPLETED**")
-                    else:
-                        uploader.runDataUpload(proj, self.dirname, runoption)
+                    t = UploadThread(self,uploader,proj,self.dirname, runoption)
+                    t.start()
+                    # uploader.runDataUpload(proj, self.dirname, runoption)
                 else:
                     raise ConnectionError('Not connected')
 
@@ -572,13 +638,16 @@ class OPEXUploaderGUI(UploaderGUI):
             except Exception as e:
                 logging.error(e)
                 print("ERROR:", e)
-            finally:  # Processing complete
-                uploader.xnatdisconnect()
-                logging.info("FINISHED")
-                print("FINISHED - see xnatupload.log for details")
-                self.m_statusBar1.SetStatusText('Done')
+            # finally:  # Processing complete
+            #     uploader.xnatdisconnect()
+            #     logging.info("FINISHED")
+            #     print("FINISHED - see xnatupload.log for details")
+            #     self.m_statusBar1.SetStatusText('Done')
 
 
+
+
+##############################################################################
 def main():
     app = wx.App(False)
     OPEXUploaderGUI(None)
