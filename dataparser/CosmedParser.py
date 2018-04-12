@@ -390,7 +390,9 @@ class CosmedParser(DataParser):
     def writePhasedata(self, f, df_file_data, df_file_results):
         """
         Collate Phase data and append as new tab in datafile
-        :param f:
+        :param f: filename
+        :param df_file_data: Phase data from file
+        :param df_file_results: Calculated results
         :return:
         """
         book = None
@@ -419,7 +421,7 @@ class CosmedParser(DataParser):
             results = dict()
             cols = []
             for phase in phases:
-                if phase == 'NONE':  # ?assume not included
+                if phase == 'NONE':  # exclude
                     continue
                 if phase == 'RECOVERY':
                     d = d1[d1['Phase'] == phase]

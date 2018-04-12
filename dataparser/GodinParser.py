@@ -27,7 +27,7 @@ class GodinParser(DataParser):
         # Replace field headers
         self.fields = ['total']
         ncols = ['SubjectID']
-        for ix in range(0, 10, 3):
+        for ix in range(0, 13, 3):
             ncols += [c + '_' + str(ix) for c in self.fields]
         cols = ['ID'] + [c for c in self.data.columns if c.startswith('Total')]
         df = self.data[cols]
