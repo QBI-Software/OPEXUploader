@@ -8,12 +8,12 @@ import logging
 def findResourceDir():
     # try local
     if sys.platform =='darwin':
-        resource_dir = join('.','resources')
+        base = dirname(abspath('.'))
+        resource_dir = join(base, 'resources')
     else:
         resource_dir = join('resources')
-    if not access(resource_dir,R_OK):
-        #Try to locate resource dir
         base = dirname(abspath('..'))
+    if not access(resource_dir,R_OK):
         allfiles = [y for y in iglob(join(base,'**', "resources"))]
         files = [f for f in allfiles if not 'build' in f]
         if len(files) == 1:
