@@ -1,5 +1,5 @@
 from xnatconnect.XnatConnector import XnatConnector
-from report.report import OPEXReport
+from opexreport.report import OPEXReport
 from os.path import join, expanduser
 import argparse
 

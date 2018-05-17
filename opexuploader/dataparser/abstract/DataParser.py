@@ -38,8 +38,8 @@ class DataParser(object):
                 self.fields = None
             self.subjects = None
             #self.incorrect = self.dbi.getIDs()
-            if (datafile is not None and len(datafile)> 0):
-                (bname, extn)= splitext(basename(datafile))
+            if (self.datafile is not None and len(self.datafile)> 0):
+                (bname, extn)= splitext(basename(self.datafile))
                 self.ftype = extn #extension - xlsx or csv
                 self.sheet = sheet
                 self.skiplines = skiplines

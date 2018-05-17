@@ -15,7 +15,7 @@ import glob
 from os import R_OK, access
 from os.path import join
 
-from dataparser.DataParser import DataParser
+from opexuploader.dataparser.abstract.DataParser import DataParser
 
 VERBOSE = 0
 class AcerParser(DataParser):

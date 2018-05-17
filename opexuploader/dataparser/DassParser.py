@@ -11,14 +11,12 @@ Created on Thu Mar 2 2017
 """
 
 import argparse
-import glob
 from os import R_OK, access
 from os.path import join
 
 import numpy as np
-import pandas as pd
 
-from dataparser.DataParser import DataParser, stripspaces
+from opexuploader.dataparser.abstract.DataParser import DataParser
 
 VERBOSE = 0
 

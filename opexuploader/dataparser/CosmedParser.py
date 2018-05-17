@@ -47,15 +47,15 @@ import numpy as np
 import pandas as pd
 from openpyxl import load_workbook
 
-from dataparser.DataParser import stripspaces
-from dataparser.DataParser import DataParser, stripspaces
+from opexuploader.dataparser.abstract.DataParser import DataParser,stripspaces
+
 DEBUG = 0
 
 
 # Not using DataParser as too complex
 class CosmedParser(DataParser):
     def __init__(self, inputdir, inputsubdir, datafile, testonly=False):
-        DataParser.__init__(self,etype='COSMED')
+        DataParser.__init__(self, etype='COSMED')
         self.inputdir = inputdir
         self.testonly = testonly
         # Load fields

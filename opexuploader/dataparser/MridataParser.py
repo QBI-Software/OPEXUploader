@@ -16,9 +16,7 @@ from datetime import datetime
 from os import R_OK, access
 from os.path import join
 
-import pandas
-
-from dataparser.DataParser import DataParser
+from opexuploader.dataparser.abstract.DataParser import DataParser, stripspaces
 
 VERBOSE = 0
 class MridataParser(DataParser):

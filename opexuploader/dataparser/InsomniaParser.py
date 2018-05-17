@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Utility script: GodinParser
+Utility script: InsomniaParser
 Reads an excel or csv file with data and extracts per subject
 
 Created on Thu Mar 2 2017
@@ -14,29 +14,43 @@ from os.path import join
 
 import numpy as np
 
-from dataparser.DataParser import DataParser, stripspaces
+from opexuploader.dataparser.abstract.DataParser import DataParser, stripspaces
 
 
-class GodinParser(DataParser):
-    def __init__(self, *args):
+class InsomniaParser(DataParser):
+    def __init__(self, *args,**kwargs):
         DataParser.__init__(self, *args)
+        #Maybe empty sheet
+        if self.data.empty or len(self.data.columns) <=1:
+            msg ="No data available"
+            raise ValueError(msg)
         # cleanup subjects
         self.data['ID'] = self.data.apply(lambda x: stripspaces(x, 0), axis=1)
+
         if self.info is None:
-            self.info = {'prefix': 'GDN', 'xsitype': 'opex:godin'}
+            self.info = {'prefix': 'INS', 'xsitype': 'opex:insomnia'}
         # Replace field headers
-        self.fields = ['total']
-        ncols = ['SubjectID']
-        for ix in range(0, 13, 3):
-            ncols += [c + '_' + str(ix) for c in self.fields]
-        cols = ['ID'] + [c for c in self.data.columns if c.startswith('Total')]
+        self.fieldmap = {'total': 'Total Score'}
+        self.fields = self.fieldmap.keys()
+        ncols = ['SubjectID'] + self.fields
+        cols = ['ID',self.fieldmap['total']]
+        # zeros have been entered when should be blank
+        self.data[self.fieldmap['total']] = self.data.apply(lambda x: self.nodatarow(x,self.fieldmap['total']), axis=1)
         df = self.data[cols]
         df.columns = ncols
         df.reindex()
+
         self.data = df
         # sort subjects
         self.sortSubjects('SubjectID')
         print('Data load complete')
+
+
+    def nodatarow(self,row,fieldname):
+        rtn = row[fieldname]
+        if np.isnan(row[1]):
+            rtn = ''
+        return rtn
 
     def getSampleid(self, sd, interval):
         """
@@ -62,13 +76,11 @@ class GodinParser(DataParser):
             xsd + '/data_valid': 'Checked',
             xsd + '/comments': ''
         }
-        # One field in GODIN - is mandatory
-
+        #all data is mandata
         motdata = {}
         for field in self.fields:
-            rfield = field + '_' + str(i)
-            if rfield in row and not np.isnan(row[rfield].iloc[0]):
-                mandata[xsd + '/' + field] = str(row[rfield].iloc[0])
+            if field in row and not np.isnan(row[field].iloc[0]):
+                mandata[xsd + '/' + field] = str(row[field].iloc[0])
         return (mandata, motdata)
 
     def validData(self, dvalues):
@@ -100,40 +112,43 @@ if __name__ == "__main__":
 
              ''')
     parser.add_argument('--filedir', action='store', help='Directory containing files',
-                        default="Q:\\DATA\\DATA ENTRY\\XnatUploaded\\sampledata\\godin")
+                        default="Q:\\DATA\\DATA ENTRY\\XnatUploaded\\sampledata\\insomnia")
     parser.add_argument('--datafile', action='store', help='Filename of original data',
-                        default="GODIN_Data_entry_180717.xlsx")
+                        default="ISI Data Entry 20180323.xlsx")
     parser.add_argument('--sheet', action='store', help='Sheet name to extract',
                         default="0")
     args = parser.parse_args()
 
     inputfile = join(args.filedir, args.datafile)
-    sheet = int(args.sheet)
-    skip = 2
+    #Data file has one sheet per interval
+    skip = 1
     header = 1
-    etype = 'Godin'
+    etype = 'Insomnia'
     print("Input:", inputfile)
     if access(inputfile, R_OK):
         try:
             print("Loading ", inputfile)
-            dp = GodinParser(inputfile, sheet, skip, header, etype)
-            xsdtypes = dp.getxsd()
             intervals = range(0, 13, 3)
-            for sd in dp.subjects:
-                print('\n***********SubjectID:', sd)
-                for i in intervals:
-                    print('Interval:', i)
-                    iheaders = [c + "_" + str(i) for c in dp.fields]
+            for sheet in range(0,5):
+                i = intervals[sheet]
+                print('Interval:', i)
+                dp = InsomniaParser(inputfile, sheet, skip, header, etype)
+                if dp is None:
+                    continue
+                else:
+                    dp.interval = i
+                xsdtypes = dp.getxsd()
+                for sd in dp.subjects:
+                    print('\n***********SubjectID:', sd)
                     sampleid = dp.getSampleid(sd, i)
+                    print('Sampleid:', sampleid)
                     row = dp.subjects[sd]
-                    if iheaders[0] in row.columns:
-                        print('Sampleid:', sampleid)
-                        if not dp.validData(row[iheaders].values.tolist()[0]):
-                            print('empty data - skipping')
-                            continue
-                        (mandata, data) = dp.mapData(row[iheaders], i, xsdtypes)
-                        print(mandata)
-                        print(data)
+                    if not dp.validData(row[dp.fields].values.tolist()[0]):
+                        print('empty data - skipping')
+                        continue
+                    (mandata, data) = dp.mapData(row, i, xsdtypes)
+                    print(mandata)
+                    print(data)
 
         except Exception as e:
             print("Error: ", e)

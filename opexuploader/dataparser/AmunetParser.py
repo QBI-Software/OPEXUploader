@@ -25,7 +25,7 @@ import pandas
 from numpy import nan
 from pandas import Series
 
-from dataparser.DataParser import DataParser
+from opexuploader.dataparser.abstract.DataParser import DataParser
 
 VERBOSE = 0
 

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Utility script: InsomniaParser
+Utility script: PsqiParser
 Reads an excel or csv file with data and extracts per subject
 
 Created on Thu Mar 2 2017
@@ -14,43 +14,31 @@ from os.path import join
 
 import numpy as np
 
-from dataparser.DataParser import DataParser, stripspaces
+from opexuploader.dataparser.abstract.DataParser import DataParser, stripspaces
 
 
-class InsomniaParser(DataParser):
-    def __init__(self, *args,**kwargs):
+class PsqiParser(DataParser):
+    def __init__(self, *args):
         DataParser.__init__(self, *args)
-        #Maybe empty sheet
-        if self.data.empty or len(self.data.columns) <=1:
-            msg ="No data available"
+        # Maybe empty sheet
+        if self.data.empty or len(self.data.columns) <= 1:
+            msg = "No data available"
             raise ValueError(msg)
         # cleanup subjects
         self.data['ID'] = self.data.apply(lambda x: stripspaces(x, 0), axis=1)
-
         if self.info is None:
-            self.info = {'prefix': 'INS', 'xsitype': 'opex:insomnia'}
+            self.info = {'prefix': 'PSQ', 'xsitype': 'opex:psqi'}
         # Replace field headers
-        self.fieldmap = {'total': 'Total Score'}
-        self.fields = self.fieldmap.keys()
+        self.fields = ['c'+str(i) for i in range(1,8)] # + ['total']
         ncols = ['SubjectID'] + self.fields
-        cols = ['ID',self.fieldmap['total']]
-        # zeros have been entered when should be blank
-        self.data[self.fieldmap['total']] = self.data.apply(lambda x: self.nodatarow(x,self.fieldmap['total']), axis=1)
+        cols = ['ID'] + [c for c in self.data.columns if (isinstance(c,unicode) or isinstance(c,str)) and c.startswith('Component')] # calculate total on upload + ['Global PQSI ']
         df = self.data[cols]
         df.columns = ncols
         df.reindex()
-
         self.data = df
         # sort subjects
         self.sortSubjects('SubjectID')
         print('Data load complete')
-
-
-    def nodatarow(self,row,fieldname):
-        rtn = row[fieldname]
-        if np.isnan(row[1]):
-            rtn = ''
-        return rtn
 
     def getSampleid(self, sd, interval):
         """
@@ -76,11 +64,13 @@ class InsomniaParser(DataParser):
             xsd + '/data_valid': 'Checked',
             xsd + '/comments': ''
         }
-        #all data is mandata
         motdata = {}
+        totalcols = 0
         for field in self.fields:
             if field in row and not np.isnan(row[field].iloc[0]):
-                mandata[xsd + '/' + field] = str(row[field].iloc[0])
+                motdata[xsd + '/' + field] = str(int(row[field].iloc[0]))
+                totalcols += int(row[field].iloc[0])
+        motdata[xsd + '/total'] = str(totalcols)
         return (mandata, motdata)
 
     def validData(self, dvalues):
@@ -112,46 +102,49 @@ if __name__ == "__main__":
 
              ''')
     parser.add_argument('--filedir', action='store', help='Directory containing files',
-                        default="Q:\\DATA\\DATA ENTRY\\XnatUploaded\\sampledata\\insomnia")
+                        default="Q:\\DATA\\DATA ENTRY\\XnatUploaded\\sampledata\\psqi")
     parser.add_argument('--datafile', action='store', help='Filename of original data',
-                        default="ISI Data Entry 20180323.xlsx")
+                        default="PSQI data entry_withcalcs.xlsx")
     parser.add_argument('--sheet', action='store', help='Sheet name to extract',
                         default="0")
     args = parser.parse_args()
 
     inputfile = join(args.filedir, args.datafile)
-    #Data file has one sheet per interval
+    sheet = int(args.sheet)
     skip = 1
     header = 1
-    etype = 'Insomnia'
+    etype = 'PSQI'
     print("Input:", inputfile)
     if access(inputfile, R_OK):
         try:
             print("Loading ", inputfile)
-            intervals = range(0, 13, 3)
-            for sheet in range(0,5):
+            intervals = range(0, 10, 3)
+            for sheet in range(0, 4):
                 i = intervals[sheet]
                 print('Interval:', i)
-                dp = InsomniaParser(inputfile, sheet, skip, header, etype)
-                if dp is None:
+                try:
+                    dp = PsqiParser(inputfile, sheet, skip, header, etype)
+                except ValueError as e:
+                    print(e.args[0])
                     continue
-                else:
-                    dp.interval = i
                 xsdtypes = dp.getxsd()
+
                 for sd in dp.subjects:
                     print('\n***********SubjectID:', sd)
                     sampleid = dp.getSampleid(sd, i)
-                    print('Sampleid:', sampleid)
+
                     row = dp.subjects[sd]
                     if not dp.validData(row[dp.fields].values.tolist()[0]):
-                        print('empty data - skipping')
+                        #print('empty data - skipping')
                         continue
+                    print('Sampleid:', sampleid)
                     (mandata, data) = dp.mapData(row, i, xsdtypes)
                     print(mandata)
                     print(data)
-
+            print("Complete")
         except Exception as e:
             print("Error: ", e)
+
 
     else:
         print("Cannot access file: ", inputfile)

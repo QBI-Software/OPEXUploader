@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Utility script: PsqiParser
+Utility script: GodinParser
 Reads an excel or csv file with data and extracts per subject
 
 Created on Thu Mar 2 2017
@@ -14,31 +14,29 @@ from os.path import join
 
 import numpy as np
 
-from dataparser.DataParser import DataParser, stripspaces
+from opexuploader.dataparser.abstract.DataParser import DataParser, stripspaces
 
 
-class PsqiParser(DataParser):
+class GodinParser(DataParser):
     def __init__(self, *args):
         DataParser.__init__(self, *args)
-        # Maybe empty sheet
-        if self.data.empty or len(self.data.columns) <= 1:
-            print "No data available"
-            return None
         # cleanup subjects
         self.data['ID'] = self.data.apply(lambda x: stripspaces(x, 0), axis=1)
         if self.info is None:
-            self.info = {'prefix': 'PSQ', 'xsitype': 'opex:psqi'}
+            self.info = {'prefix': 'GDN', 'xsitype': 'opex:godin'}
         # Replace field headers
-        self.fields = ['c'+str(i) for i in range(1,8)] # + ['total']
-        ncols = ['SubjectID'] + self.fields
-        cols = ['ID'] + [c for c in self.data.columns if (isinstance(c,unicode) or isinstance(c,str)) and c.startswith('Component')] # calculate total on upload + ['Global PQSI ']
+        self.fields = ['total']
+        ncols = ['SubjectID']
+        for ix in range(0, 13, 3):
+            ncols += [c + '_' + str(ix) for c in self.fields]
+        cols = ['ID'] + [c for c in self.data.columns if c.startswith('Total')]
         df = self.data[cols]
         df.columns = ncols
         df.reindex()
         self.data = df
         # sort subjects
         self.sortSubjects('SubjectID')
-        print 'Data load complete'
+        print('Data load complete')
 
     def getSampleid(self, sd, interval):
         """
@@ -64,13 +62,13 @@ class PsqiParser(DataParser):
             xsd + '/data_valid': 'Checked',
             xsd + '/comments': ''
         }
+        # One field in GODIN - is mandatory
+
         motdata = {}
-        totalcols = 0
         for field in self.fields:
-            if field in row and not np.isnan(row[field].iloc[0]):
-                motdata[xsd + '/' + field] = str(row[field].iloc[0])
-                totalcols += row[field].iloc[0]
-        motdata[xsd + '/total'] = str(totalcols)
+            rfield = field + '_' + str(i)
+            if rfield in row and not np.isnan(row[rfield].iloc[0]):
+                mandata[xsd + '/' + field] = str(row[rfield].iloc[0])
         return (mandata, motdata)
 
     def validData(self, dvalues):
@@ -102,42 +100,40 @@ if __name__ == "__main__":
 
              ''')
     parser.add_argument('--filedir', action='store', help='Directory containing files',
-                        default="Q:\\DATA\\DATA ENTRY\\XnatUploaded\\sampledata\\psqi")
+                        default="Q:\\DATA\\DATA ENTRY\\XnatUploaded\\sampledata\\godin")
     parser.add_argument('--datafile', action='store', help='Filename of original data',
-                        default="PSQI data entry 20180206.xlsx")
+                        default="GODIN_Data_entry_180717.xlsx")
     parser.add_argument('--sheet', action='store', help='Sheet name to extract',
                         default="0")
     args = parser.parse_args()
 
     inputfile = join(args.filedir, args.datafile)
     sheet = int(args.sheet)
-    skip = 1
+    skip = 2
     header = 1
-    etype = 'PSQI'
+    etype = 'Godin'
     print("Input:", inputfile)
     if access(inputfile, R_OK):
         try:
-            print "Loading ", inputfile
+            print("Loading ", inputfile)
+            dp = GodinParser(inputfile, sheet, skip, header, etype)
+            xsdtypes = dp.getxsd()
             intervals = range(0, 13, 3)
-            for sheet in range(0, 5):
-                i = intervals[sheet]
-                print 'Interval:', i
-                dp = PsqiParser(inputfile, sheet, skip, header, etype)
-                if dp is None:
-                    continue
-                xsdtypes = dp.getxsd()
-
-                for sd in dp.subjects:
-                    print '\n***********SubjectID:', sd
+            for sd in dp.subjects:
+                print('\n***********SubjectID:', sd)
+                for i in intervals:
+                    print('Interval:', i)
+                    iheaders = [c + "_" + str(i) for c in dp.fields]
                     sampleid = dp.getSampleid(sd, i)
-                    print 'Sampleid:', sampleid
                     row = dp.subjects[sd]
-                    if not dp.validData(row[dp.fields].values.tolist()[0]):
-                        print 'empty data - skipping'
-                        continue
-                    (mandata, data) = dp.mapData(row, i, xsdtypes)
-                    print mandata
-                    print data
+                    if iheaders[0] in row.columns:
+                        print('Sampleid:', sampleid)
+                        if not dp.validData(row[iheaders].values.tolist()[0]):
+                            print('empty data - skipping')
+                            continue
+                        (mandata, data) = dp.mapData(row[iheaders], i, xsdtypes)
+                        print(mandata)
+                        print(data)
 
         except Exception as e:
             print("Error: ", e)

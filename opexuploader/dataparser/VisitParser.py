@@ -1,3 +1,4 @@
+from __future__ import print_function
 # -*- coding: utf-8 -*-
 """
 Utility script: VisitParser
@@ -11,22 +12,17 @@ Created on Thu Mar 2 2017
 """
 
 import argparse
-import glob
-from os import R_OK, access
-from os.path import join
-import pandas as pd
 from datetime import datetime
-from numpy import nan
 import logging
 
-from dataparser.DataParser import DataParser
+from opexuploader.dataparser.abstract.DataParser import DataParser, stripspaces
 
 VERBOSE = 0
 class VisitParser(DataParser):
 
     def __init__(self, *args):
         DataParser.__init__(self, *args)
-        self.opex = pd.read_csv(join(self.resource_dir, 'opex.csv'))
+        #self.opex = pd.read_csv(join(self.resource_dir, 'opex.csv'))
         self.expts = dict()
 
     def getSubjectData(self,sd):
@@ -71,7 +67,7 @@ class VisitParser(DataParser):
         """
         # Check data has required fields
         if not 'ID' in self.data.columns or not 'Sex' in self.data.columns:
-            print 'Cannot run update genders as data is not present'
+            print('Cannot run update genders as data is not present')
             return 0
 
         xnatgenders={'F':'female', 'M': 'male'}
@@ -91,11 +87,19 @@ class VisitParser(DataParser):
                 if gender != xgender:
                     s.attrs.mset({'gender': gender})
                     msg = 'Subject gender updated: %s to %s' % (subject_id, gender)
-                    print msg
+                    print(msg)
                     logging.info(msg)
             else:
                 msg = 'Subject gender to update: %s to %s' % (subject_id, gender)
-                print msg
+                print(msg)
+
+    def getValidSid(self, sid):
+        checksid = sid.replace(" ", "")
+        if len(str(checksid)) > 6:
+            checksid = checksid[0:6]
+        checksid = self._DataParser__checkSID(checksid)
+
+        return checksid
 
     def processData(self):
         """
@@ -105,13 +109,15 @@ class VisitParser(DataParser):
         intvals = [str(i) for i in range(0, 13)]
         # get each experiment and check date matches - these are upload dates by default as dates were not provided with the data
         #  ['DEXA', 'COBAS', 'ELISAS', 'MULTIPLEX', 'MRI ASHS', 'MRI FS', 'FMRI', 'DASS']
-        dateless = self.opex['Expt'][self.opex['date_provided'] == 'n'].values
-
+        dateless = self.dbi.getDatelessExpts() #opex['Expt'][self.opex['date_provided'] == 'n'].values
+        print("Dateless expts: ",dateless)
         for i, sd in self.data.iterrows():
-            subject_id = sd['ID'].replace(" ", "")
+            subject_id = self.getValidSid(sd['ID'])
+
             for expt in dateless:
-                prefix = self.opex['prefix'][self.opex['Expt'] == expt].values[0]
-                xtype = self.opex['xsitype'][self.opex['Expt'] == expt].values[0]
+                info = self.dbi.getInfo(expt)
+                prefix = info['prefix']
+                xtype = info['xsitype']
                 for intval in intvals:
                     if xtype.startswith('opex:blood'):
                         subexpts = ["FASTED", "PREPOST"]
@@ -160,59 +166,60 @@ class VisitParser(DataParser):
         :param xnat:
         :return:
         """
-        print "**Uploading dates to XNAT**"
+        print("**Uploading dates to XNAT**")
+        missing =[]
+        matches=[]
+        if xnat is not None:
+            project = xnat.get_project(projectcode)
+        else:
+            raise IOError("XNAT not connected")
 
         for eid in self.expts.keys():
             d = self.expts.get(eid)
             prefix = eid.split('_')[0]
             subject_id = eid.split('_')[1]
-            xtype = self.opex['xsitype'][self.opex['prefix'] == prefix].values[0]
-
-            msg="Searching %s" % eid
-            #print msg
-            logging.debug(msg)
-
-            if xnat is not None:
-                project = xnat.get_project(projectcode)
-                s = project.subject(subject_id)
-                if not s.exists():
-                    continue
-                e = s.experiment(eid)
-                if xtype.startswith('opex:blood'):
-                    expts = s.experiments(eid[0:-2] + '*')
-                    e = expts.fetchone()
-                # elif xtype == 'opex:fmri':
-                #     expts = [e.id() for e in s.experiments('OPEXNAT*') if e.label() == eid]
-                #     if len(expts) > 0:
-                #         eid = expts[0]
-                #         e = s.experiment(eid)
-                #     else:
-                #         continue
-                if e is not None and e.exists():
-                    exptid = e.id()
-                    msg = 'Found expt: %s %s : %s [%s]' % (subject_id,xtype, exptid,eid)
-                    #print msg
-                    logging.debug(msg)
-                    xnatexpt = xnat.updateExptDate(s, exptid, d, xtype)
-                    if xnatexpt is not None: #not updated if not different
-                        # remove or update comment
-                        comments = xnatexpt.attrs.get(xtype + '/comments')
-                        if len(comments) > 0:
-                            if comments != 'Date analysed not collected' and not 'Date updated' in comments:
-                                comments = comments + '; Date updated'
-                        else:
-                            comments = 'Date updated'
-                        xnatexpt.attrs.set(xtype + '/comments', comments)
-                        msg = 'UPDATED %s %s date - %s' % (subject_id, xnatexpt.id(), d)
-                        print msg
-                        logging.info(msg)
-                else:
-                    msg = "Expt not found: %s" % eid
-                    logging.debug(msg)
-                    #print msg
-
+            xtype = self.dbi.getXsitypeFromPrefix(prefix)
+            s = project.subject(subject_id)
+            if not s.exists():
+                continue
+            e = s.experiment(eid)
+            if xtype.startswith('opex:blood'):
+                expts = s.experiments(eid[0:-2] + '*')
+                e = expts.fetchone()
+            # elif xtype == 'opex:fmri':
+            #     expts = [e.id() for e in s.experiments('OPEXNAT*') if e.label() == eid]
+            #     if len(expts) > 0:
+            #         eid = expts[0]
+            #         e = s.experiment(eid)
+            #     else:
+            #         continue
+            if e is not None and e.exists():
+                exptid = e.id()
+                msg = 'Found expt: %s %s : %s [%s]' % (subject_id,xtype, exptid,eid)
+                #print(msg)
+                logging.debug(msg)
+                xnatexpt = xnat.updateExptDate(s, exptid, d, xtype)
+                if xnatexpt is not None: #not updated if not different
+                    # remove or update comment
+                    comments = xnatexpt.attrs.get(xtype + '/comments')
+                    if len(comments) > 0:
+                        if comments != 'Date analysed not collected' and not 'Date updated' in comments:
+                            comments = comments + '; Date updated'
+                    else:
+                        comments = 'Date updated'
+                    xnatexpt.attrs.set(xtype + '/comments', comments)
+                    matches.append(xnatexpt.id())
+                    msg = 'UPDATED %s %s date - %s' % (subject_id, xnatexpt.id(), d)
+                    print(msg)
+                    logging.info(msg)
             else:
-                print 'XNAT connection not available'
+                msg = "Expt not found: %s" % eid
+                logging.debug(msg)
+                #print msg
+
+
+        print("Total updates: ", len(matches))
+        return (missing,matches)
 
 
 ########################################################################
@@ -237,11 +244,11 @@ if __name__ == "__main__":
         dp = VisitParser(inputfile,args.sheet,1)
         #dp.updateGenders()
         dp.processData()
-        # print output
-        print "**Processed dates**"
+        # print(output
+        print("**Processed dates**")
         for eid in dp.expts.keys():
-            print eid, ": ", dp.expts.get(eid)
+            print(eid, ": ", dp.expts.get(eid))
 
     except Exception as e:
-        print e
+        print(e)
 

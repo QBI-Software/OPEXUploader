@@ -1,8 +1,11 @@
 from __future__ import print_function
+
+from os import mkdir, access, W_OK
 from os.path import join, expanduser, split
-from os import mkdir,access,R_OK,W_OK
+
+from opexuploader.uploader import OPEXUploader, create_parser
 from resources.dbquery import DBI
-from uploader import OPEXUploader, create_parser
+
 
 class BulkUploader():
     def __init__(self, uploader):

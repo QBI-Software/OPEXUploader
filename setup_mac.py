@@ -18,10 +18,12 @@
 #
 
 
-from os.path import join, dirname
-from setuptools import setup
 from os import getcwd
-from uploader_app import __version__
+from os.path import join
+
+from setuptools import setup
+
+from opexuploader.uploader_app import __version__
 
 application_title = 'QBI OPEX XNAT Uploader'
 exe_name='opex_uploader'

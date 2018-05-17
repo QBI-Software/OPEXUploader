@@ -728,14 +728,17 @@ class dlgLogViewer ( wx.Dialog ):
 	def __init__( self, parent ):
 		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Upload Log Output", pos = wx.DefaultPosition, size = wx.DefaultSize, style = wx.DEFAULT_DIALOG_STYLE )
 		
-		self.SetSizeHintsSz( wx.Size( 400,600 ), wx.DefaultSize )
+		self.SetSizeHintsSz( wx.Size( 600,600 ), wx.DefaultSize )
 		
 		bSizer17 = wx.BoxSizer( wx.VERTICAL )
 		
 		self.tcLog = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.TE_MULTILINE|wx.TE_READONLY|wx.TE_WORDWRAP )
-		self.tcLog.SetMinSize( wx.Size( 390,590 ) )
+		self.tcLog.SetMinSize( wx.Size( 580,500 ) )
 		
 		bSizer17.Add( self.tcLog, 0, wx.ALL, 5 )
+		
+		self.m_button16 = wx.Button( self, wx.ID_ANY, u"Refresh", wx.DefaultPosition, wx.DefaultSize, 0 )
+		bSizer17.Add( self.m_button16, 0, wx.ALL, 5 )
 		
 		
 		self.SetSizer( bSizer17 )
@@ -743,8 +746,16 @@ class dlgLogViewer ( wx.Dialog ):
 		bSizer17.Fit( self )
 		
 		self.Centre( wx.BOTH )
+		
+		# Connect Events
+		self.m_button16.Bind( wx.EVT_BUTTON, self.OnRefresh )
 	
 	def __del__( self ):
 		pass
+	
+	
+	# Virtual event handlers, overide them in your derived class
+	def OnRefresh( self, event ):
+		event.Skip()
 	
 

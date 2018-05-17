@@ -2,11 +2,13 @@ import unittest2 as unittest
 import argparse
 from os.path import join, expanduser
 from resources.dbquery import DBI
+from opexuploader.utils import findResourceDir
 import pandas
 
 class TestDBquery(unittest.TestCase):
     def setUp(self):
-        configdb = join('..','resources', 'opexconfig_test.db')
+        self.resourcedir = findResourceDir()
+        configdb = join(self.resourcedir, 'opexconfig_test.db')
         self.dbi = DBI(configdb)
         self.dbi.getconn()
 
@@ -83,7 +85,7 @@ class TestDBquery(unittest.TestCase):
 
     def test_getInterval(self):
         expt ='Godin'
-        expected = 5
+        expected = 3
         data = self.dbi.getInterval(expt)
         self.assertEqual(expected,data)
 

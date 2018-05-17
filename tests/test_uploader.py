@@ -1,8 +1,8 @@
-import unittest2 as unittest
-import argparse
 from os.path import join, expanduser
 
-from uploader import OPEXUploader, create_parser
+import unittest2 as unittest
+
+from opexuploader.uploader import OPEXUploader, create_parser
 
 ROOTDATADIR = "Q:\\DATA\\DATA ENTRY\\XnatUploaded\\sampledata"
 

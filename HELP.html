@@ -23,6 +23,19 @@
 <p>Before a run, it is good to check <strong>TEST RUN</strong> to ensure data is OK - it will not be loaded to the database.  Note, that datafiles must be closed if being viewed in Excel. (See Setup for initial use.)</p>
 <p>The following steps refer to the <strong>XnatUploaded</strong> directory on the share drive.  It is best to copy the main data files here except for MRI scans, and Amunet and COSMED subdirectories which are too large.</p>
 <p>All data upload is recorded in a log file in your user directory called logs/xnatupload.log.</p>
+<h3>Batch Upload</h3>
+<p>There is now an option to combine regular data uploads.  Follow the guidelines in the sections below to put the correct data files in the <code>XnatUploaded/sampledata</code> folders (this should then be entered in the Input directory field).  Select the <strong>Bulk Upload</strong> option from the Data Type dropdown and click 'RUN'.</p>
+<p>These datasets are currently included:</p>
+<ol>
+<li>CANTAB</li>
+<li>DEXA</li>
+<li>DASS</li>
+<li>GODIN</li>
+<li>INSOMNIA</li>
+<li>PSQI</li>
+<li>BLOODS (all)</li>
+<li>Visits (final)</li>
+</ol>
 <h3>CANTAB data (XnatUploaded/sampledata/cantab)</h3>
 <p>Downloaded excel sheet called 'RowBySession' should be copied into this directory.</p>
 <ol>
@@ -64,6 +77,34 @@
 <li>Select 'DEXA' from the Data Type dropdown</li>
 <li>Click 'RUN'</li>
 </ol>
+<h3>DASS data (XnatUploaded/sampledata/dass)</h3>
+<ol>
+<li>Copy data file (DASS Data Entry Plus Check_20171206.xlsx) to this directory from share drive (\DATA\DATA ENTRY\PaperBasedPdfs\PaperBasedExcelSheets\DASS)</li>
+<li>Set input directory to this directory</li>
+<li>Select 'DASS' from the Data Type dropdown</li>
+<li>Click 'RUN'</li>
+</ol>
+<h3>GODIN data (XnatUploaded/sampledata/godin)</h3>
+<ol>
+<li>Copy data file (GODIN_Data_entry_180717.xlsx) to this directory from share drive (\DATA\DATA ENTRY\PaperBasedPdfs\PaperBasedExcelSheets\GODIN)</li>
+<li>Set input directory to this directory</li>
+<li>Select 'GODIN' from the Data Type dropdown</li>
+<li>Click 'RUN'</li>
+</ol>
+<h3>Insomnia (ISI) data (XnatUploaded/sampledata/insomnia)</h3>
+<ol>
+<li>Copy data file (ISI Data Entry 20180206.xlsx) to this directory from share drive (\DATA\DATA ENTRY\PaperBasedPdfs\PaperBasedExcelSheets\ISI Data Entry)</li>
+<li>Set input directory to this directory</li>
+<li>Select 'Insomnia' from the Data Type dropdown</li>
+<li>Click 'RUN'</li>
+</ol>
+<h3>PSQI data (XnatUploaded/sampledata/psqi)</h3>
+<ol>
+<li>Copy data file (PSQI data entry 20180206.xlsx) to this directory from share drive (\DATA\DATA ENTRY\PaperBasedPdfs\PaperBasedExcelSheets\PSQI Data)</li>
+<li>Set input directory to this directory</li>
+<li>Select 'PSQI' from the Data Type dropdown</li>
+<li>Click 'RUN'</li>
+</ol>
 <h3>MRI Scans (XnatUploaded/sampledata/mri)</h3>
 <p>MRI scans must be sorted into their series before uploading so this is a two step process.</p>
 <h4>Scans Organizer</h4>
@@ -92,14 +133,27 @@
 <li>Click 'RUN'</li>
 </ol>
 <h3>Visits (XnatUploaded/sampledata/visit)</h3>
-<p>Some experimental data is not accompanied by the visit date (eg blood, DEXA, MRIdata) so it is extracted from the participants file.  This file cannot be used directly however.</p>
+<p>Some experimental data is not accompanied by the visit date: 
++ all bloods
++ DEXA
++ DASS
++ MRIdata (FS or ASHS) 
++ FMRI</p>
+<p>so it is extracted from the participants file after these data have been uploaded.  This file cannot be used directly however as it is full of inconsistent data.</p>
 <ol>
 <li>Copy data file ('Participant visit record_20171110.xlsx') to this directory from share drive (\CENTRE ADMIN\PARTICIPANTS)</li>
+<li>Save to a new file called 'Visits.xlsx' (can overwrite)</li>
 <li>A new line of headers needs to be added - see the existing file 'Visits.xlsx'</li>
-<li>Some data may need cleaning up then rename the file to 'Visits.xlsx' before Running</li>
+<li>Insert a new column called BLOOD_FASTED_3 which has the same values as DEXA_3 (3mth Assessment)</li>
+<li>A LOT of data will need cleaning up which I have done via Excel "find and replace" and "formats -&gt; date -&gt; yyyy-mm-dd" (if in doubt, leave it out)</li>
 </ol>
-<h3>DASS, FMRI data (XnatUploaded\sampledata\spreadsheet_upload)</h3>
-<p>When data is able to match the headings directly, it is quicker to use XNAT's Spreadsheet upload option.  Guidelines for this are in the OPEX XNAT User guide.</p>
+<p>Only experiments which exist in the database will be updated and only if the date is different so a comment "Date updated" is entered which can be checked on XNAT.</p>
+<h3>FMRI data (XnatUploaded\sampledata\spreadsheet_upload)</h3>
+<p>When data is able to match the headings directly, it is quicker to use XNAT's Spreadsheet upload option.  Guidelines for this are in the OPEX XNAT User guide.  It mostly involves setting up the columns in the right order with the headers matching the template exactly.  </p>
+<p>If an ID is to be generated, it is usually:</p>
+<p>```
+=CONCATENATE(prefix,"<em>",subjectid, "</em>",interval)</p>
+<p>```</p>
 <h2>General Housekeeping</h2>
 <ol>
 <li>Reports are created in the report directory showing missing and matched participants - these should be checked and any repeated incorrect IDs can be added to the file called 'incorrectIds.csv' in the application resources directory.</li>
@@ -107,7 +161,7 @@
 </ol>
 <h2>Other Options</h2>
 <h3>Create Subjects from Data</h3>
-<p>If the subject doesn't exist, this will create it in the database. Generally, this isn't used in case there are errors in the Participant IDs and thus incorrect data entry.</p>
+<p>If the subject doesn't exist, this will create it in the database. Generally, this isn't used in case there are often errors in the Participant IDs and thus incorrect data entry.</p>
 <h3>Update existing data</h3>
 <p>This will reload the data over existing data.  This is useful, for example, with the MRIdata (hippocampal volumes) where there have been improvements in the methods.</p>
 <h3>Download CSVs</h3>
@@ -117,4 +171,19 @@
 <li>Check the "Deltas" if you also want the changes between intervals (per individual - note that baseline data remains the same)</li>
 <li>Select the Output directory</li>
 <li>Click on <strong>'Download'</strong></li>
+</ol>
+<h3>Generate Reports</h3>
+<p>This generates reports of processed data, grouped by parameter or group (AIT,MIT,LIT) for further analysis. Currently, just Blood and CANTAB data.</p>
+<ol>
+<li>From the File Menu, Select "Generate Reports"</li>
+<li>Check the "Deltas" if you also want the changes from baseline</li>
+<li>Select the Output directory</li>
+<li>Click on <strong>'Generate'</strong></li>
+</ol>
+<h3>View Logs</h3>
+<p>View more details about the processing from the log file which is generated each run and can be viewed from locally via a text editor (under your user home directory in subdirectory 'logs') or via the File Menu.</p>
+<ol>
+<li>From the File Menu, Select "View Logs"</li>
+<li>Scroll down to the bottom for the most recent entry</li>
+<li>Close and re-open to refresh</li>
 </ol>

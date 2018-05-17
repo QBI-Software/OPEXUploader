@@ -1,8 +1,8 @@
-import unittest2 as unittest
-import argparse
-from dataparser.DataParser import DataParser
 from os.path import join
-from os import access,R_OK
+
+import unittest2 as unittest
+
+from opexuploader.dataparser.abstract import DataParser
 
 ROOTDATADIR="..\\sampledata" #"Q:\\DATA\\DATA ENTRY\\XnatUploaded\\sampledata"
 
@@ -15,7 +15,7 @@ class TestCantabDataparser(unittest.TestCase):
             header=None
             etype='CANTAB'
             self.dp = None
-            self.dp = DataParser(datafile,sheet, skip, header, etype)
+            self.dp = DataParser(datafile, sheet, skip, header, etype)
         except Exception as e:
             print(e)
 
@@ -41,7 +41,7 @@ class TestDataparser(unittest.TestCase):
             header=None
             etype='MULTIPLEX'
             self.dp = None
-            self.dp = DataParser(datafile,sheet, skip, header, etype)
+            self.dp = DataParser(datafile, sheet, skip, header, etype)
         except Exception as e:
             print(e)
 

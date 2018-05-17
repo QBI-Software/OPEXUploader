@@ -30,10 +30,11 @@
 
 import sys
 from os import environ, getcwd
-from os.path import join, dirname, normpath
+from os.path import join
 
 from cx_Freeze import setup, Executable
-from uploader import __version__
+
+from opexuploader.uploader import __version__
 
 application_title = 'QBI OPEX XNAT Uploader'
 main_python_file = 'uploader_app.py'

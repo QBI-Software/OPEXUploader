@@ -15,11 +15,10 @@ import glob
 from datetime import datetime
 from os import R_OK, access
 from os.path import join
-from resources.dbquery import DBI
 
 import pandas
 
-from dataparser.DataParser import DataParser
+from opexuploader.dataparser.abstract.DataParser import DataParser
 
 DEBUG = 0
 class BloodParser(DataParser):

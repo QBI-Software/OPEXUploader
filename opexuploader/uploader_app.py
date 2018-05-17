@@ -1,23 +1,24 @@
 import argparse
-import csv
 import logging
 import sys
+import threading
+from multiprocessing import freeze_support
 from os import access, R_OK, mkdir
-from os.path import join, expanduser, dirname,split
+from os.path import join, expanduser, dirname, split
 
 import wx
 from configobj import ConfigObj
 from requests.exceptions import ConnectionError
 
-from gui.uploadergui import UploaderGUI, dlgScans, dlgConfig, dlgHelp, dlgIDS, dlgDownloads, dlgReports, dlgLogViewer
-from report.report import OPEXReport
-from uploader import OPEXUploader
+from opexreport.report import OPEXReport
+from opexuploader.bulk_uploader import BulkUploader
+from opexuploader.gui.uploadergui import UploaderGUI, dlgScans, dlgConfig, dlgHelp, dlgIDS, dlgDownloads, dlgReports, dlgLogViewer
+from opexuploader.uploader import OPEXUploader
+from opexuploader.utils import findResourceDir
+from resources.dbquery import DBI
 from xnatconnect.XnatConnector import XnatConnector
 from xnatconnect.XnatOrganizeFiles import Organizer
-from resources.dbquery import DBI
-from bulk_uploader import BulkUploader
-import threading
-from multiprocessing import freeze_support, Pool
+
 # Required for dist
 freeze_support()
 ########################################################################
@@ -213,14 +214,19 @@ class ReportDialog(dlgReports):
 class IdsDialog(dlgIDS):
     def __init__(self, parent):
         super(IdsDialog, self).__init__(parent)
-        self.idfile = join(dirname(__file__),'resources', 'incorrectIds.csv')
-        self.iddb = join(dirname(__file__), 'resources', 'opexconfig.db')
+        self.resource_dir = findResourceDir()
+        self.idfile = join(self.resource_dir, 'incorrectIds.csv')
+        self.iddb = join(self.resource_dir, 'opexconfig.db')
         self.__loadData()
 
     def __loadData(self):
         dbi = DBI(self.iddb)
         rownum =0
-        for ids in dbi.getIDs():
+        rows = self.m_grid1.GetTable().GetRowsCount()
+        idlist = dbi.getIDs()
+        for ids in idlist:
+            if rownum >= rows:
+                self.m_grid1.AppendRows(1,True)
             self.m_grid1.SetCellValue(rownum, 0, ids[0])
             self.m_grid1.SetCellValue(rownum, 1, ids[1])
             rownum += 1
@@ -349,6 +355,14 @@ class LogOutput():
     def write(self, string):
         self.out.WriteText(string)
 
+class LogViewer(dlgLogViewer):
+    def __init__(self,parent):
+        super(LogViewer, self).__init__(parent)
+
+    def OnRefresh( self, event ):
+        logfile = self.Parent.getLogFile()
+        self.tcLog.LoadFile(logfile)
+
 
 ####################################################################################################
 class OPEXUploaderGUI(UploaderGUI):
@@ -362,7 +376,8 @@ class OPEXUploaderGUI(UploaderGUI):
         self.SetPosition(wx.Point(100, 100))
         self.SetSize((700, 700))
         self.configfile = join(expanduser('~'), '.xnat.cfg')
-        self.configdb = join(dirname(__file__),'resources', 'opexconfig.db')
+        self.resource_dir = findResourceDir()
+        self.configdb = join(self.resource_dir, 'opexconfig.db')
         self.loaded = self.__loadConfig()
         self.runoptions = self.__loadOptions()
         if self.loaded:
@@ -551,7 +566,7 @@ class OPEXUploaderGUI(UploaderGUI):
         :param event:
         :return:
         """
-        dlg = dlgLogViewer(self)
+        dlg = LogViewer(self)
         logfile = self.getLogFile()
         dlg.tcLog.LoadFile(logfile)
         dlg.ShowModal()

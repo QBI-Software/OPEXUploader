@@ -21,28 +21,26 @@ import argparse
 import csv
 import glob
 import logging
-import re
 import shutil
-from datetime import date
-from os import R_OK, access, listdir, getcwd, mkdir
-from os.path import expanduser, isdir, join, basename, split, exists
+from os import R_OK, access, listdir, mkdir
+from os.path import expanduser, join, basename, exists
 
 from numpy import isnan, nan
 
 from requests.exceptions import ConnectionError
 
-from dataparser.AcerParser import AcerParser
-from dataparser.AmunetParser import AmunetParser, generateAmunetdates
-from dataparser.BloodParser import BloodParser
-from dataparser.CantabParser import CantabParser
-from dataparser.CosmedParser import CosmedParser
-from dataparser.DexaParser import DexaParser
-from dataparser.MridataParser import MridataParser
-from dataparser.VisitParser import VisitParser
-from dataparser.DassParser import DassParser
-from dataparser.GodinParser import GodinParser
-from dataparser.PsqiParser import PsqiParser
-from dataparser.InsomniaParser import InsomniaParser
+from opexuploader.dataparser.AcerParser import AcerParser
+from opexuploader.dataparser.AmunetParser import AmunetParser, generateAmunetdates
+from opexuploader.dataparser.BloodParser import BloodParser
+from opexuploader.dataparser.CantabParser import CantabParser
+from opexuploader.dataparser.CosmedParser import CosmedParser
+from opexuploader.dataparser.DexaParser import DexaParser
+from opexuploader.dataparser.MridataParser import MridataParser
+from opexuploader.dataparser.VisitParser import VisitParser
+from opexuploader.dataparser.DassParser import DassParser
+from opexuploader.dataparser.GodinParser import GodinParser
+from opexuploader.dataparser.PsqiParser import PsqiParser
+from opexuploader.dataparser.InsomniaParser import InsomniaParser
 from xnatconnect.XnatConnector import XnatConnector
 
 from logging.handlers import RotatingFileHandler
@@ -238,7 +236,7 @@ class OPEXUploader():
                 try:
                     xsd = dp.getxsd()
                     if isinstance(xsd,dict) and 'opex:cantabMOT' in xsd.values(): #cantab
-                        print('Running cantab upload')
+                        #print('Running cantab upload')
                         xsdtypes = xsd
                         for i, row in dp.subjects[sd].iterrows():
                             sampleid = dp.getSampleid(sd, row)
@@ -249,6 +247,8 @@ class OPEXUploader():
                                 print(msg)
                                 continue
                             for type in xsdtypes.keys():
+                                if str(row[dp.getStatusstring()[type]]) == 'SYSTEM_ERROR':
+                                    continue
                                 (mandata, data) = dp.mapData(row, i, type)
                                 xsd = xsdtypes[type]
                                 msg = self.loadSampledata(s, xsd, type + "_" + sampleid, mandata, data)

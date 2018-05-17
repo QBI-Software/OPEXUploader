@@ -13,12 +13,12 @@ Created on Thu Mar 2 2017
 import argparse
 import glob
 from datetime import datetime
-from os import R_OK, access, error
+from os import R_OK, access
 from os.path import join
 
 import pandas
 
-from dataparser.DataParser import DataParser
+from opexuploader.dataparser.abstract.DataParser import DataParser
 
 VERBOSE = 0
 class CantabParser(DataParser):
