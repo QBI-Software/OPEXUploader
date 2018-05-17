@@ -5,8 +5,9 @@ import threading
 from multiprocessing import freeze_support
 from os import access, R_OK, mkdir
 from os.path import join, expanduser, dirname, split
-
+import markdown
 import wx
+from shutil import copyfile
 from configobj import ConfigObj
 from requests.exceptions import ConnectionError
 
@@ -372,7 +373,8 @@ class OPEXUploaderGUI(UploaderGUI):
         :param parent:
         """
         super(OPEXUploaderGUI, self).__init__(parent)
-        self.SetTitle("XNAT Connector App")
+        self.Bind(wx.EVT_CLOSE, self.OnExit)
+        self.SetTitle("OPEX Uploader App")
         self.SetPosition(wx.Point(100, 100))
         self.SetSize((700, 700))
         self.configfile = join(expanduser('~'), '.xnat.cfg')
@@ -390,13 +392,11 @@ class OPEXUploaderGUI(UploaderGUI):
         self.Show()
 
     def __loadConfig(self):
-        if self.configfile is not None and access(self.configfile, R_OK):
-            print("Loading config file")
-            self.config = ConfigObj(self.configfile, encoding='UTF-8')
-
-            return True
-        else:
-            raise IOError("Config file not accessible: %s", self.configfile)
+        if not access(self.configfile, R_OK):
+            copyfile(join(self.resource_dir,'xnat.cfg'),self.configfile)
+        logging.debug("Loading config file:", self.configfile)
+        self.config = ConfigObj(self.configfile, encoding='UTF-8')
+        return True
 
     def __loadOptions(self):
         """
@@ -446,13 +446,19 @@ class OPEXUploaderGUI(UploaderGUI):
         :param e:
         :return:
         """
-        import markdown
         md = markdown.Markdown()
-        md.convertFile('README.md', 'HELP.html')
-        # Load to dialog
-        dlg = dlgHelp(self)
-        dlg.m_htmlWin1.LoadPage('HELP.html')
-        dlg.Show()
+        resource_dir = findResourceDir()
+        projdir = dirname(resource_dir)
+        if access(join(projdir,'README.md'),R_OK):
+            md.convertFile(join(projdir,'README.md'), join(resource_dir,'HELP.html'))
+            # Load to dialog
+            dlg = dlgHelp(self)
+            dlg.m_htmlWin1.LoadPage(join(resource_dir,'HELP.html'))
+            dlg.Show()
+        else:
+            dlg =wx.MessageDialog(self,"Cannot find help file - see docs online")
+            dlg.ShowModal()
+            dlg.Destroy()
 
     def OnTest(self, e):
         """
@@ -509,8 +515,18 @@ class OPEXUploaderGUI(UploaderGUI):
                 if org.run():
                     self.tcResults.AppendText("\n***FINISHED***\n")
 
-    def OnClose(self, e):
-        self.Close(True)  # Close the frame.
+    def OnExit(self, e):
+        dial = wx.MessageDialog(None, 'Are you sure you want to quit?', 'Question',
+                                wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
+
+        ret = dial.ShowModal()
+
+        if ret == wx.ID_YES:
+            self.DestroyChildren()
+            self.Destroy()
+
+        else:
+            e.Veto()
 
     def OnOpen(self, e):
         """ Open a file"""
