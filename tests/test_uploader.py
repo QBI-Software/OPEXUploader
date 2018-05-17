@@ -5,6 +5,7 @@ import unittest2 as unittest
 from opexuploader.uploader import OPEXUploader, create_parser
 
 ROOTDATADIR = "Q:\\DATA\\DATA ENTRY\\XnatUploaded\\sampledata"
+ROOTDATADIR = "/Volumes/project_humanexercise/DATA/DATA ENTRY/XnatUploaded/sampledata"
 
 
 class TestUploader(unittest.TestCase):
