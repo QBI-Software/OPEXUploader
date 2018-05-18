@@ -72,7 +72,9 @@ class VisitParser(DataParser):
 
         xnatgenders={'F':'female', 'M': 'male'}
         for i, sd in self.data.iterrows():
-            subject_id = sd['ID'].replace(" ", "")
+            subject_id = self.getValidSid(sd['ID'])
+            if not subject_id:
+                continue
             g = sd['Sex']
             if g == 'U':
                 continue
@@ -94,10 +96,13 @@ class VisitParser(DataParser):
                 print(msg)
 
     def getValidSid(self, sid):
-        checksid = sid.replace(" ", "")
-        if len(str(checksid)) > 6:
-            checksid = checksid[0:6]
-        checksid = self._DataParser__checkSID(checksid)
+        if isinstance(sid,int):
+            checksid = False
+        else:
+            checksid = sid.replace(" ", "")
+            if len(str(checksid)) > 6:
+                checksid = checksid[0:6]
+            checksid = self._DataParser__checkSID(checksid)
 
         return checksid
 
@@ -113,7 +118,8 @@ class VisitParser(DataParser):
         print("Dateless expts: ",dateless)
         for i, sd in self.data.iterrows():
             subject_id = self.getValidSid(sd['ID'])
-
+            if not subject_id:
+                continue
             for expt in dateless:
                 info = self.dbi.getInfo(expt)
                 prefix = info['prefix']
