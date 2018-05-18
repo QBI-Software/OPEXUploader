@@ -183,7 +183,7 @@ class UploaderGUI ( wx.Frame ):
 		self.btnRun.Bind( wx.EVT_BUTTON, self.OnSubmit )
 		self.m_button13.Bind( wx.EVT_BUTTON, self.OnTest )
 		self.m_button15.Bind( wx.EVT_BUTTON, self.OnClearOutput )
-		self.btnCancel.Bind( wx.EVT_BUTTON, self.OnClose )
+		self.btnCancel.Bind( wx.EVT_BUTTON, self.OnExit )
 		self.Bind( wx.EVT_MENU, self.OnSettings, id = self.m_menuItem4.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnIds, id = self.m_menuItem5.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnLaunch, id = self.m_menuItem1.GetId() )
@@ -216,7 +216,7 @@ class UploaderGUI ( wx.Frame ):
 	def OnClearOutput( self, event ):
 		event.Skip()
 	
-	def OnClose( self, event ):
+	def OnExit( self, event ):
 		event.Skip()
 	
 	def OnSettings( self, event ):
@@ -401,7 +401,7 @@ class dlgReports ( wx.Dialog ):
 class dlgIDS ( wx.Dialog ):
 	
 	def __init__( self, parent ):
-		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Incorrect IDs", pos = wx.DefaultPosition, size = wx.Size( 434,525 ), style = wx.DEFAULT_DIALOG_STYLE )
+		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Incorrect IDs", pos = wx.DefaultPosition, size = wx.Size( 685,746 ), style = wx.DEFAULT_DIALOG_STYLE )
 		
 		self.SetSizeHintsSz( wx.DefaultSize, wx.DefaultSize )
 		
@@ -414,14 +414,15 @@ class dlgIDS ( wx.Dialog ):
 		self.m_grid1 = wx.grid.Grid( self, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
 		
 		# Grid
-		self.m_grid1.CreateGrid( 10, 2 )
+		self.m_grid1.CreateGrid( 15, 2 )
 		self.m_grid1.EnableEditing( True )
 		self.m_grid1.EnableGridLines( True )
 		self.m_grid1.EnableDragGridSize( True )
 		self.m_grid1.SetMargins( 0, 0 )
 		
 		# Columns
-		self.m_grid1.AutoSizeColumns()
+		self.m_grid1.SetColSize( 0, 200 )
+		self.m_grid1.SetColSize( 1, 200 )
 		self.m_grid1.EnableDragColMove( False )
 		self.m_grid1.EnableDragColSize( True )
 		self.m_grid1.SetColLabelSize( 60 )
@@ -439,6 +440,8 @@ class dlgIDS ( wx.Dialog ):
 		
 		# Cell Defaults
 		self.m_grid1.SetDefaultCellAlignment( wx.ALIGN_LEFT, wx.ALIGN_TOP )
+		self.m_grid1.SetMinSize( wx.Size( 500,500 ) )
+		
 		bSizer10.Add( self.m_grid1, 0, wx.ALL, 5 )
 		
 		bSizer11 = wx.BoxSizer( wx.HORIZONTAL )

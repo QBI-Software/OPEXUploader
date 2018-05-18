@@ -1828,7 +1828,7 @@
                                 <property name="window_extra_style"></property>
                                 <property name="window_name"></property>
                                 <property name="window_style"></property>
-                                <event name="OnButtonClick">OnClose</event>
+                                <event name="OnButtonClick">OnExit</event>
                                 <event name="OnChar"></event>
                                 <event name="OnEnterWindow"></event>
                                 <event name="OnEraseBackground"></event>
@@ -3433,7 +3433,7 @@
                 </object>
             </object>
         </object>
-        <object class="Dialog" expanded="0">
+        <object class="Dialog" expanded="1">
             <property name="aui_managed">0</property>
             <property name="aui_manager_style">wxAUI_MGR_DEFAULT</property>
             <property name="bg"></property>
@@ -3451,7 +3451,7 @@
             <property name="minimum_size"></property>
             <property name="name">dlgIDS</property>
             <property name="pos"></property>
-            <property name="size">434,525</property>
+            <property name="size">685,746</property>
             <property name="style">wxDEFAULT_DIALOG_STYLE</property>
             <property name="subclass"></property>
             <property name="title">Incorrect IDs</property>
@@ -3495,7 +3495,7 @@
             <event name="OnSetFocus"></event>
             <event name="OnSize"></event>
             <event name="OnUpdateUI"></event>
-            <object class="wxBoxSizer" expanded="0">
+            <object class="wxBoxSizer" expanded="1">
                 <property name="minimum_size"></property>
                 <property name="name">bSizer10</property>
                 <property name="orient">wxVERTICAL</property>
@@ -3596,7 +3596,7 @@
                         <property name="aui_name"></property>
                         <property name="aui_position"></property>
                         <property name="aui_row"></property>
-                        <property name="autosize_cols">1</property>
+                        <property name="autosize_cols">0</property>
                         <property name="autosize_rows">1</property>
                         <property name="best_size"></property>
                         <property name="bg"></property>
@@ -3614,7 +3614,7 @@
                         <property name="col_label_values">&quot;INCORRECT&quot; &quot;CORRECT&quot;</property>
                         <property name="col_label_vert_alignment">wxALIGN_CENTRE</property>
                         <property name="cols">2</property>
-                        <property name="column_sizes"></property>
+                        <property name="column_sizes">200,200</property>
                         <property name="context_help"></property>
                         <property name="context_menu">1</property>
                         <property name="default_pane">0</property>
@@ -3645,7 +3645,7 @@
                         <property name="maximum_size"></property>
                         <property name="min_size"></property>
                         <property name="minimize_button">0</property>
-                        <property name="minimum_size"></property>
+                        <property name="minimum_size">500,500</property>
                         <property name="moveable">1</property>
                         <property name="name">m_grid1</property>
                         <property name="pane_border">1</property>
@@ -3660,7 +3660,7 @@
                         <property name="row_label_values"></property>
                         <property name="row_label_vert_alignment">wxALIGN_CENTRE</property>
                         <property name="row_sizes"></property>
-                        <property name="rows">10</property>
+                        <property name="rows">15</property>
                         <property name="show">1</property>
                         <property name="size">-1,-1</property>
                         <property name="subclass"></property>
