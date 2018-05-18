@@ -41,7 +41,7 @@ from opexuploader.uploader import __version__
 
 application_title = 'QBI OPEX XNAT Uploader'
 exe_name = 'opexuploader'
-main_python_file = join('opexuploader','uploader_app.py') # 'uploader_app.py'
+main_python_file = 'uploader_app.py'
 
 plist = dict(CFBundleDisplayName=application_title,
              CFBundleName=exe_name,
