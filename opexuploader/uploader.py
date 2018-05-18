@@ -21,6 +21,7 @@ import argparse
 import csv
 import glob
 import logging
+import sys
 import shutil
 from os import R_OK, access, listdir, mkdir
 from os.path import expanduser, join, basename, exists
@@ -380,8 +381,14 @@ class OPEXUploader():
                     inputdir = join(topinputdir, inputdir)
                     print(inputdir)
                     # Get dates from zip files
-                    dates_uri_file = join(inputdir, 'folderpath.txt')
+                    if sys.platform == 'win32':
+                        dates_uri_file = join(inputdir, 'folderpath.txt')
+                    else:
+                        dates_uri_file = join(inputdir, 'folderpath_mac.txt')
                     if not exists(dates_uri_file):
+                        msg ='Amunet Path file not found: %s' % dates_uri_file
+                        print(msg)
+                        logging.warning(msg)
                         continue
                     with open(dates_uri_file, "r") as dd:
                         content = dd.readlines()
@@ -602,7 +609,12 @@ class OPEXUploader():
             # ---------------------------------------------------------------------#
             elif datatype == 'cosmed':
                 try:
-                    f = open(join(inputdir, 'xnatpaths.txt'))
+                    if sys.platform == 'win32':
+                        pathsfile =join(inputdir, 'xnatpaths.txt')
+                    else:
+                        pathsfile = join(inputdir, 'xnatpaths_mac.txt')
+
+                    f = open(pathsfile)
                     paths = {}
                     for p in f.readlines():
                         p = p.rstrip()

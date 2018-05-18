@@ -1,15 +1,16 @@
 from os.path import join
-
 import unittest2 as unittest
-
-from opexuploader.dataparser.abstract import DataParser
-
-ROOTDATADIR="..\\sampledata" #"Q:\\DATA\\DATA ENTRY\\XnatUploaded\\sampledata"
+from opexuploader.dataparser.abstract.DataParser import DataParser
+import sys
+if sys.platform == 'win32':
+    ROOTDATADIR = "Q:\\DATA\\DATA ENTRY\\XnatUploaded\\sampledata"
+else:
+    ROOTDATADIR = "/Volumes/project_humanexercise/DATA/DATA ENTRY/XnatUploaded/sampledata"
 
 class TestCantabDataparser(unittest.TestCase):
     def setUp(self):
         try:
-            datafile=join(ROOTDATADIR,'cantab','RowBySession_HealthyBrains_11082017.csv')
+            datafile=join(ROOTDATADIR,'cantab','RowBySession_HealthyBrains_20180504.csv')
             sheet=0
             skip=0
             header=None
