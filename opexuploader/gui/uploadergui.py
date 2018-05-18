@@ -19,7 +19,7 @@ import wx.html
 class UploaderGUI ( wx.Frame ):
 	
 	def __init__( self, parent ):
-		wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = u"XNAT Uploader", pos = wx.DefaultPosition, size = wx.Size( 783,860 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
+		wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = u"XNAT Uploader", pos = wx.DefaultPosition, size = wx.Size( 936,860 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
 		
 		self.SetSizeHintsSz( wx.DefaultSize, wx.DefaultSize )
 		self.SetBackgroundColour( wx.Colour( 244, 254, 255 ) )
@@ -86,20 +86,20 @@ class UploaderGUI ( wx.Frame ):
 		self.m_staticline5 = wx.StaticLine( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
 		fgSizer2.Add( self.m_staticline5, 0, wx.EXPAND |wx.ALL, 5 )
 		
-		self.cbChecks = wx.CheckBox( self, wx.ID_ANY, u"TEST RUN only", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.cbChecks.SetToolTipString( u"This checks the data in the input file can be read properly by the script (not the database)." )
-		
-		fgSizer2.Add( self.cbChecks, 0, wx.ALL, 5 )
-		
-		self.cbCreateSubject = wx.CheckBox( self, wx.ID_ANY, u"Create Subjects from data", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.cbCreateSubject = wx.CheckBox( self, wx.ID_ANY, u"Create Subjects from CANTAB data", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.cbCreateSubject.SetToolTipString( u"Use only if certain that all participant IDs are valid. Mostly this is not used." )
 		
 		fgSizer2.Add( self.cbCreateSubject, 0, wx.ALL, 5 )
 		
-		self.cbUpdate = wx.CheckBox( self, wx.ID_ANY, u"Update existing data", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.cbUpdate.SetToolTipString( u"Use only if confident that all data needs to be updated for this experiment type." )
+		self.cbUpdate = wx.CheckBox( self, wx.ID_ANY, u"Update existing data for selected experiment type", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.cbUpdate.SetToolTipString( u"Will overwrite any existing data in XNAT" )
 		
 		fgSizer2.Add( self.cbUpdate, 0, wx.ALL, 5 )
+		
+		self.cbChecks = wx.CheckBox( self, wx.ID_ANY, u"TEST RUN only", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.cbChecks.SetToolTipString( u"This checks the data in the input file can be read properly by the script (not the database)." )
+		
+		fgSizer2.Add( self.cbChecks, 0, wx.ALL, 5 )
 		
 		
 		bSizer1.Add( fgSizer2, 1, wx.EXPAND, 5 )
@@ -156,13 +156,10 @@ class UploaderGUI ( wx.Frame ):
 		self.m_menuItem61 = wx.MenuItem( self.m_menu1, wx.ID_ANY, u"Generate Reports", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_menu1.AppendItem( self.m_menuItem61 )
 		
-		self.m_menuItem8 = wx.MenuItem( self.m_menu1, wx.ID_ANY, u"Incorrect IDs", wx.EmptyString, wx.ITEM_NORMAL )
-		self.m_menu1.AppendItem( self.m_menuItem8 )
-		
 		self.m_menuItem81 = wx.MenuItem( self.m_menu1, wx.ID_ANY, u"View Log", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_menu1.AppendItem( self.m_menuItem81 )
 		
-		self.m_menubar1.Append( self.m_menu1, u"Functions" ) 
+		self.m_menubar1.Append( self.m_menu1, u"Tools" ) 
 		
 		self.m_menu2 = wx.Menu()
 		self.m_menuItem2 = wx.MenuItem( self.m_menu2, wx.ID_ANY, u"Help", wx.EmptyString, wx.ITEM_NORMAL )
@@ -192,7 +189,6 @@ class UploaderGUI ( wx.Frame ):
 		self.Bind( wx.EVT_MENU, self.OnLaunch, id = self.m_menuItem1.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnDownload, id = self.m_menuItem6.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnReport, id = self.m_menuItem61.GetId() )
-		self.Bind( wx.EVT_MENU, self.OnIds, id = self.m_menuItem8.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnLog, id = self.m_menuItem81.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnHelp, id = self.m_menuItem2.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnAbout, id = self.m_menuItem3.GetId() )
@@ -237,7 +233,6 @@ class UploaderGUI ( wx.Frame ):
 	
 	def OnReport( self, event ):
 		event.Skip()
-	
 	
 	def OnLog( self, event ):
 		event.Skip()
