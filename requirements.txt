@@ -48,14 +48,14 @@ plotly==2.3.0
 pluggy==0.6.0
 py==1.5.2
 pycparser==2.18
-pydicom==1.0.0b1
+pydicom==1.0.2
 pyOpenSSL==17.5.0
 pyparsing==2.2.0
 pytest==3.4.0
 pytest-tap==2.2
 python-dateutil==2.6.1
 pytz==2017.3
-pyxnat==1.0.0.0
+pyxnat==1.0.1.0
 requests==2.18.4
 six==1.11.0
 tap.py==2.2

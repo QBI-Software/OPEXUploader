@@ -16,7 +16,7 @@ from opexuploader.bulk_uploader import BulkUploader
 from opexuploader.gui.uploadergui import UploaderGUI, dlgScans, dlgConfig, dlgHelp, dlgIDS, dlgDownloads, dlgReports, dlgLogViewer
 from opexuploader.uploader import OPEXUploader
 from opexuploader.utils import findResourceDir
-from resources.dbquery import DBI
+from config.dbquery import DBI
 from xnatconnect.XnatConnector import XnatConnector
 from xnatconnect.XnatOrganizeFiles import Organizer
 
@@ -354,7 +354,10 @@ class LogOutput():
         self.out = aWxTextCtrl
 
     def write(self, string):
-        self.out.WriteText(string)
+        try:
+            self.out.WriteText(string)
+        except Exception as e:
+            logging.warning('Output console error - skipping log output: ',string)
 
 class LogViewer(dlgLogViewer):
     def __init__(self,parent):

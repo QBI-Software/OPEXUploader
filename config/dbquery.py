@@ -1,5 +1,4 @@
 import sqlite3
-import pandas
 from os.path import join
 from os import access, R_OK, W_OK
 
@@ -162,11 +161,11 @@ if __name__ == "__main__":
         etypes = ['MULTIPLEX','CANTAB MOT', 'MRI FS']
         for etype in etypes:
             info = dbi.getInfo(etype)
-            print info
+            print(info)
             fields = dbi.getFields(etype)
-            print fields
+            print(fields)
         visitdata = dbi.getDatelessExpts()
-        print visitdata
+        print(visitdata)
 
     else:
         raise IOError("cannot access db")

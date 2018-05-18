@@ -10,7 +10,6 @@ Created on Thu Mar 2 2017
 @author: Liz Cooper-Williams, QBI
 """
 
-import argparse
 import glob
 from datetime import datetime
 from os import R_OK, access
@@ -18,7 +17,7 @@ from os.path import join, basename, splitext, dirname, abspath
 
 import pandas
 import logging
-from resources.dbquery import DBI
+from config.dbquery import DBI
 
 class DataParser(object):
     def __init__(self, datafile=None, sheet=0,skiplines=0, header=None, etype=None):

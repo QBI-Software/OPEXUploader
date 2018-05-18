@@ -4,7 +4,7 @@ from os import mkdir, access, W_OK
 from os.path import join, expanduser, split
 
 from opexuploader.uploader import OPEXUploader, create_parser
-from resources.dbquery import DBI
+from config.dbquery import DBI
 
 
 class BulkUploader():

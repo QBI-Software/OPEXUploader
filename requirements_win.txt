@@ -1,4 +1,3 @@
 cx-Freeze==5.1.1
-py2exe2msi==0.0.2
 pypiwin32==219
 winpython==1.0

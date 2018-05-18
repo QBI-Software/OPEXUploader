@@ -1,7 +1,6 @@
 import unittest2 as unittest
-import argparse
-from os.path import join, expanduser
-from resources.dbquery import DBI
+from os.path import join
+from config.dbquery import DBI
 from opexuploader.utils import findResourceDir
 import pandas
 

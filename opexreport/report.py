@@ -19,12 +19,10 @@ from os import access, R_OK, mkdir
 from collections import OrderedDict
 import numpy as np
 import pandas
-import xlsxwriter
-import plotly.plotly as py
 import plotly.graph_objs as go
 from plotly import tools
 from plotly import offline
-from resources.dbquery import DBI
+from config.dbquery import DBI
 #import cufflinks as cf
 
 

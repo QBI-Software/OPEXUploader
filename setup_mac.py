@@ -16,61 +16,55 @@
 #
 #   python setup.py py2app
 #
-
+# Usage:
+#     python setup_mac.py py2app --matplotlib-backends='-'
+#
+# can test with -A first - then full zipped version
+# > ./dist/opexuploader.app/Contents/MacOS/opexuploader
+#
+# Notes:
+#     Clean on reruns:
+#     > rm -rf build dist __pycache__
+#     May need to use system python rather than virtualenv
+#     > /Library/Frameworks/Python.framework/Versions/2.7/bin/python2.7 setup_mac.py py2app --matplotlib-backends='-' > build.log
+#  Specify matplotlib backends with '-'
+#     Macholib version=1.7 required to prevent endless recursions - also need to downgrade py2app==0.10 and fix MachO header error: bug in MachOGraph line 49:
+#  change loader=loader.filename TO loader_path=loader.filename
+#
 
 from os import getcwd
 from os.path import join
 
 from setuptools import setup
 
-from opexuploader.uploader_app import __version__
+from opexuploader.uploader import __version__
 
 application_title = 'QBI OPEX XNAT Uploader'
-exe_name='opex_uploader'
+exe_name = 'opexuploader'
+main_python_file = join('opexuploader','uploader_app.py') # 'uploader_app.py'
 
 plist = dict(CFBundleDisplayName=application_title,
-	         CFBundleName=exe_name,
+             CFBundleName=exe_name,
              NSHumanReadableCopyright='Copyright (2018) Queensland Brain Institute, University of Queensland',
              CFBundleTypeIconFile='upload_logo.icns',
              CFBundleVersion=__version__)
 
-APP = ['uploader_app.py']
-DATA_FILES = ['gui', 'resources']
-PARENTDIR= join(getcwd(),'.')
-OPTIONS = {'argv_emulation': True, 'plist':plist,
-           'iconfile': join('resources','upload_logo.icns'),
-           'includes': ['idna.idnadata','numpy.core._methods', 'numpy.lib.format','lxml._elementpath'],
-           'excludes': ['PyQt4', 'PyQt5', 'scipy','notebook','matplotlib','mpl-data','sqlalchemy'],
-           'packages': ['pandas','pyxnat','xlrd','urllib','ast','math','lxml','pytz','six','numpy']
-           }
-
-setup(app=APP, data_files=DATA_FILES,options={'py2app':OPTIONS},
-      setup_requires=['py2app', 'pyobjc-framework-Cocoa', 'numpy', 'scipy'],)
-
-# Add info to MacOSX plist
-# plist = Plist.fromFile('Info.plist')
-plist = dict(CFBundleDisplayName=application_title,
-	         CFBundleName=exe_name,
-             NSHumanReadableCopyright='Copyright (c) 2018 Queensland Brain Institute',
-             CFBundleTypeIconFile='measure.ico.icns',
-             CFBundleVersion=__version__
-             )
-
-APP = ['runapp.py']
-DATA_FILES = ['resources', 'gui']
-PARENTDIR= join(getcwd(),'.')
-OPTIONS = {'argv_emulation': True,
-           'plist': plist,
-           'iconfile': 'resources/measure.ico.icns',
-           'packages': ['scipy', 'wx','pandas','msdapp'],
-           'includes':['six','appdirs','packaging','packaging.version','packaging.specifiers','packaging.requirements','os','numbers','future_builtins'],
+APP = [main_python_file]
+DATA_FILES = [join('opexuploader', 'gui'), 'resources/', 'README.md',]
+PARENTDIR = join(getcwd(), '.')
+OPTIONS = {'argv_emulation': True, 'plist': plist,
+           'iconfile': join('resources', 'upload_logo.icns'),
+           'packages': ['sqlite3', 'wx', 'pandas','openpyxl','pyxnat','certifi','xlrd','urllib','ast','math','lxml','pytz'],
+           'includes': ['six', 'appdirs', 'os', 'numbers', 'future_builtins',
+                        'packaging', 'packaging.version', 'packaging.specifiers', 'packaging.requirements', ],
            'bdist_base': join(PARENTDIR, 'build'),
            'dist_dir': join(PARENTDIR, 'dist'),
+
            }
 
-setup( name=exe_name,
-    app=APP,
-    data_files=DATA_FILES,
-    options={'py2app': OPTIONS},
-    setup_requires=['py2app','pyobjc-framework-Cocoa','numpy','scipy'],
-)
+setup(name=exe_name,
+      app=APP,
+      data_files=DATA_FILES,
+      options={'py2app': OPTIONS},
+      setup_requires=['py2app', 'pyobjc-framework-Cocoa', 'numpy'],
+      )
