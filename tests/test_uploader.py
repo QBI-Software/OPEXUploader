@@ -3,6 +3,7 @@ from os.path import join, expanduser
 import unittest2 as unittest
 
 from opexuploader.uploader import OPEXUploader, create_parser
+
 import sys
 if sys.platform == 'win32':
     ROOTDATADIR = "Q:\\DATA\\DATA ENTRY\\XnatUploaded\\sampledata"
