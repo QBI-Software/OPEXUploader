@@ -339,8 +339,10 @@ class dlgReports ( wx.Dialog ):
 		
 		bSizer12 = wx.BoxSizer( wx.VERTICAL )
 		
-		self.m_staticText26 = wx.StaticText( self, wx.ID_ANY, u"Generate Reports from Experiment Data", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText26.Wrap( -1 )
+		self.m_staticText26 = wx.StaticText( self, wx.ID_ANY, u"Generate Reports from Experiment Data (may include html plots which may launch in a browser)", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText26.Wrap( 400 )
+		self.m_staticText26.SetFont( wx.Font( wx.NORMAL_FONT.GetPointSize(), 70, 90, 92, False, wx.EmptyString ) )
+		
 		bSizer12.Add( self.m_staticText26, 0, wx.ALL, 5 )
 		
 		self.chDelta = wx.CheckBox( self, wx.ID_ANY, u"Include Deltas", wx.DefaultPosition, wx.DefaultSize, 0 )
@@ -363,7 +365,7 @@ class dlgReports ( wx.Dialog ):
 		bSizer15 = wx.BoxSizer( wx.HORIZONTAL )
 		
 		self.m_button17 = wx.Button( self, wx.ID_ANY, u"Generate", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_button17.SetFont( wx.Font( wx.NORMAL_FONT.GetPointSize(), 71, 90, 90, False, wx.EmptyString ) )
+		self.m_button17.SetFont( wx.Font( wx.NORMAL_FONT.GetPointSize(), 70, 90, 90, False, wx.EmptyString ) )
 		self.m_button17.SetForegroundColour( wx.Colour( 255, 255, 0 ) )
 		self.m_button17.SetBackgroundColour( wx.Colour( 0, 128, 64 ) )
 		
@@ -408,14 +410,14 @@ class dlgReports ( wx.Dialog ):
 class dlgIDS ( wx.Dialog ):
 	
 	def __init__( self, parent ):
-		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Incorrect IDs", pos = wx.DefaultPosition, size = wx.Size( 685,746 ), style = wx.DEFAULT_DIALOG_STYLE )
+		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Incorrect IDs", pos = wx.DefaultPosition, size = wx.Size( -1,-1 ), style = wx.DEFAULT_DIALOG_STYLE )
 		
-		self.SetSizeHintsSz( wx.DefaultSize, wx.DefaultSize )
+		self.SetSizeHintsSz( wx.Size( 200,300 ), wx.DefaultSize )
 		
 		bSizer10 = wx.BoxSizer( wx.VERTICAL )
 		
-		self.m_staticText20 = wx.StaticText( self, wx.ID_ANY, u"Replace Incorrect IDs", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText20.Wrap( -1 )
+		self.m_staticText20 = wx.StaticText( self, wx.ID_ANY, u"Enter Incorrect IDs to replace in data uploads.  Press Enter key after entering text then click \"Save\". To remove, clear entries then \"Save\".", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText20.Wrap( 500 )
 		bSizer10.Add( self.m_staticText20, 0, wx.ALL, 5 )
 		
 		self.m_grid1 = wx.grid.Grid( self, wx.ID_ANY, wx.DefaultPosition, wx.Size( -1,-1 ), 0 )
@@ -471,6 +473,7 @@ class dlgIDS ( wx.Dialog ):
 		
 		self.SetSizer( bSizer10 )
 		self.Layout()
+		bSizer10.Fit( self )
 		
 		self.Centre( wx.BOTH )
 		

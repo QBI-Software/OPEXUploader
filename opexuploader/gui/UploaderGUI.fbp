@@ -2275,7 +2275,7 @@
                 <event name="OnUpdateUI"></event>
             </object>
         </object>
-        <object class="Dialog" expanded="0">
+        <object class="Dialog" expanded="1">
             <property name="aui_managed">0</property>
             <property name="aui_manager_style">wxAUI_MGR_DEFAULT</property>
             <property name="bg"></property>
@@ -2898,7 +2898,7 @@
                 </object>
             </object>
         </object>
-        <object class="Dialog" expanded="0">
+        <object class="Dialog" expanded="1">
             <property name="aui_managed">0</property>
             <property name="aui_manager_style">wxAUI_MGR_DEFAULT</property>
             <property name="bg"></property>
@@ -2993,11 +2993,11 @@
                         <property name="enabled">1</property>
                         <property name="fg"></property>
                         <property name="floatable">1</property>
-                        <property name="font"></property>
+                        <property name="font">,90,92,-1,70,0</property>
                         <property name="gripper">0</property>
                         <property name="hidden">0</property>
                         <property name="id">wxID_ANY</property>
-                        <property name="label">Generate Reports from Experiment Data</property>
+                        <property name="label">Generate Reports from Experiment Data (may include html plots which may launch in a browser)</property>
                         <property name="max_size"></property>
                         <property name="maximize_button">0</property>
                         <property name="maximum_size"></property>
@@ -3022,7 +3022,7 @@
                         <property name="window_extra_style"></property>
                         <property name="window_name"></property>
                         <property name="window_style"></property>
-                        <property name="wrap">-1</property>
+                        <property name="wrap">400</property>
                         <event name="OnChar"></event>
                         <event name="OnEnterWindow"></event>
                         <event name="OnEraseBackground"></event>
@@ -3370,7 +3370,7 @@
                                 <property name="enabled">1</property>
                                 <property name="fg">255,255,0</property>
                                 <property name="floatable">1</property>
-                                <property name="font">,90,90,-1,71,0</property>
+                                <property name="font">,90,90,-1,70,0</property>
                                 <property name="gripper">0</property>
                                 <property name="hidden">0</property>
                                 <property name="id">wxID_ANY</property>
@@ -3521,7 +3521,7 @@
                 </object>
             </object>
         </object>
-        <object class="Dialog" expanded="1">
+        <object class="Dialog" expanded="0">
             <property name="aui_managed">0</property>
             <property name="aui_manager_style">wxAUI_MGR_DEFAULT</property>
             <property name="bg"></property>
@@ -3536,10 +3536,10 @@
             <property name="hidden">0</property>
             <property name="id">wxID_ANY</property>
             <property name="maximum_size"></property>
-            <property name="minimum_size"></property>
+            <property name="minimum_size">200,300</property>
             <property name="name">dlgIDS</property>
             <property name="pos"></property>
-            <property name="size">685,746</property>
+            <property name="size">-1,-1</property>
             <property name="style">wxDEFAULT_DIALOG_STYLE</property>
             <property name="subclass"></property>
             <property name="title">Incorrect IDs</property>
@@ -3583,7 +3583,7 @@
             <event name="OnSetFocus"></event>
             <event name="OnSize"></event>
             <event name="OnUpdateUI"></event>
-            <object class="wxBoxSizer" expanded="1">
+            <object class="wxBoxSizer" expanded="0">
                 <property name="minimum_size"></property>
                 <property name="name">bSizer10</property>
                 <property name="orient">wxVERTICAL</property>
@@ -3620,7 +3620,7 @@
                         <property name="gripper">0</property>
                         <property name="hidden">0</property>
                         <property name="id">wxID_ANY</property>
-                        <property name="label">Replace Incorrect IDs</property>
+                        <property name="label">Enter Incorrect IDs to replace in data uploads.  Press Enter key after entering text then click &quot;Save&quot;. To remove, clear entries then &quot;Save&quot;.</property>
                         <property name="max_size"></property>
                         <property name="maximize_button">0</property>
                         <property name="maximum_size"></property>
@@ -3645,7 +3645,7 @@
                         <property name="window_extra_style"></property>
                         <property name="window_name"></property>
                         <property name="window_style"></property>
-                        <property name="wrap">-1</property>
+                        <property name="wrap">500</property>
                         <event name="OnChar"></event>
                         <event name="OnEnterWindow"></event>
                         <event name="OnEraseBackground"></event>
