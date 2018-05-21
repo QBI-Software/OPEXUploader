@@ -27,15 +27,17 @@
 # pandas/compat/__init__.py -> change import builtins to from future import builtins
 # distutils problem with Python2.7 - a copy of 'distutils' from main Python lib is in build dir - copy it into "lib" after build run
 
+import sys
+from os import environ
+from os.path import join
+
 # [Bad fix but only thing that works] NB To add Shortcut working dir - change cx_freeze/windist.py Line 61 : last None - > 'TARGETDIR'
 from cx_Freeze import setup, Executable
-import sys
-from os import environ, getcwd
-from os.path import join, dirname
+
 from opexuploader.uploader import __version__
 
 application_title = 'QBI OPEX XNAT Uploader'
-main_python_file = join('opexuploader','uploader_app.py')
+main_python_file = 'uploader_app.py'
 
 venvpython = join(sys.prefix,'Lib','site-packages')
 mainpython = sys.real_prefix
