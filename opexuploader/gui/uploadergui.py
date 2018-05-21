@@ -119,7 +119,10 @@ class UploaderGUI ( wx.Frame ):
 		self.m_button15 = wx.Button( self, wx.ID_ANY, u"Clear Output", wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSizer4.Add( self.m_button15, 0, wx.ALL, 5 )
 		
-		self.btnCancel = wx.Button( self, wx.ID_ANY, u"Close", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_button17 = wx.Button( self, wx.ID_ANY, u"View Log", wx.DefaultPosition, wx.DefaultSize, 0 )
+		bSizer4.Add( self.m_button17, 0, wx.ALL, 5 )
+		
+		self.btnCancel = wx.Button( self, wx.ID_ANY, u"Exit", wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSizer4.Add( self.btnCancel, 0, wx.ALL, 5 )
 		
 		
@@ -185,6 +188,7 @@ class UploaderGUI ( wx.Frame ):
 		self.btnRun.Bind( wx.EVT_BUTTON, self.OnSubmit )
 		self.m_button13.Bind( wx.EVT_BUTTON, self.OnTest )
 		self.m_button15.Bind( wx.EVT_BUTTON, self.OnClearOutput )
+		self.m_button17.Bind( wx.EVT_BUTTON, self.OnLog )
 		self.btnCancel.Bind( wx.EVT_BUTTON, self.OnExit )
 		self.Bind( wx.EVT_MENU, self.OnSettings, id = self.m_menuItem4.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnIds, id = self.m_menuItem5.GetId() )
@@ -218,6 +222,9 @@ class UploaderGUI ( wx.Frame ):
 	def OnClearOutput( self, event ):
 		event.Skip()
 	
+	def OnLog( self, event ):
+		event.Skip()
+	
 	def OnExit( self, event ):
 		event.Skip()
 	
@@ -236,8 +243,6 @@ class UploaderGUI ( wx.Frame ):
 	def OnReport( self, event ):
 		event.Skip()
 	
-	def OnLog( self, event ):
-		event.Skip()
 	
 	def OnHelp( self, event ):
 		event.Skip()
