@@ -508,19 +508,19 @@ class dlgIDS ( wx.Dialog ):
 class dlgScans ( wx.Dialog ):
 	
 	def __init__( self, parent ):
-		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Scans organizer", pos = wx.DefaultPosition, size = wx.Size( 690,407 ), style = wx.DEFAULT_DIALOG_STYLE )
+		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Scans organizer", pos = wx.DefaultPosition, size = wx.Size( 690,500 ), style = wx.DEFAULT_DIALOG_STYLE )
 		
 		self.SetSizeHintsSz( wx.DefaultSize, wx.DefaultSize )
 		
 		bSizer5 = wx.BoxSizer( wx.VERTICAL )
 		
-		self.m_staticText13 = wx.StaticText( self, wx.ID_ANY, u"Organizes scans into the correct directory structure for XNAT uploads.  \n-  Input directory must contain *.IMA or *.DCM files.\n-  Ignore directory contains already uploaded scans (eg 'done')", wx.DefaultPosition, wx.Size( 680,100 ), 0|wx.SUNKEN_BORDER )
+		self.m_staticText13 = wx.StaticText( self, wx.ID_ANY, u"Step 1 Organizes scans into the correct directory structure for XNAT uploads (Step 2).  \n-  Input directory must have subdirectories as subject ID with *.IMA or *.DCM files.\n- Output Sorted Scans will be used for Step 2 upload\n-  Ignore directory contains already uploaded scans (eg 'done'). Note when upload is complete, move sorted scans here manually for next time.\n\nStep 2 is run from main application - select MRI and this output directory as the input directory.", wx.DefaultPosition, wx.Size( 680,220 ), 0|wx.SUNKEN_BORDER )
 		self.m_staticText13.Wrap( -1 )
 		self.m_staticText13.SetFont( wx.Font( wx.NORMAL_FONT.GetPointSize(), 70, 90, 92, False, wx.EmptyString ) )
 		
 		bSizer5.Add( self.m_staticText13, 0, wx.ALL, 5 )
 		
-		self.chkOPEX = wx.CheckBox( self, wx.ID_ANY, u"OPEX IDs : extract Subject ID as first 6 characters", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.chkOPEX = wx.CheckBox( self, wx.ID_ANY, u"Extract Subject ID as first 6 characters (eg 1001DD01 to 1001DD)", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.chkOPEX.SetValue(True) 
 		bSizer5.Add( self.chkOPEX, 0, wx.ALL, 5 )
 		
@@ -552,7 +552,7 @@ class dlgScans ( wx.Dialog ):
 		
 		fgSizer2.Add( self.m_staticText12, 0, wx.ALL, 5 )
 		
-		self.txtIgnoreScans = wx.DirPickerCtrl( self, wx.ID_ANY, wx.EmptyString, u"Select a folder", wx.DefaultPosition, wx.Size( 430,-1 ), wx.DIRP_DEFAULT_STYLE )
+		self.txtIgnoreScans = wx.DirPickerCtrl( self, wx.ID_ANY, wx.EmptyString, u"Select a folder", wx.DefaultPosition, wx.Size( 430,-1 ), wx.DIRP_DEFAULT_STYLE|wx.DIRP_DIR_MUST_EXIST )
 		fgSizer2.Add( self.txtIgnoreScans, 0, wx.ALL, 5 )
 		
 		

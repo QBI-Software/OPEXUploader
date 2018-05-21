@@ -4109,7 +4109,7 @@
             <property name="minimum_size"></property>
             <property name="name">dlgScans</property>
             <property name="pos"></property>
-            <property name="size">690,407</property>
+            <property name="size">690,500</property>
             <property name="style">wxDEFAULT_DIALOG_STYLE</property>
             <property name="subclass"></property>
             <property name="title">Scans organizer</property>
@@ -4190,7 +4190,7 @@
                         <property name="gripper">0</property>
                         <property name="hidden">0</property>
                         <property name="id">wxID_ANY</property>
-                        <property name="label">Organizes scans into the correct directory structure for XNAT uploads.  &#x0A;-  Input directory must contain *.IMA or *.DCM files.&#x0A;-  Ignore directory contains already uploaded scans (eg &apos;done&apos;)</property>
+                        <property name="label">Step 1 Organizes scans into the correct directory structure for XNAT uploads (Step 2).  &#x0A;-  Input directory must have subdirectories as subject ID with *.IMA or *.DCM files.&#x0A;- Output Sorted Scans will be used for Step 2 upload&#x0A;-  Ignore directory contains already uploaded scans (eg &apos;done&apos;). Note when upload is complete, move sorted scans here manually for next time.&#x0A;&#x0A;Step 2 is run from main application - select MRI and this output directory as the input directory.</property>
                         <property name="max_size"></property>
                         <property name="maximize_button">0</property>
                         <property name="maximum_size"></property>
@@ -4207,7 +4207,7 @@
                         <property name="pos"></property>
                         <property name="resize">Resizable</property>
                         <property name="show">1</property>
-                        <property name="size">680,100</property>
+                        <property name="size">680,220</property>
                         <property name="style"></property>
                         <property name="subclass"></property>
                         <property name="toolbar_pane">0</property>
@@ -4274,7 +4274,7 @@
                         <property name="gripper">0</property>
                         <property name="hidden">0</property>
                         <property name="id">wxID_ANY</property>
-                        <property name="label">OPEX IDs : extract Subject ID as first 6 characters</property>
+                        <property name="label">Extract Subject ID as first 6 characters (eg 1001DD01 to 1001DD)</property>
                         <property name="max_size"></property>
                         <property name="maximize_button">0</property>
                         <property name="maximum_size"></property>
@@ -4820,7 +4820,7 @@
                                 <property name="resize">Resizable</property>
                                 <property name="show">1</property>
                                 <property name="size">430,-1</property>
-                                <property name="style">wxDIRP_DEFAULT_STYLE</property>
+                                <property name="style">wxDIRP_DEFAULT_STYLE|wxDIRP_DIR_MUST_EXIST</property>
                                 <property name="subclass"></property>
                                 <property name="toolbar_pane">0</property>
                                 <property name="tooltip"></property>
