@@ -10,7 +10,8 @@ import wx
 from shutil import copyfile
 from configobj import ConfigObj
 from requests.exceptions import ConnectionError
-
+import urllib2
+import certifi
 from opexreport.report import OPEXReport
 from opexuploader.bulk_uploader import BulkUploader
 from opexuploader.gui.uploadergui import UploaderGUI, dlgScans, dlgConfig, dlgHelp, dlgIDS, dlgDownloads, dlgReports, dlgLogViewer
@@ -472,19 +473,27 @@ class OPEXUploaderGUI(UploaderGUI):
         :param e:
         :return:
         """
-        md = markdown.Markdown()
+
         resource_dir = findResourceDir()
         projdir = dirname(resource_dir)
-        if access(join(projdir,'README.md'),R_OK):
-            md.convertFile(join(projdir,'README.md'), join(resource_dir,'HELP.html'))
-            # Load to dialog
-            dlg = dlgHelp(self)
-            dlg.m_htmlWin1.LoadPage(join(resource_dir,'HELP.html'))
-            dlg.Show()
-        else:
-            dlg =wx.MessageDialog(self,"Cannot find help file - see docs online")
-            dlg.ShowModal()
-            dlg.Destroy()
+        local_readme_url = join(projdir, 'README.md')
+        readme_url='https://raw.githubusercontent.com/QBI-Software/OPEXUploader/master/README.md'
+
+        mdfile = urllib2.urlopen(readme_url)
+        with open(local_readme_url, 'wb') as output:
+            output.write(mdfile.read())
+        # Use cache if not available
+        if not access(local_readme_url,R_OK):
+            local_readme_url = join(projdir, 'README.md')
+        help_page = join(resource_dir, 'HELP.html')
+        md = markdown.Markdown()
+        md.convertFile(local_readme_url, help_page)
+
+        # Load to dialog
+        dlg = dlgHelp(self)
+        dlg.m_htmlWin1.LoadPage(help_page)
+        dlg.Show()
+
 
     def OnTest(self, e):
         """
