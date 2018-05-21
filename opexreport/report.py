@@ -242,7 +242,7 @@ class OPEXReport(object):
                                 df_delta.to_csv(join(outputdir, deltaname), index=False)
                                 print('Deltas:', deltaname)
                     else:
-                        msg = "Expt type: %s - No data", etype
+                        msg = "Expt type: %s - No data" % etype
                         logging.warning(msg)
         except Exception as e:
             raise ValueError(e)

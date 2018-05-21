@@ -24,6 +24,8 @@ def findResourceDir():
                     resource_dir= rf
                     break
         else:
-            raise ValueError('Cannot locate resources dir: ', abspath(resource_dir))
-    logging.info('Resources dir located to: ', abspath(resource_dir))
+            msg = 'Cannot locate resources dir: %s' % abspath(resource_dir)
+            raise ValueError(msg)
+    msg = 'Resources dir located to: %s ' % abspath(resource_dir)
+    logging.info(msg)
     return abspath(resource_dir)

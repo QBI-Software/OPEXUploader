@@ -81,7 +81,7 @@ class UploadThread(threading.Thread):
                 self.uploader.runDataUpload(self.proj, self.rootdirname, self.runoption)
 
         except Exception as e:
-            errmsg = "ERROR: %s" % e.args[0]
+            errmsg = "ERROR: %s" % str(e)
             logging.error(errmsg)
 
         finally:
@@ -465,7 +465,7 @@ class OPEXUploaderGUI(UploaderGUI):
 
     def OnAbout(self, e):
         # A message dialog box with an OK button. wx.OK is a standard ID in wxWidgets.
-        dlg = wx.MessageDialog(self, "Uploader for OPEX data to XNAT\n(c)2017 QBI Software", "About OPEX Uploader",
+        dlg = wx.MessageDialog(self, "Uploader for OPEX data to XNAT\n(c) 2017 QBI Software\nqbi-dev-admin@uq.edu.au", "About OPEX Uploader",
                                wx.OK)
         dlg.ShowModal()  # Show it
         dlg.Destroy()  # finally destroy it when finished.

@@ -136,8 +136,7 @@ class OPEXUploader():
         else:
             msg = "*******XNAT UPLOADED*******\n"
 
-        msg = "%sMatched participants: %d\nMissing participants: %d\n" % (
-            msg, len(matches), len(missing))
+        msg = "%sMatched participants: %d\nMissing participants: %d\n" % (msg, len(matches), len(missing))
         logging.info(msg)
         print(msg)
 
