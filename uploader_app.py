@@ -61,7 +61,7 @@ class UploadThread(threading.Thread):
 
         #Test connection
         if not self.uploader.xnat.testconnection():
-            print('UploadThread: connection failed')
+            wx.PostEvent(self.wxObject, ResultEvent('UploadThread: connection failed'))
 
     def run(self):
         print('UploadThread: Starting thread run')
@@ -84,7 +84,7 @@ class UploadThread(threading.Thread):
             wx.PostEvent(self.wxObject, ResultEvent(msg))
 
         finally:
-            msg = '\nFINISHED UploadThread\n'
+            msg = '\nFINISHED Upload - see Log for details\n'
             logger.info(msg)
             wx.PostEvent(self.wxObject, ResultEvent(msg))
             # self.terminate()
@@ -92,7 +92,6 @@ class UploadThread(threading.Thread):
             event.clear()
             # Processing complete
             self.uploader.xnatdisconnect()
-            print("FINISHED - see Log for details")
 
 
 
@@ -252,13 +251,14 @@ class IdsDialog(dlgIDS):
                     addids.append((self.m_grid1.GetCellValue(rownum, 0), self.m_grid1.GetCellValue(rownum, 1)))
             dbi.addIDs(addids)
             dlg = wx.MessageDialog(self, "IDs file saved", "Incorrect IDs", wx.OK)
-            dlg.ShowModal()  # Show it
-            dlg.Destroy()
-            self.Destroy()
+
         except Exception as e:
             dlg = wx.MessageDialog(self, e.args[0], "Incorrect IDs", wx.OK)
+
+        finally:
             dlg.ShowModal()  # Show it
             dlg.Destroy()
+            self.Close()
 
     def OnAddRow(self, event):
         self.m_grid1.AppendRows(1, True)
@@ -269,7 +269,7 @@ class IdsDialog(dlgIDS):
         self.m_grid1.DeleteRows(pos, 1, True)
 
     def OnCloseDlg(self, event):
-        self.Destroy()
+        self.Close()
 
 ############################################################################################################
 class ConfigDialog(dlgConfig):
@@ -445,7 +445,7 @@ class OPEXUploaderGUI(UploaderGUI):
 
     def __logoutput(self, msg):
         if msg is not None and msg.data is not None:
-            self.tcResults.WriteText(msg.data)
+            self.m_statusBar1.SetStatusText(msg.data)
 
     def getLogFile(self):
         logfile = join(expanduser('~'), 'logs', 'xnatupload.log')
@@ -552,7 +552,7 @@ class OPEXUploaderGUI(UploaderGUI):
     def OnOpen(self, e):
         """ Open a file"""
         # self.dirname = ''
-        dlg = wx.DirDialog(self, "Choose a directory containing input files")
+        dlg = wx.DirDialog(self, "Choose a directory containing input files",wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
         if dlg.ShowModal() == wx.ID_OK:
             self.dirname = '"{0}"'.format(dlg.GetPath())
             self.dirname = dlg.GetPath()
