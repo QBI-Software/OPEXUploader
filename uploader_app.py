@@ -26,7 +26,7 @@ freeze_support()
 # Threading support
 EVT_RESULT_ID = wx.NewId()
 
-logger = logging.getLogger()
+#logger = logging.getLogger('opex')
 lock = threading.Lock()
 event = threading.Event()
 

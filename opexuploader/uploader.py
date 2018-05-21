@@ -46,16 +46,25 @@ from xnatconnect.XnatConnector import XnatConnector
 
 from logging.handlers import RotatingFileHandler
 
+### Global config for logging required due to redirection of stdout to console in app
+logfile=join(expanduser('~'),'logs','xnatupload.log')
+logging.basicConfig(filename=logfile, level=logging.INFO, format='%(asctime)s [%(filename)s %(lineno)d] %(message)s',
+                                datefmt='%d-%m-%Y %I:%M:%S %p')
+logger = logging.getLogger('opex')
+handler = RotatingFileHandler(filename=logfile, maxBytes=4000000000)
+logger.addHandler(handler)
+
 
 class OPEXUploader():
     def __init__(self, args, logfile=None):
 
-        if logfile is not None:
-            logging.basicConfig(filename=logfile, level=logging.INFO, format='%(asctime)s [%(filename)s %(lineno)d] %(message)s',
-                                datefmt='%d-%m-%Y %I:%M:%S %p')
-            logger = logging.getLogger('opex')
-            handler = RotatingFileHandler(filename=logfile, maxBytes=4000000000)
-            logger.addHandler(handler)
+        # if logfile is not None:
+            # logging.basicConfig(filename=logfile, level=logging.INFO, format='%(asctime)s [%(filename)s %(lineno)d] %(message)s',
+            #                     datefmt='%d-%m-%Y %I:%M:%S %p')
+            # logger = logging.getLogger('opex')
+            # handler = RotatingFileHandler(filename=logfile, maxBytes=4000000000)
+            # logger.addHandler(handler)
+            # logger.info('test logger')
 
         self.args = args
         self.configfile = None
