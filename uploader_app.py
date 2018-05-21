@@ -54,10 +54,13 @@ class UploadThread(threading.Thread):
         self.uploader = uploader
         self.proj = proj
         self.rootdirname = rootdirname
+
+        self.setDaemon(True)
+        #Redirect output within Thread
+        sys.stdout = LogOutput(self.wxObject.tcResults)
+
         #Test connection
-        if self.uploader.xnat.testconnection():
-            print('UploadThread: connection OK')
-        else:
+        if not self.uploader.xnat.testconnection():
             print('UploadThread: connection failed')
 
     def run(self):
@@ -65,6 +68,7 @@ class UploadThread(threading.Thread):
         try:
             event.set()
             lock.acquire(True)
+
             if self.runoption == 'bulk':
                 bulk = BulkUploader(self.uploader)
                 bulk.run(self.proj, self.rootdirname)
@@ -72,13 +76,17 @@ class UploadThread(threading.Thread):
                 print("***BULK LOAD COMPLETED**")
             else:
                 self.uploader.runDataUpload(self.proj, self.rootdirname, self.runoption)
+
+
         except Exception as e:
-            print("ERROR:", e.args[0])
-            # wx.PostEvent(self.wxObject, ResultEvent((self.row, -1, self.uuid, self.processname,e.args[0])))
+            msg = "ERROR: %s" % e.args[0]
+            logging.error(msg)
+            wx.PostEvent(self.wxObject, ResultEvent(msg))
 
         finally:
-            # wx.PostEvent(self.wxObject, ResultEvent((self.row,100, self.uuid, self.processname,'Done')))
-            logger.info('FINISHED UploadThread')
+            msg = '\nFINISHED UploadThread\n'
+            logger.info(msg)
+            wx.PostEvent(self.wxObject, ResultEvent(msg))
             # self.terminate()
             lock.release()
             event.clear()
@@ -350,14 +358,18 @@ class ConfigDialog(dlgConfig):
 
 ####################################################################################################
 class LogOutput():
+    """
+    http://www.blog.pythonlibrary.org/2009/01/01/wxpython-redirecting-stdout-stderr/
+    """
     def __init__(self, aWxTextCtrl):
         self.out = aWxTextCtrl
 
     def write(self, string):
         try:
-            self.out.WriteText(string)
+            wx.CallAfter(self.out.WriteText,string)
+
         except Exception as e:
-            logging.warning('Output console error - skipping log output: ',string)
+            print('Output console error: ',e.args[0])
 
 class LogViewer(dlgLogViewer):
     def __init__(self,parent):
@@ -388,9 +400,11 @@ class OPEXUploaderGUI(UploaderGUI):
         if self.loaded:
             self.chOptions.SetItems(sorted(self.runoptions.keys()))
             self.dbedit.AppendItems(self.config.keys())
-
-        redir = LogOutput(self.tcResults)
-        sys.stdout = redir
+        # # DISPLAY OUTPUT IN WINDOW - Windows only
+        # if sys.platform == 'win':
+        #     sys.stdout= LogOutput(self.tcResults)
+        # else:
+        #     EVT_RESULT(self, self.__logoutput)
         self.m_statusBar1.SetStatusText('Welcome to the Uploader! Help is available from the Menu')
         self.Show()
 
@@ -428,6 +442,10 @@ class OPEXUploaderGUI(UploaderGUI):
             return (None, None)
         else:
             return (db, proj)
+
+    def __logoutput(self, msg):
+        if msg is not None and msg.data is not None:
+            self.tcResults.WriteText(msg.data)
 
     def getLogFile(self):
         logfile = join(expanduser('~'), 'logs', 'xnatupload.log')
