@@ -86,8 +86,8 @@ class UploadThread(threading.Thread):
             # Processing complete
             self.uploader.xnatdisconnect()
             if errmsg is None:
-                msg = '\nFINISHED Upload - see Log for details\n'
-                logger.info(msg)
+                msg = 'FINISHED Upload - see Log for details'
+                logging.info(msg)
             else:
                 msg = errmsg
             wx.PostEvent(self.wxObject, ResultEvent(msg))
