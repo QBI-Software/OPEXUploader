@@ -56,8 +56,6 @@ class UploadThread(threading.Thread):
         self.rootdirname = rootdirname
 
         self.setDaemon(True)
-        #Redirect output within Thread
-        sys.stdout = LogOutput(self.wxObject.tcResults)
 
         #Test connection
         if not self.uploader.xnat.testconnection():
@@ -65,6 +63,7 @@ class UploadThread(threading.Thread):
 
     def run(self):
         print('UploadThread: Starting thread run')
+        errmsg = None
         try:
             event.set()
             lock.acquire(True)
@@ -77,21 +76,22 @@ class UploadThread(threading.Thread):
             else:
                 self.uploader.runDataUpload(self.proj, self.rootdirname, self.runoption)
 
-
         except Exception as e:
-            msg = "ERROR: %s" % e.args[0]
-            logging.error(msg)
-            wx.PostEvent(self.wxObject, ResultEvent(msg))
+            errmsg = "ERROR: %s" % e.args[0]
+            logging.error(errmsg)
 
         finally:
-            msg = '\nFINISHED Upload - see Log for details\n'
-            logger.info(msg)
-            wx.PostEvent(self.wxObject, ResultEvent(msg))
-            # self.terminate()
             lock.release()
             event.clear()
             # Processing complete
             self.uploader.xnatdisconnect()
+            if errmsg is None:
+                msg = '\nFINISHED Upload - see Log for details\n'
+                logger.info(msg)
+            else:
+                msg = errmsg
+            wx.PostEvent(self.wxObject, ResultEvent(msg))
+
 
 
 
@@ -112,7 +112,7 @@ class DownloadDialog(dlgDownloads):
         downloaddirname = self.m_downloaddir.GetPath()
         deltas = self.chDelta.GetValue()
         if downloaddirname is not None and self.db is not None and self.proj is not None:
-            self.Destroy() #close window
+
             xnat = XnatConnector(self.configfile, self.db)
             xnat.connect()
             subjects = xnat.getSubjectsDataframe(self.proj)
@@ -192,31 +192,38 @@ class ReportDialog(dlgReports):
             xnat = XnatConnector(self.configfile, self.db)
             xnat.connect()
             subjects = xnat.getSubjectsDataframe(self.proj)
-            op = OPEXReport(subjects=subjects)
-            op.xnat = xnat
-            msg = "Generating CANTAB report ..."
-            logging.info(msg)
-            print(msg)
-            if op.generateCantabReport(projectcode=self.proj, outputdir=downloaddirname, deltas=deltas):
-                msg = "***CANTAB report Completed: %s" % downloaddirname
+            if subjects is not None:
+                op = OPEXReport(subjects=subjects)
+                op.xnat = xnat
+                msg = "Generating CANTAB report ..."
                 logging.info(msg)
-            else:
-                msg = "Error during CANTAB report"
-                logging.error(msg)
-            print(msg)
-            msg = "Generating BLOOD report ..."
-            logging.info(msg)
-            print(msg)
-            if op.generateBloodReport(projectcode=self.proj, outputdir=downloaddirname, deltas=deltas):
-                msg = "***BLOOD report Completed: %s" % downloaddirname
+                print(msg)
+                if op.generateCantabReport(projectcode=self.proj, outputdir=downloaddirname, deltas=deltas):
+                    msg = "***CANTAB report Completed: %s" % downloaddirname
+                    logging.info(msg)
+                else:
+                    msg = "Error during CANTAB report"
+                    logging.error(msg)
+                print(msg)
+                msg = "Generating BLOOD report ..."
                 logging.info(msg)
+                print(msg)
+                if op.generateBloodReport(projectcode=self.proj, outputdir=downloaddirname, deltas=deltas):
+                    msg = "***BLOOD report Completed: %s" % downloaddirname
+                    logging.info(msg)
+                else:
+                    msg = "Error during BLOOD report"
+                    logging.error(msg)
+                print(msg)
             else:
-                msg = "Error during BLOOD report"
+                msg = "Cannot list subjects from XNAT"
                 logging.error(msg)
-            print(msg)
+                print(msg)
+            #close connection
+            op.xnat.conn.disconnect()
 
     def OnCloseDlg(self, event):
-        self.Destroy()
+        self.Close()
 
 ############################################################################################################
 class IdsDialog(dlgIDS):
@@ -318,7 +325,7 @@ class ConfigDialog(dlgConfig):
         :param event:
         :return:
         """
-        dlg = wx.FileDialog(self, "Choose a config file to load")
+        dlg = wx.FileDialog(self, "Choose a config file to load","",wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
         if dlg.ShowModal() == wx.ID_OK:
             cfile = str(dlg.GetPath())
             self.load(cfile)
@@ -400,11 +407,10 @@ class OPEXUploaderGUI(UploaderGUI):
         if self.loaded:
             self.chOptions.SetItems(sorted(self.runoptions.keys()))
             self.dbedit.AppendItems(self.config.keys())
-        # # DISPLAY OUTPUT IN WINDOW - Windows only
-        # if sys.platform == 'win':
-        #     sys.stdout= LogOutput(self.tcResults)
-        # else:
-        #     EVT_RESULT(self, self.__logoutput)
+        # # DISPLAY OUTPUT IN WINDOW as stdout
+        sys.stdout= LogOutput(self.tcResults)
+        # Update status bar from Thread
+        EVT_RESULT(self, self.__statusoutput)
         self.m_statusBar1.SetStatusText('Welcome to the Uploader! Help is available from the Menu')
         self.Show()
 
@@ -435,15 +441,14 @@ class OPEXUploaderGUI(UploaderGUI):
         db = self.dbedit.GetStringSelection()
         proj = self.projectedit.GetValue()
         if len(db) <= 0 and len(proj) <= 0:
-            dlg = wx.MessageDialog(self, "Database or project configuration is empty or invalid",
-                                   "Connection Config Error", wx.OK)
+            dlg = wx.MessageDialog(self, "Database or project configuration is empty or invalid", "Connection Config Error", wx.OK)
             dlg.ShowModal()
             dlg.Destroy()
             return (None, None)
         else:
             return (db, proj)
 
-    def __logoutput(self, msg):
+    def __statusoutput(self, msg):
         if msg is not None and msg.data is not None:
             self.m_statusBar1.SetStatusText(msg.data)
 
@@ -552,7 +557,7 @@ class OPEXUploaderGUI(UploaderGUI):
     def OnOpen(self, e):
         """ Open a file"""
         # self.dirname = ''
-        dlg = wx.DirDialog(self, "Choose a directory containing input files",wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
+        dlg = wx.DirDialog(self, "Choose a directory containing input files","",wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
         if dlg.ShowModal() == wx.ID_OK:
             self.dirname = '"{0}"'.format(dlg.GetPath())
             self.dirname = dlg.GetPath()
