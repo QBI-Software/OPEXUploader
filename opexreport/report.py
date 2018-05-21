@@ -23,6 +23,7 @@ import plotly.graph_objs as go
 from plotly import tools
 from plotly import offline
 from config.dbquery import DBI
+from opexuploader.utils import findResourceDir
 #import cufflinks as cf
 
 
@@ -38,7 +39,7 @@ class OPEXReport(object):
         self.data = None
         self.minmth = 0
         self.maxmth = 12
-        configdb = join(self.__findResourcesdir(), 'opexconfig.db')
+        configdb = join(findResourceDir(), 'opexconfig.db')
         if not access(configdb,R_OK):
             raise IOError('Cannot find config database')
         self.dbi = DBI(configdb)
@@ -63,7 +64,7 @@ class OPEXReport(object):
         :return:
         """
         try:
-            self.resource_dir = self.__findResourcesdir()
+            self.resource_dir = findResourceDir()
             opexfile = join(self.resource_dir, 'opex.csv')
             opex = pandas.read_csv(opexfile)
             msg = 'OPEX Resources loaded: %s from %s' % (not opex.empty, opexfile)
@@ -74,15 +75,15 @@ class OPEXReport(object):
             logging.error(msg)
             raise IOError(e)
 
-    def __findResourcesdir(self):
-        resource_dir = glob.glob(join(dirname(__file__), "resources"))
-        middir = ".."
-        ctr = 1
-        while len(resource_dir) <= 0 and ctr < 5:
-            resource_dir = glob.glob(join(dirname(__file__), middir, "resources"))
-            middir = join(middir, "..")
-            ctr += 1
-        return abspath(resource_dir[0])
+    # def __findResourcesdir(self):
+    #     resource_dir = glob.glob(join(dirname(__file__), "resources"))
+    #     middir = ".."
+    #     ctr = 1
+    #     while len(resource_dir) <= 0 and ctr < 5:
+    #         resource_dir = glob.glob(join(dirname(__file__), middir, "resources"))
+    #         middir = join(middir, "..")
+    #         ctr += 1
+    #     return abspath(resource_dir[0])
 
     def getParticipants(self):
         """
@@ -437,7 +438,10 @@ class OPEXReport(object):
         :return: true if OK
         """
         self.dbi.c.execute("SELECT xsitype FROM expts WHERE name='CANTAB'")
-        etypes = [d[0] for d in self.dbi.c.fetchall()]
+        exptlist = self.dbi.c.fetchall()
+        if exptlist is None:
+            return False
+        etypes = [d[0] for d in exptlist]
         # ['opex:cantabDMS',
         #           'opex:cantabERT',
         #           'opex:cantabMOT',
@@ -463,6 +467,8 @@ class OPEXReport(object):
             for etype in etypes:
                 if etype.startswith('opex'):
                     fields = self.xnat.conn.inspect.datatypes(etype)
+                    if fields is None or len(fields) <= 0:
+                        continue
                     fields = columns + fields
                     # print(fields)
                     criteria = [(etype + '/SUBJECT_ID', 'LIKE', '*'), 'AND']
@@ -503,6 +509,7 @@ class OPEXReport(object):
         except Exception as e:
             logging.error(e)
             print(e)
+            return False
 
 
     def generateBloodReport(self, projectcode, outputdir,deltas):
@@ -546,6 +553,9 @@ class OPEXReport(object):
                 etype = etypes[ex]
                 if etype.startswith('opex'):
                     fields = self.xnat.conn.inspect.datatypes(etype)
+                    if fields is None or len(fields)<=0:
+                        continue
+
                     fields = columns + fields
                     # print(fields)
                     criteria = [(etype + '/SUBJECT_ID', 'LIKE', '*'), 'AND']
