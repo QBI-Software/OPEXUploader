@@ -2,22 +2,25 @@ import argparse
 import logging
 import sys
 import threading
+import urllib2
 from multiprocessing import freeze_support
 from os import access, R_OK, mkdir
 from os.path import join, expanduser, dirname, split
+from shutil import copyfile
+import urllib3
+import certifi
 import markdown
 import wx
-from shutil import copyfile
 from configobj import ConfigObj
 from requests.exceptions import ConnectionError
-import urllib2
-import certifi
+
+from config.dbquery import DBI
 from opexreport.report import OPEXReport
 from opexuploader.bulk_uploader import BulkUploader
-from opexuploader.gui.uploadergui import UploaderGUI, dlgScans, dlgConfig, dlgHelp, dlgIDS, dlgDownloads, dlgReports, dlgLogViewer
+from opexuploader.gui.uploadergui import UploaderGUI, dlgScans, dlgConfig, dlgHelp, dlgIDS, dlgDownloads, dlgReports, \
+    dlgLogViewer
 from opexuploader.uploader import OPEXUploader
 from opexuploader.utils import findResourceDir
-from config.dbquery import DBI
 from xnatconnect.XnatConnector import XnatConnector
 from xnatconnect.XnatOrganizeFiles import Organizer
 
@@ -478,13 +481,16 @@ class OPEXUploaderGUI(UploaderGUI):
         projdir = dirname(resource_dir)
         local_readme_url = join(projdir, 'README.md')
         readme_url='https://raw.githubusercontent.com/QBI-Software/OPEXUploader/master/README.md'
+        http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
+        mdfile = http.request('GET',readme_url)
+        # Write locally
+        if sys.platform =='win32':
+            flag = 'wb'
+        else:
+            flag = 'w'
+        with open(local_readme_url, flag) as output:
+            output.write(mdfile.data)
 
-        mdfile = urllib2.urlopen(readme_url)
-        with open(local_readme_url, 'wb') as output:
-            output.write(mdfile.read())
-        # Use cache if not available
-        if not access(local_readme_url,R_OK):
-            local_readme_url = join(projdir, 'README.md')
         help_page = join(resource_dir, 'HELP.html')
         md = markdown.Markdown()
         md.convertFile(local_readme_url, help_page)
