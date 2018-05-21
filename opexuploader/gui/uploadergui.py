@@ -9,7 +9,6 @@
 
 import wx
 import wx.xrc
-import wx.richtext
 import wx.grid
 import wx.html
 
@@ -128,10 +127,10 @@ class UploaderGUI ( wx.Frame ):
 		
 		bSizer3 = wx.BoxSizer( wx.VERTICAL )
 		
-		self.tcResults = wx.richtext.RichTextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0|wx.NO_BORDER|wx.WANTS_CHARS )
-		self.tcResults.SetMinSize( wx.Size( -1,500 ) )
+		self.tcResults = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.TE_MULTILINE|wx.TE_READONLY )
+		self.tcResults.SetMinSize( wx.Size( 900,450 ) )
 		
-		bSizer3.Add( self.tcResults, 1, wx.EXPAND |wx.ALL, 5 )
+		bSizer3.Add( self.tcResults, 0, wx.ALL, 5 )
 		
 		
 		bSizer1.Add( bSizer3, 1, wx.EXPAND, 5 )
