@@ -52,9 +52,15 @@ class CantabParser(DataParser):
         """
         Reformats DOB string from yyyy-mm-dd 00:00:00 as returned by series obj to yyyy-mm-dd
         """
-        # dt = datetime.strptime(orig,"%d-%b-%y") #if was 20-Oct-50
-        # dt = datetime.strptime(orig, "%d/%m/%Y")
-        dt = datetime.strptime(orig, "%Y-%m-%d %H:%M:%S")
+        try:
+            if "-" in orig:
+                dt = datetime.strptime(orig,"%d-%b-%y") #if was 20-Oct-50
+            elif "/" in orig:
+                dt = datetime.strptime(orig, "%d/%m/%Y")
+        except ValueError as e:
+            dt = datetime.strptime(orig, "%Y-%m-%d %H:%M:%S")
+        if dt is not None and dt.year > 2000:
+            dt = datetime(dt.year-100, dt.month, dt.day)
         return dt.strftime("%Y-%m-%d")
 
     def getInterval(self,orig):
@@ -191,7 +197,7 @@ if __name__ == "__main__":
             Reads files in a directory and extracts data for upload to XNAT
 
              ''')
-    parser.add_argument('--filedir', action='store', help='Directory containing files', default="..\\sampledata\\cantab")
+    parser.add_argument('--filedir', action='store', help='Directory containing files', default="..\\..\\sampledata\\cantab")
     parser.add_argument('--sheet', action='store', help='Sheet name to extract',
                         default="RowBySession_HealthyBrains")
 

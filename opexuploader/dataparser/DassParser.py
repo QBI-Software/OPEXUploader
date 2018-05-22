@@ -25,13 +25,13 @@ class DassParser(DataParser):
         DataParser.__init__(self, *args)
         #Replace field headers
         self.fields = ['depression', 'anxiety', 'stress']
-        ncols=[]
+        ncols=['SubjectID']
         for ix in range(0,13,3):
             ncols += [c + '_'+str(ix) for c in self.fields]
 
         dropcols=[] #remove check columns
 
-        for n in range(3, len(self.data.columns), 12):
+        for n in range(4, len(self.data.columns), 12):
             start = n
             end = n + 9
             #print('Drop ', start, ' to ', end
@@ -47,7 +47,7 @@ class DassParser(DataParser):
         df.reindex()
         self.data=df
         #sort subjects
-        self.data['SubjectID'] = self.data.index
+        #self.data['SubjectID'] = self.data.index
         self.sortSubjects('SubjectID')
         print('Data load complete')
 
@@ -118,20 +118,21 @@ if __name__ == "__main__":
 
              ''')
     parser.add_argument('--filedir', action='store', help='Directory containing files', default="Q:\\DATA\\DATA ENTRY\\XnatUploaded\\sampledata\\dass")
-    parser.add_argument('--datafile', action='store', help='Filename of original data', default="DASS Data Entry Plus Check_20171206.xlsx")
+    parser.add_argument('--datafile', action='store', help='Filename of original data', default="DASS Data Entry Plus Check_2018_03_07.xlsx")
     parser.add_argument('--sheet', action='store', help='Sheet name to extract',
                         default="0")
     args = parser.parse_args()
 
     inputfile = join(args.filedir, args.datafile)
     sheet = int(args.sheet)
-    skip = 0
+    skip = 2
     header =2
+    etype='DASS'
     print("Input:", inputfile)
     if access(inputfile, R_OK):
         try:
             print("Loading ", inputfile)
-            dp = DassParser(inputfile, sheet, skip, header)
+            dp = DassParser(inputfile, sheet, skip, header,etype)
             xsdtypes = dp.getxsd()
             intervals = range(0,13,3)
             for sd in dp.subjects:
