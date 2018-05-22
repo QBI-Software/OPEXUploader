@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 # -*- coding: utf-8 -*-
 """
 XNAT Utility script: XnatOrganizeFiles
@@ -10,30 +12,32 @@ Created on Thu Mar 2 2017
 """
 
 from os import listdir, R_OK, path, mkdir, access
-from os.path import isdir, join,expanduser
+from os.path import isdir, join, expanduser
 import argparse
 import sys
 import re
 import glob
 import shutil
 import pydicom as dicom
-from pydicom.filereader import InvalidDicomError, read_file
+from pydicom.filereader import InvalidDicomError
 import logging
+
 
 class Organizer():
     def __init__(self, inputdir, scandir, opexid=True, ignoredir=None, subjectchars=6):
-        logging.basicConfig(filename=join(expanduser('~'),'logs','xnatscans.log'), level=logging.INFO, format='%(asctime)s %(message)s', datefmt='%d-%m-%Y %I:%M:%S %p')
-        #Set input directory
+        logging.basicConfig(filename=join(expanduser('~'), 'logs', 'xnatscans.log'), level=logging.INFO,
+                            format='%(asctime)s %(message)s', datefmt='%d-%m-%Y %I:%M:%S %p')
+        # Set input directory
         if not access(inputdir, R_OK):
             raise OSError("Cannot access input directory")
         else:
             self.inputdir = inputdir
         print('Input directory: ', self.inputdir)
-        #Set output scan directory
+        # Set output scan directory
         if scandir is None:
             dirpath = path.dirname(inputdir)
             self.datapath = join(dirpath, 'sortedscans')
-        #origdatapath = datapath
+        # origdatapath = datapath
         elif not access(scandir, R_OK):
             raise OSError("Cannot access output scan directory")
         else:
@@ -43,8 +47,8 @@ class Organizer():
         # Check only subject dirs processed
         self.opexid = opexid
         self.snum = subjectchars
-        self.pattern = re.compile('^[A-Za-z0-9\_\-\.]+$') #generic alphanumeric with hyphen, underscore and decimal point
-
+        self.pattern = re.compile(
+            '^[A-Za-z0-9\_\-\.]+$')  # generic alphanumeric with hyphen, underscore and decimal point
 
         # Ignore these directories already processed - allows for repeated parsing over same dir
         if ignoredir is not None:
@@ -105,7 +109,7 @@ class Organizer():
                         idx = parts.index(series_num.zfill(4))
                         series_prefix = '.'.join(parts[0:idx + 1])
                         series[series_num] = [join(datapath, str(int(series_num))), series_prefix]
-                        print('Collecting series: ',series_num )
+                        print('Collecting series: ', series_num)
                 # Move files to new dirs grouped by series
 
                 for snum, dpath in series.items():
@@ -131,6 +135,7 @@ class Organizer():
             datapath = self.datapath
         return True
 
+
 if __name__ == "__main__":
     # Read dirlist until get to *.dcm or *.IMA
     parser = argparse.ArgumentParser(prog=sys.argv[0],
@@ -143,13 +148,17 @@ if __name__ == "__main__":
             python XnatOrganizeFiles.py "data/raw" --scandir "data/sortedscans"
 
              ''')
-    parser.add_argument('--inputdir', action='store', help='Top level file directory eg SUBJECTID', default="sampledata\\mri")
-    parser.add_argument('--scandir', action='store', help='Copy scans to this directory for upload to XNAT', default="sampledata\\mri\\sortedscans")
-    parser.add_argument('--opexid', action='store_true', help='SUBJECTID directories in OPEX format eg 1001DS', default='True')
-    parser.add_argument('--ignore', action='store', help='Ignore already processed - allows for repeated parsing over same dir (eg "done")')
+    parser.add_argument('--inputdir', action='store', help='Top level file directory eg SUBJECTID',
+                        default="sampledata\\mri")
+    parser.add_argument('--scandir', action='store', help='Copy scans to this directory for upload to XNAT',
+                        default="sampledata\\mri\\sortedscans")
+    parser.add_argument('--opexid', action='store_true', help='SUBJECTID directories in OPEX format eg 1001DS',
+                        default='True')
+    parser.add_argument('--ignore', action='store',
+                        help='Ignore already processed - allows for repeated parsing over same dir (eg "done")')
     args = parser.parse_args()
 
-    org = Organizer(args.inputdir,args.scandir,args.opexid,args.ignore)
+    org = Organizer(args.inputdir, args.scandir, args.opexid, args.ignore)
     print("ScanOrganizer loaded")
     org.run()
     print("ScanOrganizer complete")
@@ -248,9 +257,3 @@ if __name__ == "__main__":
     #     logging.info(msg)
     #     print(msg)
     #     datapath = origdatapath
-
-
-
-
-
-

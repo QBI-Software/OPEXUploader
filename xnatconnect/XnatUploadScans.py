@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 # -*- coding: utf-8 -*-
 """
 XNAT Utility script: Upload scans via subject label (not XNAT id)
@@ -26,6 +28,7 @@ import pyxnat
 
 warnings.filterwarnings("ignore")
 DEBUG = 1
+
 
 class XnatConnector:
     def __init__(self, configfile, sitename):
@@ -108,15 +111,15 @@ class XnatConnector:
 
     def checkUniqueLabel(self, subject, label):
         prefix = label.rsplit('_', 1)[0]
-        experiments = [e.label() for e in subject.experiments() if e.datatype() == 'xnat:mrSessionData' and e.label().startswith(prefix)]
+        experiments = [e.label() for e in subject.experiments() if
+                       e.datatype() == 'xnat:mrSessionData' and e.label().startswith(prefix)]
         if label in experiments:
             experiments.sort(reverse=True)
             ctr = experiments[0].rsplit('_', 1)[1]
-            #prefix = experiments[0].rsplit('_', 1)[0]
+            # prefix = experiments[0].rsplit('_', 1)[0]
             c = int(ctr) + 1
             label = prefix + "_" + str(c)
         return label
-
 
     def upload_MRIscans(self, projectcode, scandir):
         """
@@ -135,7 +138,7 @@ class XnatConnector:
         scanfiles = [f for f in listdir(scandir) if os.path.isdir(join(scandir, f))]
         if scanfiles:
             dirpath = os.path.dirname(scandir)
-            donepath = join(dirpath,'done')
+            donepath = join(dirpath, 'done')
             if not os.path.isdir(donepath):
                 try:
                     os.mkdir(donepath)
@@ -151,27 +154,27 @@ class XnatConnector:
 
             if s.exists():
                 ctr = ctr + 1
-                #Set experiment
+                # Set experiment
                 elabel = 'MR_%s_%d' % (s.label(), ctr)
-                elabel = self.checkUniqueLabel(s, elabel)# eid = self.find_next_experimentID(projectcode, prefix,True)
+                elabel = self.checkUniqueLabel(s, elabel)  # eid = self.find_next_experimentID(projectcode, prefix,True)
                 message = "Uploading scans for %s: %s with expt=%s" % (s.id(), s.label(), elabel)
                 logging.info(message)
                 print(message)
                 expt = s.experiment(elabel)
-                expt.create() #experiments='xnat:mrSessionData')
+                expt.create()  # experiments='xnat:mrSessionData')
                 uploaddir = join(scandir, slabel, 'scans')
                 scan_ctr = 0
-                #(scan_date, scan_time) = (None, None)
+                # (scan_date, scan_time) = (None, None)
                 others = {}
                 for subdr in listdir(uploaddir):
                     dcm_path = join(uploaddir, subdr)
-                    scan_files = glob.glob(join(dcm_path,'*.*'))
-                    if len(scan_files)==0: #check this isn't wrong dir
+                    scan_files = glob.glob(join(dcm_path, '*.*'))
+                    if len(scan_files) == 0:  # check this isn't wrong dir
                         logging.warning("File directory doesn't contain dcm files:%s", uploaddir)
                         continue
 
-                    scan_type = self.getScanType(default_scantype,scan_files[0])
-                    scan_id = self.getSeriesNumber(subdr,scan_files[0])
+                    scan_type = self.getScanType(default_scantype, scan_files[0])
+                    scan_id = self.getSeriesNumber(subdr, scan_files[0])
                     print('Scan ID: %s  Scan type=%s' % (scan_id, scan_type))
 
                     scan_pi = self.getPI(scan_files[0])
@@ -180,28 +183,28 @@ class XnatConnector:
                     else:
                         logging.warning("Owner does not match - skipping upload: scan=%s project=", scan_pi, proj_pi)
                         continue
-                    #(scan_date, scan_time) = self.getSeriesDatestamp(scan_files[0])
+                    # (scan_date, scan_time) = self.getSeriesDatestamp(scan_files[0])
                     scan_ctr += 1
                     scan = expt.scan(str(scan_id))
-                    #scan.insert() #Should detect type BUT IT DOESN'T
+                    # scan.insert() #Should detect type BUT IT DOESN'T
                     if scan_type == 'MR Image Storage':
                         scan.create(scans='xnat:mrScanData')
                     elif scan_type == 'Secondary Capture Image Storage':
                         scan.create(scans='xnat:scScanData')
                     else:
                         modality = self.getModality(scan_files[0])
-                        if modality is not None and modality =='MR':
+                        if modality is not None and modality == 'MR':
                             scan.create(scans='xnat:otherDicomScanData')
 
-                    dicom_resource = scan.resource('DICOM') #crucial for display DICOM headers
-                    dicom_resource.put_dir(dcm_path,overwrite=True, extract=True)
-                    #Update per scan doesn't work:
+                    dicom_resource = scan.resource('DICOM')  # crucial for display DICOM headers
+                    dicom_resource.put_dir(dcm_path, overwrite=True, extract=True)
+                    # Update per scan doesn't work:
                     ## hdrs = '/REST/experiments/%s/scans/%s?pullDataFromHeaders=true' % (elabel, str(scan_id))
-                    #xnat.conn.put(hdrs)
+                    # xnat.conn.put(hdrs)
 
                 # Update headers after files uploaded (mrScan only)
                 if expt.scans():
-                    #expt.trigger(fix_types=True, scan_headers=True, pipelines=True) - doesn't work properly as calls are in wrong order so list each function as below
+                    # expt.trigger(fix_types=True, scan_headers=True, pipelines=True) - doesn't work properly as calls are in wrong order so list each function as below
                     try:
                         expt.pull_data_from_headers()
                     except:
@@ -222,11 +225,11 @@ class XnatConnector:
                             print(message)
 
             else:
-                logging.warning("Subject doesn't exist in this project: %s %s" ,projectcode, sid)
+                logging.warning("Subject doesn't exist in this project: %s %s", projectcode, sid)
 
         return ctr
 
-    def getScanType(self, dirlabel,dicomfile):
+    def getScanType(self, dirlabel, dicomfile):
         type = dirlabel
         dcm = dicom.read_file(dicomfile)
         if dcm:
@@ -242,7 +245,7 @@ class XnatConnector:
 
         return type
 
-    def getSeriesNumber(self, dirlabel,dicomfile):
+    def getSeriesNumber(self, dirlabel, dicomfile):
         series = dirlabel
         dcm = dicom.read_file(dicomfile)
         if dcm:
@@ -250,7 +253,7 @@ class XnatConnector:
 
         return series
 
-    def getSeriesDatestamp(self,dicomfile):
+    def getSeriesDatestamp(self, dicomfile):
         sdate = None
         stime = None
         dcm = dicom.read_file(dicomfile)
@@ -258,14 +261,15 @@ class XnatConnector:
             sdate = dcm.SeriesDate
             stime = dcm.SeriesTime
 
-        return (sdate,stime)
+        return (sdate, stime)
 
-    def getPI(self,dicomfile):
+    def getPI(self, dicomfile):
         pi = None
         dcm = dicom.read_file(dicomfile)
         if dcm:
-            pi = dcm.RequestedProcedureDescription #check this field is set with Principal Investigator
+            pi = dcm.RequestedProcedureDescription  # check this field is set with Principal Investigator
         return pi
+
 
 # =============================================================================
 
@@ -275,7 +279,8 @@ if __name__ == "__main__":
                                      description='''\
         Script for uploading scans to QBI XNAT db
          ''')
-    parser.add_argument('database', action='store', help='select database config from xnat.cfg to connect to [qbixnat|irc5xnat]')
+    parser.add_argument('database', action='store',
+                        help='select database config from xnat.cfg to connect to [qbixnat|irc5xnat]')
     parser.add_argument('projectcode', action='store', help='select project by code eg QBICC')
     parser.add_argument('--p', action='store_true', help='list projects')
     parser.add_argument('--s', action='store_true', help='list subjects')
@@ -289,13 +294,13 @@ if __name__ == "__main__":
     # get current user's login details (linux) or local file (windows)
     home = expanduser("~")
     configfile = join(home, '.xnat.cfg')
-    logfile = join(home,'logs','xnatuploadscans.log')
+    logfile = join(home, 'logs', 'xnatuploadscans.log')
     if args.c is not None:
         try:
             if os.access(args.c, os.R_OK):
                 configfile = args.c
-            if not os.access(join(home,'logs'), os.R_OK):
-                os.mkdir(join(home,'logs'))
+            if not os.access(join(home, 'logs'), os.R_OK):
+                os.mkdir(join(home, 'logs'))
 
         except:
             raise IOError
@@ -304,8 +309,8 @@ if __name__ == "__main__":
     except:
         raise os.error
 
-
-    logging.basicConfig(filename=logfile, level=logging.INFO, format='%(asctime)s %(message)s', datefmt='%d-%m-%Y %I:%M:%S %p')
+    logging.basicConfig(filename=logfile, level=logging.INFO, format='%(asctime)s %(message)s',
+                        datefmt='%d-%m-%Y %I:%M:%S %p')
     logging.info('Connected to Server:%s Project:%s', args.database, args.projectcode)
     xnat = XnatConnector(configfile, args.database)
     xnat.connect()
