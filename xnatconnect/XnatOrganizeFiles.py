@@ -21,7 +21,7 @@ from pydicom.filereader import InvalidDicomError, read_file
 import logging
 
 class Organizer():
-    def __init__(self, inputdir, scandir, opexid=True, ignoredir=None):
+    def __init__(self, inputdir, scandir, opexid=True, ignoredir=None, subjectchars=6):
         logging.basicConfig(filename=join(expanduser('~'),'logs','xnatscans.log'), level=logging.INFO, format='%(asctime)s %(message)s', datefmt='%d-%m-%Y %I:%M:%S %p')
         #Set input directory
         if not access(inputdir, R_OK):
@@ -42,10 +42,9 @@ class Organizer():
 
         # Check only subject dirs processed
         self.opexid = opexid
-        if self.opexid:
-            self.pattern = re.compile('^\d{4}[A-Za-z0-9]+$')
-        else:
-            self.pattern = re.compile('[A-Za-z0-9\_\.\-]+')
+        self.snum = subjectchars
+        self.pattern = re.compile('^[A-Za-z0-9\_\-\.]+$') #generic alphanumeric with hyphen, underscore and decimal point
+
 
         # Ignore these directories already processed - allows for repeated parsing over same dir
         if ignoredir is not None:
@@ -61,13 +60,16 @@ class Organizer():
         datapath = self.datapath
         series = {}
         for subject in listdir(self.inputdir):
-            msg = "Subject: %s" % subject
-            logging.info(msg)
-            print(msg)
-            if self.opexid and len(subject) == 8:
-                trimsubject = subject[0:6]
+            # reject if not dir
+            if not isdir(join(self.inputdir, subject)):
+                continue
+            if self.opexid and len(subject) > self.snum:
+                trimsubject = subject[0:self.snum]
             else:
                 trimsubject = subject
+            msg = "Subject: %s [%s]" % (subject, trimsubject)
+            logging.info(msg)
+            print(msg)
             if not self.pattern.match(subject) or subject in self.ignorefiles or trimsubject in self.ignorefiles:
                 msg = "Not a subject or marked for ignore - next"
                 logging.warning(msg)
@@ -78,7 +80,7 @@ class Organizer():
                 mkdir(join(datapath, subject, 'scans'))
                 datapath = join(datapath, subject, 'scans')
             except OSError as e:
-                msg = 'Directory exists: %s' % e.args[0]
+                msg = 'Directory exists: %s' % subject
                 logging.info(msg)
                 print(msg)
                 datapath = self.datapath
@@ -103,6 +105,7 @@ class Organizer():
                         idx = parts.index(series_num.zfill(4))
                         series_prefix = '.'.join(parts[0:idx + 1])
                         series[series_num] = [join(datapath, str(int(series_num))), series_prefix]
+                        print('Collecting series: ',series_num )
                 # Move files to new dirs grouped by series
 
                 for snum, dpath in series.items():
@@ -112,6 +115,7 @@ class Organizer():
                         files = glob.glob(join(grouppath, seriespattern))
                         for f2 in files:
                             shutil.copy(f2, dpath[0])
+                            print('Copying file:', f2)
                     except:
                         msg = "Error copying files: %s" % dpath
                         logging.error(msg)

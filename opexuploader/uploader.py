@@ -24,7 +24,7 @@ import logging
 import sys
 import shutil
 from os import R_OK, access, listdir, mkdir
-from os.path import expanduser, join, basename, exists
+from os.path import expanduser, join, basename, exists, dirname, abspath
 
 from numpy import isnan, nan
 
@@ -48,6 +48,11 @@ from logging.handlers import RotatingFileHandler
 
 ### Global config for logging required due to redirection of stdout to console in app
 logfile=join(expanduser('~'),'logs','xnatupload.log')
+if logfile is not None:
+    logbase = dirname(abspath(logfile))
+    if not access(logbase, R_OK):
+        mkdir(logbase)
+
 logging.basicConfig(filename=logfile, level=logging.INFO, format='%(asctime)s [%(filename)s %(lineno)d] %(message)s',
                                 datefmt='%d-%m-%Y %I:%M:%S %p')
 logger = logging.getLogger('opex')
@@ -56,16 +61,7 @@ logger.addHandler(handler)
 
 
 class OPEXUploader():
-    def __init__(self, args, logfile=None):
-
-        # if logfile is not None:
-            # logging.basicConfig(filename=logfile, level=logging.INFO, format='%(asctime)s [%(filename)s %(lineno)d] %(message)s',
-            #                     datefmt='%d-%m-%Y %I:%M:%S %p')
-            # logger = logging.getLogger('opex')
-            # handler = RotatingFileHandler(filename=logfile, maxBytes=4000000000)
-            # logger.addHandler(handler)
-            # logger.info('test logger')
-
+    def __init__(self, args):
         self.args = args
         self.configfile = None
         self.xnat = None

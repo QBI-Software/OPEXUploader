@@ -25,13 +25,13 @@ class DassParser(DataParser):
         DataParser.__init__(self, *args)
         #Replace field headers
         self.fields = ['depression', 'anxiety', 'stress']
-        ncols=['SubjectID']
+        ncols=[]
         for ix in range(0,13,3):
             ncols += [c + '_'+str(ix) for c in self.fields]
 
         dropcols=[] #remove check columns
 
-        for n in range(4, len(self.data.columns), 12):
+        for n in range(3, len(self.data.columns), 12):
             start = n
             end = n + 9
             #print('Drop ', start, ' to ', end
@@ -47,7 +47,7 @@ class DassParser(DataParser):
         df.reindex()
         self.data=df
         #sort subjects
-        #self.data['SubjectID'] = self.data.index
+        self.data['SubjectID'] = self.data.index
         self.sortSubjects('SubjectID')
         print('Data load complete')
 

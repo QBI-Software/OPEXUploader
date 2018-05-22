@@ -508,25 +508,32 @@ class dlgIDS ( wx.Dialog ):
 class dlgScans ( wx.Dialog ):
 	
 	def __init__( self, parent ):
-		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Scans organizer", pos = wx.DefaultPosition, size = wx.Size( 690,500 ), style = wx.DEFAULT_DIALOG_STYLE )
+		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Scans organizer", pos = wx.DefaultPosition, size = wx.Size( 830,670 ), style = wx.DEFAULT_DIALOG_STYLE )
 		
 		self.SetSizeHintsSz( wx.DefaultSize, wx.DefaultSize )
 		
 		bSizer5 = wx.BoxSizer( wx.VERTICAL )
 		
-		self.m_staticText13 = wx.StaticText( self, wx.ID_ANY, u"Step 1 Organizes scans into the correct directory structure for XNAT uploads (Step 2).  \n-  Input directory must have subdirectories as subject ID with *.IMA or *.DCM files.\n- Output Sorted Scans will be used for Step 2 upload\n-  Ignore directory contains already uploaded scans (eg 'done'). Note when upload is complete, move sorted scans here manually for next time.\n\nStep 2 is run from main application - select MRI and this output directory as the input directory.", wx.DefaultPosition, wx.Size( 680,220 ), 0|wx.SUNKEN_BORDER )
+		self.m_staticText13 = wx.StaticText( self, wx.ID_ANY, u"Step 1 Organizes scans into the correct directory structure for XNAT uploads (Step 2).  \n-  Input directory is top level with subdirectories named as subject ID containing raw *.IMA or *.DCM files.\n- Output Sorted Scans will be used for Step 2 upload (create this if it doesn't exist)\n-  Ignore directory contains already uploaded scans (eg 'done'). Note when upload is complete, move sorted scans here manually for next time or create empty folders with same names.\n\nStep 2 is run from main application - select MRI and this output directory as the input directory.", wx.DefaultPosition, wx.Size( 700,200 ), 0|wx.SUNKEN_BORDER )
 		self.m_staticText13.Wrap( -1 )
 		self.m_staticText13.SetFont( wx.Font( wx.NORMAL_FONT.GetPointSize(), 70, 90, 92, False, wx.EmptyString ) )
 		
 		bSizer5.Add( self.m_staticText13, 0, wx.ALL, 5 )
 		
-		self.chkOPEX = wx.CheckBox( self, wx.ID_ANY, u"Extract Subject ID as first 6 characters (eg 1001DD01 to 1001DD)", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.chkOPEX = wx.CheckBox( self, wx.ID_ANY, u"Extract Subject ID as prefix (eg 1001DD01 to 1001DD)", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.chkOPEX.SetValue(True) 
 		bSizer5.Add( self.chkOPEX, 0, wx.ALL, 5 )
 		
 		fgSizer2 = wx.FlexGridSizer( 0, 2, 0, 0 )
 		fgSizer2.SetFlexibleDirection( wx.BOTH )
 		fgSizer2.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
+		
+		self.m_staticText21 = wx.StaticText( self, wx.ID_ANY, u"Number of characters in prefix (subject ID)", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText21.Wrap( -1 )
+		fgSizer2.Add( self.m_staticText21, 0, wx.ALL, 5 )
+		
+		self.m_spinCtrlChars = wx.SpinCtrl( self, wx.ID_ANY, u"6", wx.DefaultPosition, wx.DefaultSize, wx.SP_ARROW_KEYS, 0, 20, 0 )
+		fgSizer2.Add( self.m_spinCtrlChars, 0, wx.ALL, 5 )
 		
 		self.m_staticText10 = wx.StaticText( self, wx.ID_ANY, u"Input directory", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText10.Wrap( -1 )

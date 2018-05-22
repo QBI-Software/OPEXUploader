@@ -2,14 +2,14 @@ import argparse
 import logging
 import sys
 import threading
-import urllib2
 from multiprocessing import freeze_support
 from os import access, R_OK, mkdir
 from os.path import join, expanduser, dirname, split
 from shutil import copyfile
-import urllib3
+
 import certifi
 import markdown
+import urllib3
 import wx
 from configobj import ConfigObj
 from requests.exceptions import ConnectionError
@@ -30,9 +30,10 @@ freeze_support()
 # Threading support
 EVT_RESULT_ID = wx.NewId()
 
-#logger = logging.getLogger('opex')
+# logger = logging.getLogger('opex')
 lock = threading.Lock()
 event = threading.Event()
+
 
 def EVT_RESULT(win, func):
     """Define Result Event."""
@@ -50,8 +51,7 @@ class ResultEvent(wx.PyEvent):
 
 
 class UploadThread(threading.Thread):
-
-    def __init__(self,wxObject,uploader, proj, rootdirname,runoption):
+    def __init__(self, wxObject, uploader, proj, rootdirname, runoption):
         threading.Thread.__init__(self)
         self.runoption = runoption
         self.wxObject = wxObject
@@ -61,7 +61,7 @@ class UploadThread(threading.Thread):
 
         self.setDaemon(True)
 
-        #Test connection
+        # Test connection
         if not self.uploader.xnat.testconnection():
             wx.PostEvent(self.wxObject, ResultEvent('UploadThread: connection failed'))
 
@@ -97,6 +97,42 @@ class UploadThread(threading.Thread):
             wx.PostEvent(self.wxObject, ResultEvent(msg))
 
 
+class ScanOrganizerThread(threading.Thread):
+    def __init__(self, wxObject, scaninput, scanoutput, opexid, ignore, subjectchars):
+        threading.Thread.__init__(self)
+        self.wxObject = wxObject
+        self.scaninput = scaninput
+        self.scanoutput = scanoutput
+        self.opexid = opexid
+        self.ignore = ignore
+        self.subjectchars = subjectchars
+        self.setDaemon(True)
+
+
+    def run(self):
+        print('ScanOrganizerThread: Starting thread run')
+        errmsg = None
+        try:
+            event.set()
+            lock.acquire(True)
+
+            org = Organizer(self.scaninput, self.scanoutput, self.opexid, self.ignore, self.subjectchars)
+            if org.run():
+                msg ='***FINISHED***'
+                logging.info(msg)
+                print("\n", msg, "\n")
+                wx.PostEvent(self.wxObject, ResultEvent(msg))
+            else:
+                raise ValueError('ScanOrganizerThread: Run failed')
+
+        except Exception as e:
+            errmsg = "ERROR: %s" % str(e)
+            logging.error(errmsg)
+            wx.PostEvent(self.wxObject, ResultEvent(errmsg))
+        finally:
+            lock.release()
+            event.clear()
+
 
 
 ####################################################################################
@@ -122,7 +158,7 @@ class DownloadDialog(dlgDownloads):
             subjects = xnat.getSubjectsDataframe(self.proj)
             op = OPEXReport(subjects=subjects)
             op.xnat = xnat
-            if op.downloadOPEXExpts(self.proj,downloaddirname, deltas):
+            if op.downloadOPEXExpts(self.proj, downloaddirname, deltas):
                 msg = "***Downloads Completed: %s" % downloaddirname
                 logging.info(msg)
             else:
@@ -166,9 +202,9 @@ class DownloadDialog(dlgDownloads):
             dlg.ShowModal()  # Show it
             dlg.Destroy()
 
-
     def OnCloseDlg(self, event):
         self.Destroy()
+
 
 ############################################################################################################
 class ReportDialog(dlgReports):
@@ -182,7 +218,6 @@ class ReportDialog(dlgReports):
             self.configfile = parent.configfile
             self.db = db
             self.proj = proj
-
 
     def OnGenerateReports(self, event):
         """
@@ -223,11 +258,12 @@ class ReportDialog(dlgReports):
                 msg = "Cannot list subjects from XNAT"
                 logging.error(msg)
                 print(msg)
-            #close connection
+            # close connection
             op.xnat.conn.disconnect()
 
     def OnCloseDlg(self, event):
         self.Close()
+
 
 ############################################################################################################
 class IdsDialog(dlgIDS):
@@ -240,12 +276,12 @@ class IdsDialog(dlgIDS):
 
     def __loadData(self):
         dbi = DBI(self.iddb)
-        rownum =0
+        rownum = 0
         rows = self.m_grid1.GetTable().GetRowsCount()
         idlist = dbi.getIDs()
         for ids in idlist:
             if rownum >= rows:
-                self.m_grid1.AppendRows(1,True)
+                self.m_grid1.AppendRows(1, True)
             self.m_grid1.SetCellValue(rownum, 0, ids[0])
             self.m_grid1.SetCellValue(rownum, 1, ids[1])
             rownum += 1
@@ -281,6 +317,7 @@ class IdsDialog(dlgIDS):
 
     def OnCloseDlg(self, event):
         self.Close()
+
 
 ############################################################################################################
 class ConfigDialog(dlgConfig):
@@ -329,7 +366,7 @@ class ConfigDialog(dlgConfig):
         :param event:
         :return:
         """
-        dlg = wx.FileDialog(self, "Choose a config file to load","",wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
+        dlg = wx.FileDialog(self, "Choose a config file to load", "", wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
         if dlg.ShowModal() == wx.ID_OK:
             cfile = str(dlg.GetPath())
             self.load(cfile)
@@ -372,21 +409,23 @@ class LogOutput():
     """
     http://www.blog.pythonlibrary.org/2009/01/01/wxpython-redirecting-stdout-stderr/
     """
+
     def __init__(self, aWxTextCtrl):
         self.out = aWxTextCtrl
 
     def write(self, string):
         try:
-            wx.CallAfter(self.out.WriteText,string)
+            wx.CallAfter(self.out.WriteText, string)
 
         except Exception as e:
-            print('Output console error: ',e.args[0])
+            print('Output console error: ', e.args[0])
+
 
 class LogViewer(dlgLogViewer):
-    def __init__(self,parent):
+    def __init__(self, parent):
         super(LogViewer, self).__init__(parent)
 
-    def OnRefresh( self, event ):
+    def OnRefresh(self, event):
         logfile = self.Parent.getLogFile()
         self.tcLog.LoadFile(logfile)
 
@@ -412,7 +451,7 @@ class OPEXUploaderGUI(UploaderGUI):
             self.chOptions.SetItems(sorted(self.runoptions.keys()))
             self.dbedit.AppendItems(self.config.keys())
         # # DISPLAY OUTPUT IN WINDOW as stdout
-        sys.stdout= LogOutput(self.tcResults)
+        sys.stdout = LogOutput(self.tcResults)
         # Update status bar from Thread
         EVT_RESULT(self, self.__statusoutput)
         self.m_statusBar1.SetStatusText('Welcome to the Uploader! Help is available from the Menu')
@@ -420,7 +459,7 @@ class OPEXUploaderGUI(UploaderGUI):
 
     def __loadConfig(self):
         if not access(self.configfile, R_OK):
-            copyfile(join(self.resource_dir,'xnat.cfg'),self.configfile)
+            copyfile(join(self.resource_dir, 'xnat.cfg'), self.configfile)
         logging.debug("Loading config file:", self.configfile)
         self.config = ConfigObj(self.configfile, encoding='UTF-8')
         return True
@@ -432,7 +471,7 @@ class OPEXUploaderGUI(UploaderGUI):
         """
         dbi = DBI(self.configdb)
         runoptions = dbi.getRunOptions()
-        runoptions['Visit']='--visit'
+        runoptions['Visit'] = '--visit'
         runoptions['Bulk upload'] = '--bulk'
         # config = ConfigObj(optionsfile)
         # if 'options' in config:
@@ -445,7 +484,8 @@ class OPEXUploaderGUI(UploaderGUI):
         db = self.dbedit.GetStringSelection()
         proj = self.projectedit.GetValue()
         if len(db) <= 0 and len(proj) <= 0:
-            dlg = wx.MessageDialog(self, "Database or project configuration is empty or invalid", "Connection Config Error", wx.OK)
+            dlg = wx.MessageDialog(self, "Database or project configuration is empty or invalid",
+                                   "Connection Config Error", wx.OK)
             dlg.ShowModal()
             dlg.Destroy()
             return (None, None)
@@ -465,7 +505,8 @@ class OPEXUploaderGUI(UploaderGUI):
 
     def OnAbout(self, e):
         # A message dialog box with an OK button. wx.OK is a standard ID in wxWidgets.
-        dlg = wx.MessageDialog(self, "Uploader for OPEX data to XNAT\n(c) 2017 QBI Software\nqbi-dev-admin@uq.edu.au", "About OPEX Uploader",
+        dlg = wx.MessageDialog(self, "Uploader for OPEX data to XNAT\n(c) 2017 QBI Software\nqbi-dev-admin@uq.edu.au",
+                               "About OPEX Uploader",
                                wx.OK)
         dlg.ShowModal()  # Show it
         dlg.Destroy()  # finally destroy it when finished.
@@ -480,11 +521,11 @@ class OPEXUploaderGUI(UploaderGUI):
         resource_dir = findResourceDir()
         projdir = dirname(resource_dir)
         local_readme_url = join(projdir, 'README.md')
-        readme_url='https://raw.githubusercontent.com/QBI-Software/OPEXUploader/master/README.md'
+        readme_url = 'https://raw.githubusercontent.com/QBI-Software/OPEXUploader/master/README.md'
         http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
-        mdfile = http.request('GET',readme_url)
+        mdfile = http.request('GET', readme_url)
         # Write locally
-        if sys.platform =='win32':
+        if sys.platform == 'win32':
             flag = 'wb'
         else:
             flag = 'w'
@@ -499,7 +540,6 @@ class OPEXUploaderGUI(UploaderGUI):
         dlg = dlgHelp(self)
         dlg.m_htmlWin1.LoadPage(help_page)
         dlg.Show()
-
 
     def OnTest(self, e):
         """
@@ -523,7 +563,6 @@ class OPEXUploaderGUI(UploaderGUI):
             msg = "CONNECTION FAILED - please check config"
         self.tcResults.AppendText(msg)
 
-
     def OnIds(self, event):
         """
         Configure Incorrect ID list
@@ -546,15 +585,18 @@ class OPEXUploaderGUI(UploaderGUI):
             scanoutput = dlg.txtOutputScans.GetPath()
             ignore = dlg.txtIgnoreScans.GetPath()
             opexid = dlg.chkOPEX.GetValue()
+            subjectchars = dlg.m_spinCtrlChars.GetValue()
             if len(scaninput) <= 0 or len(scanoutput) <= 0:
                 dlg = wx.MessageDialog(self, "Please specify data directories", "Scan organizer", wx.OK)
                 dlg.ShowModal()  # Show it
                 dlg.Destroy()
             else:
                 self.tcResults.AppendText("Running Scans Organizer\n*******\n")
-                org = Organizer(scaninput, scanoutput, opexid, ignore)
-                if org.run():
-                    self.tcResults.AppendText("\n***FINISHED***\n")
+                t = ScanOrganizerThread(self,scaninput, scanoutput, opexid, ignore, subjectchars)
+                t.start()
+                # org = Organizer(scaninput, scanoutput, opexid, ignore, subjectchars)
+                # if org.run():
+                #     self.tcResults.AppendText("\n***FINISHED***\n")
 
     def OnExit(self, e):
         dial = wx.MessageDialog(None, 'Are you sure you want to quit?', 'Question',
@@ -572,7 +614,8 @@ class OPEXUploaderGUI(UploaderGUI):
     def OnOpen(self, e):
         """ Open a file"""
         # self.dirname = ''
-        dlg = wx.DirDialog(self, "Choose a directory containing input files","",wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
+        dlg = wx.DirDialog(self, "Choose a directory containing input files", "",
+                           wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
         if dlg.ShowModal() == wx.ID_OK:
             self.dirname = '"{0}"'.format(dlg.GetPath())
             self.dirname = dlg.GetPath()
@@ -609,7 +652,7 @@ class OPEXUploaderGUI(UploaderGUI):
             dlg.ShowModal()
             dlg.Destroy()
 
-    def OnClearOutput( self, event ):
+    def OnClearOutput(self, event):
         """
         Clear data output window
         :param event:
@@ -676,11 +719,11 @@ class OPEXUploaderGUI(UploaderGUI):
             args.database = db
             args.projectcode = proj
             args.create = self.cbCreateSubject.GetValue()
-            #args.skiprows = self.cbSkiprows.GetValue()
+            # args.skiprows = self.cbSkiprows.GetValue()
             args.checks = self.cbChecks.GetValue()
             args.update = self.cbUpdate.GetValue()
 
-            uploader = OPEXUploader(args, self.getLogFile())
+            uploader = OPEXUploader(args)
             uploader.config()
             uploader.xnatconnect()
             msg = 'Connecting to Server:%s Project:%s' % (uploader.args.database, uploader.args.projectcode)
@@ -691,7 +734,7 @@ class OPEXUploaderGUI(UploaderGUI):
                 if uploader.xnat.testconnection():
                     logging.info("...Connected")
                     print("...Connected")
-                    t = UploadThread(self,uploader,proj,self.dirname, runoption)
+                    t = UploadThread(self, uploader, proj, self.dirname, runoption)
                     t.start()
                     # uploader.runDataUpload(proj, self.dirname, runoption)
                 else:
@@ -710,13 +753,11 @@ class OPEXUploaderGUI(UploaderGUI):
             except Exception as e:
                 logging.error(e)
                 print("ERROR:", e)
-            # finally:  # Processing complete
-            #     uploader.xnatdisconnect()
-            #     logging.info("FINISHED")
-            #     print("FINISHED - see xnatupload.log for details")
-            #     self.m_statusBar1.SetStatusText('Done')
-
-
+                # finally:  # Processing complete
+                #     uploader.xnatdisconnect()
+                #     logging.info("FINISHED")
+                #     print("FINISHED - see xnatupload.log for details")
+                #     self.m_statusBar1.SetStatusText('Done')
 
 
 ##############################################################################
