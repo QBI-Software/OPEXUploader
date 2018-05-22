@@ -7,7 +7,7 @@ import logging
 ##### Global functions
 def findResourceDir():
     # try local
-    base = dirname(__file__)
+    base = dirname(abspath('.'))
     resource_dir = join(base, 'resources')
     if not access(resource_dir,R_OK):
         base = dirname(base)
