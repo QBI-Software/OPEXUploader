@@ -14,15 +14,18 @@ import glob
 from datetime import datetime
 from os import R_OK, access
 from os.path import join, basename, splitext, dirname, abspath
-
+from opexuploader.utils import findResourceDir
 import pandas
 import logging
 from config.dbquery import DBI
 
 class DataParser(object):
     def __init__(self, datafile=None, sheet=0,skiplines=0, header=None, etype=None):
+        msg = 'DataParser: datafile=%s sheet=%s skiplines=%s header=%s etype=%s' % (datafile, str(sheet),str(skiplines),str(header),etype)
+        print(msg)
+        logging.info(msg)
         self.datafile = datafile #full pathname to data file
-        self.resource_dir = self.__findResourcesdir()
+        self.resource_dir = findResourceDir()
         configdb = join(self.resource_dir, 'opexconfig.db')
         if not access(configdb,R_OK):
             print(configdb)
@@ -66,15 +69,15 @@ class DataParser(object):
             raise ValueError("Unable to get ids from file", e)
         return info
 
-    def __findResourcesdir(self):
-        resource_dir = glob.glob(join(dirname(__file__), "resources"))
-        middir = ".."
-        ctr = 1
-        while len(resource_dir) <= 0 and ctr < 5:
-            resource_dir = glob.glob(join(dirname(__file__), middir, "resources"))
-            middir = join(middir, "..")
-            ctr += 1
-        return abspath(resource_dir[0])
+    # def __findResourcesdir(self):
+    #     resource_dir = glob.glob(join(dirname(__file__), "resources"))
+    #     middir = ".."
+    #     ctr = 1
+    #     while len(resource_dir) <= 0 and ctr < 5:
+    #         resource_dir = glob.glob(join(dirname(__file__), middir, "resources"))
+    #         middir = join(middir, "..")
+    #         ctr += 1
+    #     return abspath(resource_dir[0])
 
     def __checkSID(self,sid):
         """
