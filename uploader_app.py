@@ -445,6 +445,8 @@ class OPEXUploaderGUI(UploaderGUI):
         self.configdb = join(self.resource_dir, 'opexconfig.db')
         self.loaded = self.__loadConfig()
         self.runoptions = self.__loadOptions()
+        self.opexid = False
+        self.subjectchars = 6
         if self.loaded:
             self.chOptions.SetItems(sorted(self.runoptions.keys()))
             self.dbedit.AppendItems(self.config.keys())
@@ -471,11 +473,7 @@ class OPEXUploaderGUI(UploaderGUI):
         runoptions = dbi.getRunOptions()
         runoptions['Visit'] = '--visit'
         runoptions['Bulk upload'] = '--bulk'
-        # config = ConfigObj(optionsfile)
-        # if 'options' in config:
-        #     runoptions = config['options']
-        # else:
-        #     runoptions = {'Help': '--h'}
+
         return runoptions
 
     def __loadConnection(self):
@@ -582,8 +580,11 @@ class OPEXUploaderGUI(UploaderGUI):
             scaninput = dlg.txtInputScans.GetPath()
             scanoutput = dlg.txtOutputScans.GetPath()
             ignore = dlg.txtIgnoreScans.GetPath()
+            if len(ignore) <=0:
+                ignore = None
             opexid = dlg.chkOPEX.GetValue()
             subjectchars = dlg.m_spinCtrlChars.GetValue()
+
             if len(scaninput) <= 0 or len(scanoutput) <= 0:
                 dlg = wx.MessageDialog(self, "Please specify data directories", "Scan organizer", wx.OK)
                 dlg.ShowModal()  # Show it
@@ -592,9 +593,7 @@ class OPEXUploaderGUI(UploaderGUI):
                 self.tcResults.AppendText("Running Scans Organizer\n*******\n")
                 t = ScanOrganizerThread(self,scaninput, scanoutput, opexid, ignore, subjectchars)
                 t.start()
-                # org = Organizer(scaninput, scanoutput, opexid, ignore, subjectchars)
-                # if org.run():
-                #     self.tcResults.AppendText("\n***FINISHED***\n")
+
 
     def OnExit(self, e):
         dial = wx.MessageDialog(None, 'Are you sure you want to quit?', 'Question',
@@ -720,6 +719,9 @@ class OPEXUploaderGUI(UploaderGUI):
             # args.skiprows = self.cbSkiprows.GetValue()
             args.checks = self.cbChecks.GetValue()
             args.update = self.cbUpdate.GetValue()
+            # Add MRI scan options
+            args.opexid = self.m_chkExtractid.GetValue()
+            args.subjectchars = self.m_spinChars.GetValue()
 
             uploader = OPEXUploader(args)
             uploader.config()

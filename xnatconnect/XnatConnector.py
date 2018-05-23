@@ -11,11 +11,12 @@ import csv
 import glob
 import logging
 import os
+import re
 import shutil
 import warnings
 from os import listdir
 from os.path import expanduser
-from os.path import join
+from os.path import join, basename
 # import resource
 import datetime
 import pydicom as dicom
@@ -269,7 +270,7 @@ class XnatConnector:
             df_subjects = None
         return df_subjects
 
-    def upload_MRIscans(self, projectcode, scandir, opexid=False):
+    def upload_MRIscans(self, projectcode, scandir, opexid=False, snum=6):
         """
         Upload MRI scans from scandir to project
         :param projectcode: XNAT ID for project eg QBICC
@@ -278,7 +279,7 @@ class XnatConnector:
         data should be organized by DICOM series as: data/subject_label/scans/series_number/*.dcm (or *.IMA)
         :return: number of sessions loaded
         """
-        import re
+
         project = self.get_project(projectcode)
         # owners = project.owners()
         # proj_pi = self.get_projectPI(projectcode)
@@ -289,13 +290,15 @@ class XnatConnector:
         if scanfiles:
             dirpath = os.path.dirname(scandir)
             # opex
-            visitid = scandir.rsplit('_', 1)
+            visitid = basename(scandir).rsplit('_', 1)
             if len(visitid) > 1:
                 m = re.match('(\d){1,2}[mM]?$', visitid[1])
                 visitid = int(m.group(1))
+                done = 'done_%dm' % visitid
+                donepath = join(dirpath, done)
             else:
                 visitid = 1
-            donepath = join(dirpath, 'done')
+                donepath = join(dirpath, 'done')
             if not os.path.isdir(donepath):
                 try:
                     os.mkdir(donepath)
@@ -303,9 +306,9 @@ class XnatConnector:
                     raise OSError
 
         for slabel in scanfiles:
-            if opexid and len(slabel) > 6:
+            if opexid and len(slabel) > snum:
                 # try to extract slabel eg 1006JJ06
-                sid = self.get_subjectid_bylabel(projectcode, slabel[0:6])
+                sid = self.get_subjectid_bylabel(projectcode, slabel[0:snum])
             else:
                 sid = self.get_subjectid_bylabel(projectcode, slabel)
             if sid is None:
@@ -338,23 +341,25 @@ class XnatConnector:
                     scan_type = self.getScanType(default_scantype, scan_files[0])
                     scan_id = self.getSeriesNumber(subdr, scan_files[0])
                     scan_pi = self.getPI(scan_files[0])
-                    print('Scan ID:', scan_id, 'Scan type=', scan_type, 'Scan info=', scan_pi)
+                    msg ='Scan ID:%s Series:%s Scan type=%s Scan info=%s' % (elabel,scan_id, scan_type, scan_pi)
+                    logging.info(msg)
+                    print(msg)
+
                     # (scan_date, scan_time) = self.getSeriesDatestamp(scan_files[0])
                     scan_ctr += 1
                     scan = expt.scan(str(scan_id))
                     # Refer to scan types in DICOMSOP.csv
                     if scan_type == 'MR Image Storage' or '1.2.840.10008.5.1.4.1.1.4' in scan_type:
                         scan.create(scans='xnat:mrScanData')
-                        logging.info("Scan created[%s]:  MR Image Storage [%s] - %s", scan_id, scan_type, scan_pi)
+                        logging.info("Scan created[%s:%s]:  MR Image Storage [%s]", elabel,scan_id, scan_type)
                     elif scan_type == 'Secondary Capture Image Storage' or '1.2.840.10008.5.1.4.1.1.7' in scan_type:
                         scan.create(scans='xnat:scScanData')
-                        logging.info("Scan created[%s]:  Secondary Capture Image Storage [%s] - %s", scan_id, scan_type,
-                                     scan_pi)
+                        logging.info("Scan created[%s:%s]:  Secondary Capture Image Storage [%s]", elabel,scan_id, scan_type)
                     else:
                         modality = self.getModality(scan_files[0])
                         if modality is not None and modality == 'MR':
                             scan.create(scans='xnat:otherDicomScanData')
-                            logging.info("Scan created[%s]:  Other DICOM [%s] - %s", scan_id, scan_type, scan_pi)
+                            logging.info("Scan created[%s:%s]:  Other DICOM [%s]", elabel,scan_id, scan_type)
 
                     dicom_resource = scan.resource('DICOM')  # crucial for display DICOM headers
                     dicom_resource.put_dir(dcm_path, overwrite=True, extract=True)

@@ -664,8 +664,34 @@ class OPEXUploader():
                         (missing, matches) = dp.uploadDates(projectcode, self.xnat)
                 except Exception as e:
                     raise ValueError(e)
-
+            # ---------------------------------------------------------------------#
+            elif datatype == 'mri':
+                if hasattr(self.args,'opexid'):
+                    opexid = self.args.opexid
+                else:
+                    opexid = False
+                if hasattr(self.args,'subjectchars'):
+                    snum = self.args.subjectchars
+                else:
+                    snum = 6
+                fid = self.xnat.upload_MRIscans(projectcode, inputdir,opexid, snum)
+                if fid == 0:
+                    msg = 'Upload not successful - 0 sessions uploaded'
+                    print(msg)
+                    logging.warning(msg)
+                else:
+                    msg = "Subject sessions uploaded: %d" % fid
+                    print(msg)
+                    logging.info(msg)
+            # ---------------------------------------------------------------------#
+            else:
+                msg = "Option not handled: %s" % datatype
+                logging.error(msg)
+                raise ValueError(msg)
+            # ---------------------------------------------------------------------#
             return (missing, matches)
+
+
         else:
             msg = "Input directory error: %s" % inputdir
             logging.error(msg)
@@ -688,6 +714,7 @@ def create_parser():
     parser.add_argument('--checks', action='store_true', help='Test run with output to files')
     parser.add_argument('--update', action='store_true', help='Also update existing data')
     parser.add_argument('--create', action='store_true', help='Create Subject from input data if not exists')
+    parser.add_argument('--mri', action='store')
     return parser
 
 
@@ -726,6 +753,8 @@ if __name__ == "__main__":
                 projlist = uploader.xnat.list_projects()
                 for p in projlist:
                     print("Project: ", p.id())
+            if (uploader.args.mri is not None and uploader.args.mri):
+                logging.info("Calling MRI upload")
 
             ################ Upload expt data ################
             runoption = args.expt

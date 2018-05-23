@@ -86,7 +86,7 @@ class UploaderGUI ( wx.Frame ):
 		self.m_staticline5 = wx.StaticLine( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
 		fgSizer2.Add( self.m_staticline5, 0, wx.EXPAND |wx.ALL, 5 )
 		
-		self.cbCreateSubject = wx.CheckBox( self, wx.ID_ANY, u"Create Subjects from CANTAB data", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.cbCreateSubject = wx.CheckBox( self, wx.ID_ANY, u"Create Subjects from CANTAB", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.cbCreateSubject.SetToolTipString( u"Use only if certain that all participant IDs are valid. Mostly this is not used." )
 		
 		fgSizer2.Add( self.cbCreateSubject, 0, wx.ALL, 5 )
@@ -95,6 +95,15 @@ class UploaderGUI ( wx.Frame ):
 		self.cbUpdate.SetToolTipString( u"Will overwrite any existing data in XNAT" )
 		
 		fgSizer2.Add( self.cbUpdate, 0, wx.ALL, 5 )
+		
+		self.m_chkExtractid = wx.CheckBox( self, wx.ID_ANY, u"Extract Subject ID (MRI scans)", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_chkExtractid.SetValue(True) 
+		fgSizer2.Add( self.m_chkExtractid, 0, wx.ALL, 5 )
+		
+		self.m_spinChars = wx.SpinCtrl( self, wx.ID_ANY, u"6", wx.DefaultPosition, wx.DefaultSize, wx.SP_ARROW_KEYS, 0, 20, 0 )
+		self.m_spinChars.SetToolTipString( u"Number characters  to extract for MRI subjectid" )
+		
+		fgSizer2.Add( self.m_spinChars, 0, wx.ALL, 5 )
 		
 		self.cbChecks = wx.CheckBox( self, wx.ID_ANY, u"TEST RUN only", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.cbChecks.SetToolTipString( u"This checks the data in the input file can be read properly by the script (not the database)." )
