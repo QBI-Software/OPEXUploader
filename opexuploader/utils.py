@@ -8,12 +8,12 @@ import logging
 def findResourceDir():
     # resource dir is at top level of cwd
     base = getcwd()
-    print('Base:', base)
+    logging.debug('Base:', base)
     resource_dir = join(base, 'resources')
     ctr = 0
     while(ctr < 5 and not access(resource_dir,R_OK)):
         base = dirname(base)
-        print('Base:', base)
+        logging.debug('Base:', base)
         resource_dir = join(base, 'resources')
         ctr += 1
     #
