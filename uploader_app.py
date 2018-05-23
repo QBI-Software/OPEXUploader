@@ -69,7 +69,6 @@ class UploadThread(threading.Thread):
         print('UploadThread: Starting thread run')
         errmsg = None
         try:
-            event.set()
             lock.acquire(True)
 
             if self.runoption == 'bulk':
@@ -85,8 +84,8 @@ class UploadThread(threading.Thread):
             logging.error(errmsg)
 
         finally:
-            lock.release()
-            event.clear()
+            if lock is not None:
+                lock.release()
             # Processing complete
             self.uploader.xnatdisconnect()
             if errmsg is None:
@@ -113,7 +112,6 @@ class ScanOrganizerThread(threading.Thread):
         print('ScanOrganizerThread: Starting thread run')
         errmsg = None
         try:
-            event.set()
             lock.acquire(True)
 
             org = Organizer(self.scaninput, self.scanoutput, self.opexid, self.ignore, self.subjectchars)
@@ -130,8 +128,8 @@ class ScanOrganizerThread(threading.Thread):
             logging.error(errmsg)
             wx.PostEvent(self.wxObject, ResultEvent(errmsg))
         finally:
-            lock.release()
-            event.clear()
+            if lock is not None:
+                lock.release()
 
 
 
