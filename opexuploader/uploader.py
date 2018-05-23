@@ -714,13 +714,14 @@ def create_parser():
     parser.add_argument('--checks', action='store_true', help='Test run with output to files')
     parser.add_argument('--update', action='store_true', help='Also update existing data')
     parser.add_argument('--create', action='store_true', help='Create Subject from input data if not exists')
-    parser.add_argument('--mri', action='store')
     return parser
 
 
 ########################################################################
 if __name__ == "__main__":
-
+    """
+    Example: python uploader.py opex P1 --expt cantab --exptdata "Q:\\DATA\\DATA ENTRY\\XnatUploaded\\sampledata\\cantab" --checks
+    """
     parser = create_parser()
     args = parser.parse_args()
     uploader = OPEXUploader(args)
@@ -730,7 +731,6 @@ if __name__ == "__main__":
 
     try:
         if uploader.xnat.testconnection():
-            logging.info("...Connected")
             print("Connected")
             # Check project code is correct
             projectcode = uploader.args.projectcode
@@ -745,16 +745,13 @@ if __name__ == "__main__":
             if (uploader.args.subjects is not None and uploader.args.subjects):
                 msg = "Calling List Subjects"
                 print(msg)
-                logging.info(msg)
                 uploader.xnat.list_subjects_all(projectcode)
             # List available projects
             if (uploader.args.projects is not None and uploader.args.projects):
-                logging.info("Calling List Projects")
+                print("Calling List Projects")
                 projlist = uploader.xnat.list_projects()
                 for p in projlist:
                     print("Project: ", p.id())
-            if (uploader.args.mri is not None and uploader.args.mri):
-                logging.info("Calling MRI upload")
 
             ################ Upload expt data ################
             runoption = args.expt
@@ -764,18 +761,13 @@ if __name__ == "__main__":
         else:
             raise ConnectionError("Connection failed - check config")
     except IOError as e:
-        logging.error(e)
         print("Failed IO:", e)
     except ConnectionError as e:
-        logging.error(e)
         print("Failed connection:", e)
     except ValueError as e:
-        logging.error(e)
         print("ValueError:", e)
     except Exception as e:
-        logging.error(e)
         print("ERROR:", e)
     finally:  # Processing complete
         uploader.xnatdisconnect()
-        logging.info("FINISHED")
         print("\n****FINISHED**** - see xnatupload.log for details")
