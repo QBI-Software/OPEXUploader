@@ -1,7 +1,7 @@
 # OPEXUploader
 A user's guide for data upload to XNAT modules for the OPEX project.
 
-## Quick Guide for Data Uploads
+## User Guide for Data Uploads
 
 ### Settings
 

@@ -3,44 +3,46 @@ import os
 import unittest2 as unittest
 from opexuploader.utils import findResourceDir
 
-class TestCantabDataparser(unittest.TestCase):
+class TestResources(unittest.TestCase):
     def setUp(self):
-        pass
+        self.rootdir = 'D:\\Projects\\OPEXUploader'
+        print('Init Root dir: ', self.rootdir)
 
     def test_Tests(self):
-        print('Current dir:', os.getcwd())
+        os.chdir(os.path.join(self.rootdir, 'tests'))
+        print('Tests Current dir:', os.getcwd())
         resourcedir = findResourceDir()
         print('Resource dir: ', resourcedir)
         expected = 'resources'
         self.assertEqual(os.path.basename(resourcedir), expected)
 
     def test_Root(self):
-        os.chdir(os.path.dirname(os.getcwd()))
-        print('Current dir:', os.getcwd())
+        os.chdir(self.rootdir)
+        print('Root Current dir:', os.getcwd())
         resourcedir = findResourceDir()
         print('Resource dir: ', resourcedir)
         expected = 'resources'
         self.assertEqual(os.path.basename(resourcedir), expected)
 
     def test_Subdir(self):
-        os.chdir(os.path.join(os.path.dirname(os.getcwd()),'opexuploader'))
-        print('Current dir:', os.getcwd())
+        os.chdir(os.path.join(self.rootdir,'opexuploader'))
+        print('Subdir: Current dir:', os.getcwd())
         resourcedir = findResourceDir()
         print('Resource dir: ', resourcedir)
         expected = 'resources'
         self.assertEqual(os.path.basename(resourcedir), expected)
 
     def test_SubSubdir(self):
-        os.chdir(os.path.join(os.path.dirname(os.getcwd()),'opexuploader','dataparser'))
-        print('Current dir:', os.getcwd())
+        os.chdir(os.path.join(self.rootdir,'opexuploader','dataparser'))
+        print('Subsubdir: Current dir:', os.getcwd())
         resourcedir = findResourceDir()
         print('Resource dir: ', resourcedir)
         expected = 'resources'
         self.assertEqual(os.path.basename(resourcedir), expected)
 
     def test_SubSubSubdir(self):
-        os.chdir(os.path.join(os.path.dirname(os.getcwd()),'opexuploader','dataparser','abstract'))
-        print('Current dir:', os.getcwd())
+        os.chdir(os.path.join(self.rootdir,'opexuploader','dataparser','abstract'))
+        print('SubSubSubdir: Current dir:', os.getcwd())
         resourcedir = findResourceDir()
         print('Resource dir: ', resourcedir)
         expected = 'resources'
