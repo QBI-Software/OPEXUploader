@@ -517,13 +517,13 @@ class dlgIDS ( wx.Dialog ):
 class dlgScans ( wx.Dialog ):
 	
 	def __init__( self, parent ):
-		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Scans organizer", pos = wx.DefaultPosition, size = wx.Size( 830,670 ), style = wx.DEFAULT_DIALOG_STYLE )
+		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Scans organizer", pos = wx.DefaultPosition, size = wx.Size( 830,428 ), style = wx.DEFAULT_DIALOG_STYLE )
 		
 		self.SetSizeHintsSz( wx.DefaultSize, wx.DefaultSize )
 		
 		bSizer5 = wx.BoxSizer( wx.VERTICAL )
 		
-		self.m_staticText13 = wx.StaticText( self, wx.ID_ANY, u"Step 1 Organizes scans into the correct directory structure for XNAT uploads (Step 2).  \n-  Input directory is top level with subdirectories named as subject ID containing raw *.IMA or *.DCM files.\n- Output Sorted Scans will be used for Step 2 upload (create this if it doesn't exist)\n-  Ignore directory contains already uploaded scans (eg 'done'). Note when upload is complete, move sorted scans here manually for next time or create empty folders with same names.\n\nStep 2 is run from main application - select MRI and this output directory as the input directory.", wx.DefaultPosition, wx.Size( 700,200 ), 0|wx.SUNKEN_BORDER )
+		self.m_staticText13 = wx.StaticText( self, wx.ID_ANY, u"Step 1 Organize scans into the correct directory structure for XNAT uploads.\nStep 2 Upload MRI scans to XNAT.  This is run from the main application.\nPlease see Menu->Help for further detail.", wx.DefaultPosition, wx.Size( 700,-1 ), 0|wx.SUNKEN_BORDER )
 		self.m_staticText13.Wrap( -1 )
 		self.m_staticText13.SetFont( wx.Font( wx.NORMAL_FONT.GetPointSize(), 70, 90, 92, False, wx.EmptyString ) )
 		

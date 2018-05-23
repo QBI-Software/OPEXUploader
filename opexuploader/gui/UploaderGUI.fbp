@@ -4285,7 +4285,7 @@
             <property name="minimum_size"></property>
             <property name="name">dlgScans</property>
             <property name="pos"></property>
-            <property name="size">830,670</property>
+            <property name="size">830,428</property>
             <property name="style">wxDEFAULT_DIALOG_STYLE</property>
             <property name="subclass"></property>
             <property name="title">Scans organizer</property>
@@ -4366,7 +4366,7 @@
                         <property name="gripper">0</property>
                         <property name="hidden">0</property>
                         <property name="id">wxID_ANY</property>
-                        <property name="label">Step 1 Organizes scans into the correct directory structure for XNAT uploads (Step 2).  &#x0A;-  Input directory is top level with subdirectories named as subject ID containing raw *.IMA or *.DCM files.&#x0A;- Output Sorted Scans will be used for Step 2 upload (create this if it doesn&apos;t exist)&#x0A;-  Ignore directory contains already uploaded scans (eg &apos;done&apos;). Note when upload is complete, move sorted scans here manually for next time or create empty folders with same names.&#x0A;&#x0A;Step 2 is run from main application - select MRI and this output directory as the input directory.</property>
+                        <property name="label">Step 1 Organize scans into the correct directory structure for XNAT uploads.&#x0A;Step 2 Upload MRI scans to XNAT.  This is run from the main application.&#x0A;Please see Menu-&gt;Help for further detail.</property>
                         <property name="max_size"></property>
                         <property name="maximize_button">0</property>
                         <property name="maximum_size"></property>
@@ -4383,7 +4383,7 @@
                         <property name="pos"></property>
                         <property name="resize">Resizable</property>
                         <property name="show">1</property>
-                        <property name="size">700,200</property>
+                        <property name="size">700,-1</property>
                         <property name="style"></property>
                         <property name="subclass"></property>
                         <property name="toolbar_pane">0</property>
