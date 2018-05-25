@@ -1,7 +1,7 @@
 COBAS,ELISAS,MULTIPLEX
 Prolactin,Ghrelin,GH
 Insulin,CathepsinB,Leptin
-HGH,,BDNF
+HGH,BetaHydroxy,BDNF
 Cortisol,,IGFBP7
 ,,IL1
 ,,IL4

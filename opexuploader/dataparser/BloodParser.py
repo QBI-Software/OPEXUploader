@@ -33,39 +33,49 @@ class BloodParser(DataParser):
             self.fields = self.dbi.getFields(self.type)
             self.info = self.dbi.getInfo(self.type)
             #self.fields = self.getFieldsFromFile(self.type)
+        elif self.etype is not None:
+            self.type = self.etype
 
-            # Multiplex has different headers vs Cobas
-            if self.type == 'MULTIPLEX':
-                print('Headers for ', self.type)
-                colnames = {'Date': 'A_Date', 'Participant ID ': 'Participant ID', 'Timepoint': 'Sample ID','IGFBP-7':'IGFBP7'}
-                self.data = self.data.rename(index=str, columns=colnames)
-                self.data.insert(0, 'R_No.', range(len(self.data)))
-            # Rename columns to field names
-            if self.fields[0] not in self.data.columns:
-                colnames = {}
-                v=1
-                for i in range(len(self.fields)):
-                    colnames['Value.' + str(v)] = self.fields[i]
-                    v = v + 2
+        # Multiplex has different headers vs Cobas
+        if self.type == 'MULTIPLEX':
+            print('Headers for ', self.type)
+            colnames = {'Date': 'A_Date', 'Participant ID ': 'Participant ID', 'Timepoint': 'Sample ID','IGFBP-7':'IGFBP7'}
+            self.data = self.data.rename(index=str, columns=colnames)
+            self.data.insert(0, 'R_No.', range(len(self.data)))
+        elif self.type == 'ELISAS':
+            colnames = {'BetaHydroxy', 'ID',	'Timepoint'}
+            self.data = self.data.rename(index=str, columns=colnames)
+            self.data['Interval'] = self.data.apply(lambda x: self.getInterval(x['Timepoint']))
 
-                df = self.data.rename(index=str, columns=colnames)
-                print("Renamed columns: ", colnames)
-                self.data = df
-            # Remove NaT rows
-            i = self.data.query('A_Date =="NaT"')
-            if not i.empty:
-                self.data.drop(i.index[0], inplace=True)
-                print('NaT row dropped')
-            # Organize data into subjects
-            subjectfield ='Participant ID'
-            if subjectfield not in self.data.columns:
-                raise ValueError('Subject ID field not present: ', subjectfield)
-            self.data[subjectfield] = self.data[subjectfield].str.replace(" ","")
-            self.sortSubjects(subjectfield)
-            if self.subjects is not None:
-                print('BloodParser: subjects loaded successfully')
 
-   
+        # Rename columns to field names
+        if self.fields[0] not in self.data.columns:
+            colnames = {}
+            v=1
+            for i in range(len(self.fields)):
+                colnames['Value.' + str(v)] = self.fields[i]
+                v = v + 2
+
+            df = self.data.rename(index=str, columns=colnames)
+            print("Renamed columns: ", colnames)
+            self.data = df
+        # Remove NaT rows
+        i = self.data.query('A_Date =="NaT"')
+        if not i.empty:
+            self.data.drop(i.index[0], inplace=True)
+            print('NaT row dropped')
+        # Organize data into subjects
+        subjectfield ='Participant ID'
+        if subjectfield not in self.data.columns:
+            raise ValueError('Subject ID field not present: ', subjectfield)
+        self.data[subjectfield] = self.data[subjectfield].str.replace(" ","")
+        self.sortSubjects(subjectfield)
+        if self.subjects is not None:
+            print('BloodParser: subjects loaded successfully')
+
+    def getInterval(self,rowval):
+        print('getinterval',rowval)
+
     def getFieldsFromFile(self, type):
         """
         Get list of fields for subtype
@@ -173,17 +183,20 @@ if __name__ == "__main__":
 
              ''')
 
-    parser.add_argument('--filedir', action='store', help='Directory containing files', default="..\\sampledata\\blood\\COBAS")
+    parser.add_argument('--filedir', action='store', help='Directory containing files', default="Q:\DATA\DATA ENTRY\BloodBiochemistry\Elisas")
     parser.add_argument('--sheet', action='store', help='Sheet name to extract', default="0")
-    parser.add_argument('--type', action='store', help='Type of blood sample', default="COBAS")
+    parser.add_argument('--type', action='store', help='Type of blood sample', default="ELISAS")
     args = parser.parse_args()
 
     inputdir = args.filedir
     sheet = int(args.sheet)
     skip = 1
-    type = args.type
+    header=None
+    etype = args.type
     if args.type =='MULTIPLEX':
         skip =0
+    elif args.type=='ELISAS':
+        skip=34
     print("Input:", inputdir)
     if access(inputdir, R_OK):
         seriespattern = '*.xlsx'
@@ -193,7 +206,7 @@ if __name__ == "__main__":
             print("Files:", len(files))
             for f2 in files:
                 print("\n****Loading",f2)
-                dp = BloodParser(f2,sheet,skip, type=type)
+                dp = BloodParser(f2,sheet,skip, header,etype)
                 dp.sortSubjects()
 
                 for sd in dp.subjects:

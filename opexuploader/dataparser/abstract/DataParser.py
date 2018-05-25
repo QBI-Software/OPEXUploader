@@ -32,6 +32,7 @@ class DataParser(object):
             raise IOError('Cannot find config database')
         try:
             self.dbi = DBI(configdb)
+            self.etype = etype
             if etype is not None:
                 self.info = self.dbi.getInfo(etype)
                 self.fields = self.dbi.getFields(etype)
