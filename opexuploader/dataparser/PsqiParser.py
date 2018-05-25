@@ -30,8 +30,8 @@ class PsqiParser(DataParser):
             self.info = {'prefix': 'PSQ', 'xsitype': 'opex:psqi'}
         # Replace field headers
         self.fields = ['c'+str(i) for i in range(1,8)] # + ['total']
-        ncols = ['SubjectID'] + self.fields
-        cols = ['ID'] + [c for c in self.data.columns if (isinstance(c,unicode) or isinstance(c,str)) and c.startswith('Component')] # calculate total on upload + ['Global PQSI ']
+        ncols = ['SubjectID'] + self.fields + ['total']
+        cols = ['ID'] + [c for c in self.data.columns if (isinstance(c,unicode) or isinstance(c,str)) and c.startswith('Component')] + ['total']
         df = self.data[cols]
         df.columns = ncols
         df.reindex()
@@ -69,8 +69,9 @@ class PsqiParser(DataParser):
         for field in self.fields:
             if field in row and not np.isnan(row[field].iloc[0]):
                 motdata[xsd + '/' + field] = str(int(row[field].iloc[0]))
-                totalcols += int(row[field].iloc[0])
-        motdata[xsd + '/total'] = str(totalcols)
+                #totalcols += int(row[field].iloc[0])
+        if not np.isnan(row['total'].iloc[0]):
+            motdata[xsd + '/total'] = str(int(row['total'].iloc[0]))
         return (mandata, motdata)
 
     def validData(self, dvalues):
@@ -104,7 +105,7 @@ if __name__ == "__main__":
     parser.add_argument('--filedir', action='store', help='Directory containing files',
                         default="Q:\\DATA\\DATA ENTRY\\XnatUploaded\\sampledata\\psqi")
     parser.add_argument('--datafile', action='store', help='Filename of original data',
-                        default="PSQI data entry_withcalcs.xlsx")
+                        default="PSQI data entry_FINAL_FORMULAS_Liz.xlsx")
     parser.add_argument('--sheet', action='store', help='Sheet name to extract',
                         default="0")
     args = parser.parse_args()
