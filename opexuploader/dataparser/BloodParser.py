@@ -116,9 +116,9 @@ class BloodParser(DataParser):
         return (interval, prepost)
 
     def parseTimepoint(self,timepoint):
-        m = re.search('^(\d{1,2})m\s(\w)', timepoint)
-        interval = m.group(0)
-        prepost = m.group(1)
+        m = re.search('^(\d{1,2})m\s(\w+)', timepoint)
+        interval = m.group(1)
+        prepost = m.group(2)
         return (interval, prepost)
 
     def getSampleid(self, sd, row):
@@ -130,12 +130,12 @@ class BloodParser(DataParser):
         if 'Timepoint' in row:
             (interval, prepost) = self.parseTimepoint(row['Timepoint'])
             m_sid = re.search('(\d{1,2})', row['R_No.'])
-            id = "%s_%dm_%s_%s" % (sd, int(interval), prepost, int(m_sid))
-            print('Timepoint: id=', id)
+            id = "%s_%dm_%s_%s" % (sd, int(interval), prepost, int(m_sid.group(1)))
+            # print('Timepoint: id=', id)
         elif 'Sample ID' in row:
             parts = row['Sample ID'].split("-")
             id = "%s_%dm_%s_%s" % (sd, int(parts[0]), self.getPrepostOptions(int(parts[1])), int(row['R_No.']))
-            print('SampleID: id=', id)
+            # print('SampleID: id=', id)
         else:
             raise ValueError("Sample ID column missing")
         return id
@@ -172,12 +172,12 @@ class BloodParser(DataParser):
             sample_num = str(row['R_No.'])
 
         if xsd is None:
-            xsd = self.getxsd()[self.type]
+            xsd = self.getxsd() #[self.type]
         mandata = {
             xsd + '/interval': str(interval),
             xsd + '/sample_id': sample_id,  # row number in this data file for reference
-            xsd + '/sample_quality': 'Unknown',  # default - check later if an error
-            xsd + '/data_valid': 'Initial',
+            xsd + '/sample_quality': 'Good',  # default - check later if an error
+            xsd + '/data_valid': 'Checked',
             xsd + '/date' : self.formatADate(row['A_Date']),
             xsd + '/comments' : 'Date analysed',
             xsd + '/prepost': prepost,
@@ -207,7 +207,7 @@ if __name__ == "__main__":
 
              ''')
 
-    parser.add_argument('--filedir', action='store', help='Directory containing files', default="Q:\DATA\DATA ENTRY\BloodBiochemistry\Elisas")
+    parser.add_argument('--filedir', action='store', help='Directory containing files', default="Z:\\DATA\\DATA ENTRY\\XnatUploaded\\sampledata\\blood\\ELISAS")
     parser.add_argument('--sheet', action='store', help='Sheet name to extract', default="0")
     parser.add_argument('--type', action='store', help='Type of blood sample', default="ELISAS")
     args = parser.parse_args()
@@ -236,7 +236,7 @@ if __name__ == "__main__":
                     print('ID:', sd)
                     for i, row in dp.subjects[sd].iterrows():
                         dob = dp.formatADate(str(dp.subjects[sd]['A_Date'][i]))
-                        uid = dp.type + "_" + dp.getSampleid(sd,row)
+                        uid = dp.getPrefix() + "_" + dp.getSampleid(sd,row)
                         print(i, 'Visit:', uid, 'Date', dob)
                         (d1,d2) = dp.mapData(row,i)
                         print(d1)
