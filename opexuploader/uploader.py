@@ -480,15 +480,17 @@ class OPEXUploader():
                 seriespattern = '*.xlsx'
                 sheet = 0
                 skip = 1
-                type = basename(inputdir)  # assume dir is type eg COBAS to match
-
+                header = None
+                type = basename(inputdir).upper()  # assume dir is type eg COBAS to match
                 if type == 'MULTIPLEX':
                     skip = 0
+                elif type == 'ELISAS':
+                    skip = 34
                 files = glob.glob(join(inputdir, seriespattern))
                 print("Files:", len(files))
                 for f2 in files:
                     print("Loading ", f2)
-                    dp = BloodParser(f2, sheet, skip, type=type)
+                    dp = BloodParser(f2, sheet, skip, header,type)
                     (missing, matches) = self.uploadData(project, dp)
                     # Output matches and missing
                     if len(matches) > 0 or len(missing) > 0:

@@ -12,6 +12,7 @@ Created on Thu Mar 2 2017
 
 import argparse
 import glob
+import re
 from datetime import datetime
 from os import R_OK, access
 from os.path import join
@@ -43,22 +44,25 @@ class BloodParser(DataParser):
             self.data = self.data.rename(index=str, columns=colnames)
             self.data.insert(0, 'R_No.', range(len(self.data)))
         elif self.type == 'ELISAS':
-            colnames = {'BetaHydroxy', 'ID',	'Timepoint'}
-            self.data = self.data.rename(index=str, columns=colnames)
-            self.data['Interval'] = self.data.apply(lambda x: self.getInterval(x['Timepoint']))
+            colnames = ['BetaHydroxy','Sample ID','A_Date','R_No.','Participant ID','Timepoint']
+            try:
+                df = self.data[colnames]
+                self.data = df
+            except Exception as e:
+                raise ValueError(e)
+            #self.data = self.data.rename(index=str, columns=colnames)
+        elif self.type == 'COBAS':
+            # Rename columns to field names
+            if self.fields[0] not in self.data.columns:
+                colnames = {}
+                v=1
+                for i in range(len(self.fields)):
+                    colnames['Value.' + str(v)] = self.fields[i]
+                    v = v + 2
 
-
-        # Rename columns to field names
-        if self.fields[0] not in self.data.columns:
-            colnames = {}
-            v=1
-            for i in range(len(self.fields)):
-                colnames['Value.' + str(v)] = self.fields[i]
-                v = v + 2
-
-            df = self.data.rename(index=str, columns=colnames)
-            print("Renamed columns: ", colnames)
-            self.data = df
+                df = self.data.rename(index=str, columns=colnames)
+                print("Renamed columns: ", colnames)
+                self.data = df
         # Remove NaT rows
         i = self.data.query('A_Date =="NaT"')
         if not i.empty:
@@ -111,15 +115,27 @@ class BloodParser(DataParser):
             prepost = ""
         return (interval, prepost)
 
+    def parseTimepoint(self,timepoint):
+        m = re.search('^(\d{1,2})m\s(\w)', timepoint)
+        interval = m.group(0)
+        prepost = m.group(1)
+        return (interval, prepost)
+
     def getSampleid(self, sd, row):
         """
         Generate a unique id for data sample
         :param row:
         :return:
         """
-        if 'Sample ID' in row:
+        if 'Timepoint' in row:
+            (interval, prepost) = self.parseTimepoint(row['Timepoint'])
+            m_sid = re.search('(\d{1,2})', row['R_No.'])
+            id = "%s_%dm_%s_%s" % (sd, int(interval), prepost, int(m_sid))
+            print('Timepoint: id=', id)
+        elif 'Sample ID' in row:
             parts = row['Sample ID'].split("-")
             id = "%s_%dm_%s_%s" % (sd, int(parts[0]), self.getPrepostOptions(int(parts[1])), int(row['R_No.']))
+            print('SampleID: id=', id)
         else:
             raise ValueError("Sample ID column missing")
         return id
@@ -146,18 +162,26 @@ class BloodParser(DataParser):
         :param row:
         :return:
         """
-        (interval,prepost) = self.parseSampleID(row['Sample ID'])
+        if self.type=='ELISAS':
+            (interval,prepost) = self.parseTimepoint(row['Timepoint'])
+            sample_id = row['Sample ID']
+            sample_num = str(row['R_No.'])
+        else:
+            (interval, prepost) = self.parseSampleID(row['Sample ID'])
+            sample_id = row['Sample ID']
+            sample_num = str(row['R_No.'])
+
         if xsd is None:
             xsd = self.getxsd()[self.type]
         mandata = {
             xsd + '/interval': str(interval),
-            xsd + '/sample_id': row['Sample ID'],  # row number in this data file for reference
+            xsd + '/sample_id': sample_id,  # row number in this data file for reference
             xsd + '/sample_quality': 'Unknown',  # default - check later if an error
             xsd + '/data_valid': 'Initial',
             xsd + '/date' : self.formatADate(row['A_Date']),
-            xsd + '/comments' : 'Date analysed not collected',
+            xsd + '/comments' : 'Date analysed',
             xsd + '/prepost': prepost,
-            xsd + '/sample_num' : str(row['R_No.'])
+            xsd + '/sample_num' : sample_num
 
         }
         #Different fields for different bloods
@@ -207,7 +231,6 @@ if __name__ == "__main__":
             for f2 in files:
                 print("\n****Loading",f2)
                 dp = BloodParser(f2,sheet,skip, header,etype)
-                dp.sortSubjects()
 
                 for sd in dp.subjects:
                     print('ID:', sd)
