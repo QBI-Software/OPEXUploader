@@ -562,7 +562,7 @@ class OPEXUploader():
                 seriespattern = 'PSQI*.xlsx'
                 files = glob.glob(join(inputdir, seriespattern))
                 print("Files:", len(files))
-                maxmth = 9
+                maxmth = 12
                 intervals = range(0, maxmth+1, 3)
                 for f2 in files:
                     print("Loading ", f2)
