@@ -63,6 +63,11 @@ class BloodParser(DataParser):
                 df = self.data.rename(index=str, columns=colnames)
                 print("Renamed columns: ", colnames)
                 self.data = df
+        elif self.type =='IGF':
+            colnames = {'Date': 'A_Date', 'Participant ID ': 'Participant ID', 'Timepoint': 'Sample ID',
+                        'IGF-1': 'IGF1'}
+            self.data = self.data.rename(index=str, columns=colnames)
+            self.data.insert(0, 'R_No.', range(len(self.data)))
         # Remove NaT rows
         i = self.data.query('A_Date =="NaT"')
         if not i.empty:
@@ -207,9 +212,9 @@ if __name__ == "__main__":
 
              ''')
 
-    parser.add_argument('--filedir', action='store', help='Directory containing files', default="Q:\\DATA\\DATA ENTRY\\XnatUploaded\\sampledata\\blood\\ELISAS")
+    parser.add_argument('--filedir', action='store', help='Directory containing files', default="D:\\Dropbox\\worktransfer\\opex\\IGF")
     parser.add_argument('--sheet', action='store', help='Sheet name to extract', default="0")
-    parser.add_argument('--type', action='store', help='Type of blood sample', default="ELISAS")
+    parser.add_argument('--type', action='store', help='Type of blood sample', default="IGF")
     args = parser.parse_args()
 
     inputdir = args.filedir
@@ -217,7 +222,7 @@ if __name__ == "__main__":
     skip = 1
     header=None
     etype = args.type
-    if args.type =='MULTIPLEX':
+    if args.type =='MULTIPLEX' or args.type =='IGF':
         skip =0
     elif args.type=='ELISAS':
         skip=34

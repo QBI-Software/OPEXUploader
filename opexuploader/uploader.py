@@ -482,7 +482,7 @@ class OPEXUploader():
                 skip = 1
                 header = None
                 type = basename(inputdir).upper()  # assume dir is type eg COBAS to match
-                if type == 'MULTIPLEX':
+                if type == 'MULTIPLEX' or type =='IGF':
                     skip = 0
                 elif type == 'ELISAS':
                     skip = 34
