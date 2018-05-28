@@ -207,7 +207,7 @@ if __name__ == "__main__":
 
              ''')
 
-    parser.add_argument('--filedir', action='store', help='Directory containing files', default="Z:\\DATA\\DATA ENTRY\\XnatUploaded\\sampledata\\blood\\ELISAS")
+    parser.add_argument('--filedir', action='store', help='Directory containing files', default="Q:\\DATA\\DATA ENTRY\\XnatUploaded\\sampledata\\blood\\ELISAS")
     parser.add_argument('--sheet', action='store', help='Sheet name to extract', default="0")
     parser.add_argument('--type', action='store', help='Type of blood sample', default="ELISAS")
     args = parser.parse_args()

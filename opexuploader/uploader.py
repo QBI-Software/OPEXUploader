@@ -14,7 +14,7 @@ from __future__ import print_function
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 """
-__version__ = '1.3.0'
+__version__ = '1.3.1'
 __author__ = 'Liz Cooper-Williams'
 
 import argparse
