@@ -31,6 +31,9 @@ class DexaParser(DataParser):
             self.fields = pd.read_excel(fields, header=0, sheetname='dexa_fields')
             df_header = pd.read_excel(fields, header=0, sheetname='dexa_header')
             self.header = df_header['concatenated'].tolist()
+            if len(self.data.columns) != len(self.header):
+                msg = 'Unexpected number of columns: data=%d fields=%d' % (len(self.data.columns), len(self.header))
+                raise ValueError(msg)
             self.data.columns = self.header
             print("Loaded rows=", len(self.data['ID']))
             #extract subject info
@@ -115,7 +118,7 @@ if __name__ == "__main__":
             Reads files in a directory and extracts data for upload to XNAT
 
              ''')
-    parser.add_argument('--filedir', action='store', help='Directory containing files', default="Q:\\DATA\\DATA ENTRY\\XnatUploaded\\sampledata\\dexa")
+    parser.add_argument('--filedir', action='store', help='Directory containing files', default="D:\\Projects\\Bartlett_OPEX\\data")
     parser.add_argument('--sheet', action='store', help='Sheet name to extract',
                         default="0")
     parser.add_argument('--fields', action='store', help='Fields to extract',
@@ -126,6 +129,7 @@ if __name__ == "__main__":
     sheet = int(args.sheet)
     fields = args.fields
     skip = 4
+    header = None
     print("Input:", inputdir)
     if access(inputdir, R_OK):
         seriespattern = 'DXA Data entry*.xlsx'
@@ -135,7 +139,7 @@ if __name__ == "__main__":
             print("Files:", len(files))
             for f2 in files:
                 print("Loading ", f2)
-                dp = DexaParser(fields, f2, sheet, skip, None, etype)
+                dp = DexaParser(f2, sheet, skip, header, etype)
                 xsdtypes = dp.getxsd()
                 #dp.sortSubjects()
                 for sd in dp.subjects:

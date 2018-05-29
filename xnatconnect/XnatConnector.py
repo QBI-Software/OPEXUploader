@@ -292,7 +292,7 @@ class XnatConnector:
             # opex
             visitid = basename(scandir).rsplit('_', 1)
             if len(visitid) > 1:
-                m = re.match('(\d){1,2}[mM]?$', visitid[1])
+                m = re.match('(\d{1,2})[mM]?$', visitid[1])
                 visitid = int(m.group(1))
                 done = 'done_%dm' % visitid
                 donepath = join(dirpath, done)
