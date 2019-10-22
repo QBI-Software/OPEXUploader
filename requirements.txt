@@ -57,7 +57,7 @@ pytest-tap==2.2
 python-dateutil==2.7.3
 pytz==2018.4
 pyxnat==1.0.1.0
-requests==2.18.4
+requests==2.20.0
 six==1.11.0
 tap.py==2.2
 traceback2==1.4.0
