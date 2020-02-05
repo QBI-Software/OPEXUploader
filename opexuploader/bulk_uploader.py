@@ -1,34 +1,31 @@
-from __future__ import print_function
-
 from os import mkdir, access, W_OK
 from os.path import join, expanduser, split
 
-from opexuploader.uploader import OPEXUploader, create_parser
 from config.dbquery import DBI
+from opexuploader.uploader import OPEXUploader, create_parser
 
 
 class BulkUploader():
     def __init__(self, uploader):
         self.uploader = uploader
-        #list expts
+        # list expts
         configdb = join('resources', 'opexconfig.db')
         dbi = DBI(configdb)
         self.expts = dbi.getRunOptions()
-        self.excludes = ['mridata', 'mri', 'blood', 'acer', 'amunet', 'fmri', 'visit','cosmed']
+        self.excludes = ['mridata', 'mri', 'blood', 'acer', 'amunet', 'fmri', 'visit', 'cosmed']
 
     def close(self):
         self.uploader.xnatdisconnect()
 
-
-    def run(self, project,rootdatadir):
+    def run(self, project, rootdatadir):
         """
         Runs through all available expt except those in excludes
         :param datadir:
         :return:
         """
 
-        for expt in self.expts.values():
-            if len(expt)<=0:
+        for expt in list(self.expts.values()):
+            if len(expt) <= 0:
                 continue
             runoption = expt[2:]
             if runoption in self.excludes:
@@ -64,13 +61,14 @@ def getLogFile(self):
             raise IOError("Cannot create log file")
     return logfile
 
+
 ######################################################################################
 if __name__ == '__main__':
     # Run through all reliable datasets
-    db ='opex' #'xnat-dev-opex'
-    project ='P1'
+    db = 'opex'  # 'xnat-dev-opex'
+    project = 'P1'
     ROOTDATADIR = "Q:\\DATA\\DATA ENTRY\\XnatUploaded\\sampledata"
-    #checks='--checks'   #TESTonly
+    # checks='--checks'   #TESTonly
     checks = ''
     parser = create_parser()
     if len(checks) > 0:

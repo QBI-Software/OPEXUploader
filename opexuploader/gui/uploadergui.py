@@ -19,14 +19,14 @@ import wx.html
 class UploaderGUI ( wx.Frame ):
 	
 	def __init__( self, parent ):
-		wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = u"XNAT Uploader", pos = wx.DefaultPosition, size = wx.Size( 936,860 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
+		wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = "XNAT Uploader", pos = wx.DefaultPosition, size = wx.Size( 936,860 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
 		
 		self.SetSizeHintsSz( wx.DefaultSize, wx.DefaultSize )
 		self.SetBackgroundColour( wx.Colour( 244, 254, 255 ) )
 		
 		bSizer1 = wx.BoxSizer( wx.VERTICAL )
 		
-		self.m_staticText1 = wx.StaticText( self, wx.ID_ANY, u"Upload Data to XNAT", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText1 = wx.StaticText( self, wx.ID_ANY, "Upload Data to XNAT", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText1.Wrap( -1 )
 		self.m_staticText1.SetFont( wx.Font( 12, 71, 90, 92, False, wx.EmptyString ) )
 		
@@ -39,7 +39,7 @@ class UploaderGUI ( wx.Frame ):
 		fgSizer2.SetFlexibleDirection( wx.BOTH )
 		fgSizer2.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
 		
-		self.m_staticText2 = wx.StaticText( self, wx.ID_ANY, u"Database config", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText2 = wx.StaticText( self, wx.ID_ANY, "Database config", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText2.Wrap( -1 )
 		fgSizer2.Add( self.m_staticText2, 0, wx.ALL, 5 )
 		
@@ -48,24 +48,24 @@ class UploaderGUI ( wx.Frame ):
 		self.dbedit.SetSelection( 0 )
 		fgSizer2.Add( self.dbedit, 0, wx.ALL, 5 )
 		
-		self.m_staticText3 = wx.StaticText( self, wx.ID_ANY, u"Project code", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText3 = wx.StaticText( self, wx.ID_ANY, "Project code", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText3.Wrap( -1 )
 		fgSizer2.Add( self.m_staticText3, 0, wx.ALL, 5 )
 		
 		self.projectedit = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 200,-1 ), 0 )
 		fgSizer2.Add( self.projectedit, 0, wx.ALL, 5 )
 		
-		self.m_staticText5 = wx.StaticText( self, wx.ID_ANY, u"Data Type", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText5 = wx.StaticText( self, wx.ID_ANY, "Data Type", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText5.Wrap( -1 )
 		fgSizer2.Add( self.m_staticText5, 0, wx.ALL, 5 )
 		
 		chOptionsChoices = []
-		self.chOptions = wx.ComboBox( self, wx.ID_ANY, u"Select data", wx.DefaultPosition, wx.Size( 200,-1 ), chOptionsChoices, 0 )
+		self.chOptions = wx.ComboBox( self, wx.ID_ANY, "Select data", wx.DefaultPosition, wx.Size( 200,-1 ), chOptionsChoices, 0 )
 		fgSizer2.Add( self.chOptions, 0, wx.ALL, 5 )
 		
-		self.m_staticText4 = wx.StaticText( self, wx.ID_ANY, u"Input data directory", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText4 = wx.StaticText( self, wx.ID_ANY, "Input data directory", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText4.Wrap( -1 )
-		self.m_staticText4.SetToolTipString( u"Provide input directory containing data files for upload OR output directory for CSV downloads" )
+		self.m_staticText4.SetToolTipString( "Provide input directory containing data files for upload OR output directory for CSV downloads" )
 		
 		fgSizer2.Add( self.m_staticText4, 0, wx.ALL, 5 )
 		
@@ -74,7 +74,7 @@ class UploaderGUI ( wx.Frame ):
 		self.inputedit = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 300,-1 ), 0 )
 		bSizer2.Add( self.inputedit, 0, wx.ALL, 5 )
 		
-		self.btnInputdir = wx.Button( self, wx.ID_ANY, u"Browse", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.btnInputdir = wx.Button( self, wx.ID_ANY, "Browse", wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSizer2.Add( self.btnInputdir, 0, wx.ALL, 5 )
 		
 		
@@ -86,27 +86,27 @@ class UploaderGUI ( wx.Frame ):
 		self.m_staticline5 = wx.StaticLine( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
 		fgSizer2.Add( self.m_staticline5, 0, wx.EXPAND |wx.ALL, 5 )
 		
-		self.cbCreateSubject = wx.CheckBox( self, wx.ID_ANY, u"Create Subjects from CANTAB", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.cbCreateSubject.SetToolTipString( u"Use only if certain that all participant IDs are valid. Mostly this is not used." )
+		self.cbCreateSubject = wx.CheckBox( self, wx.ID_ANY, "Create Subjects from CANTAB", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.cbCreateSubject.SetToolTipString( "Use only if certain that all participant IDs are valid. Mostly this is not used." )
 		
 		fgSizer2.Add( self.cbCreateSubject, 0, wx.ALL, 5 )
 		
-		self.cbUpdate = wx.CheckBox( self, wx.ID_ANY, u"Update existing data for selected experiment type", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.cbUpdate.SetToolTipString( u"Will overwrite any existing data in XNAT" )
+		self.cbUpdate = wx.CheckBox( self, wx.ID_ANY, "Update existing data for selected experiment type", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.cbUpdate.SetToolTipString( "Will overwrite any existing data in XNAT" )
 		
 		fgSizer2.Add( self.cbUpdate, 0, wx.ALL, 5 )
 		
-		self.m_chkExtractid = wx.CheckBox( self, wx.ID_ANY, u"Extract Subject ID (MRI scans)", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_chkExtractid = wx.CheckBox( self, wx.ID_ANY, "Extract Subject ID (MRI scans)", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_chkExtractid.SetValue(True) 
 		fgSizer2.Add( self.m_chkExtractid, 0, wx.ALL, 5 )
 		
-		self.m_spinChars = wx.SpinCtrl( self, wx.ID_ANY, u"6", wx.DefaultPosition, wx.DefaultSize, wx.SP_ARROW_KEYS, 0, 20, 0 )
-		self.m_spinChars.SetToolTipString( u"Number characters  to extract for MRI subjectid" )
+		self.m_spinChars = wx.SpinCtrl( self, wx.ID_ANY, "6", wx.DefaultPosition, wx.DefaultSize, wx.SP_ARROW_KEYS, 0, 20, 0 )
+		self.m_spinChars.SetToolTipString( "Number characters  to extract for MRI subjectid" )
 		
 		fgSizer2.Add( self.m_spinChars, 0, wx.ALL, 5 )
 		
-		self.cbChecks = wx.CheckBox( self, wx.ID_ANY, u"TEST RUN only", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.cbChecks.SetToolTipString( u"This checks the data in the input file can be read properly by the script (not the database)." )
+		self.cbChecks = wx.CheckBox( self, wx.ID_ANY, "TEST RUN only", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.cbChecks.SetToolTipString( "This checks the data in the input file can be read properly by the script (not the database)." )
 		
 		fgSizer2.Add( self.cbChecks, 0, wx.ALL, 5 )
 		
@@ -115,23 +115,23 @@ class UploaderGUI ( wx.Frame ):
 		
 		bSizer4 = wx.BoxSizer( wx.HORIZONTAL )
 		
-		self.btnRun = wx.Button( self, wx.ID_ANY, u"RUN", wx.DefaultPosition, wx.DefaultSize, 0|wx.SIMPLE_BORDER )
+		self.btnRun = wx.Button( self, wx.ID_ANY, "RUN", wx.DefaultPosition, wx.DefaultSize, 0|wx.SIMPLE_BORDER )
 		self.btnRun.SetForegroundColour( wx.SystemSettings.GetColour( wx.SYS_COLOUR_BTNFACE ) )
 		self.btnRun.SetBackgroundColour( wx.Colour( 0, 128, 64 ) )
 		self.btnRun.Enable( False )
 		
 		bSizer4.Add( self.btnRun, 0, wx.ALL, 5 )
 		
-		self.m_button13 = wx.Button( self, wx.ID_ANY, u"Test Connection", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_button13 = wx.Button( self, wx.ID_ANY, "Test Connection", wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSizer4.Add( self.m_button13, 0, wx.ALL, 5 )
 		
-		self.m_button15 = wx.Button( self, wx.ID_ANY, u"Clear Output", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_button15 = wx.Button( self, wx.ID_ANY, "Clear Output", wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSizer4.Add( self.m_button15, 0, wx.ALL, 5 )
 		
-		self.m_button17 = wx.Button( self, wx.ID_ANY, u"View Log", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_button17 = wx.Button( self, wx.ID_ANY, "View Log", wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSizer4.Add( self.m_button17, 0, wx.ALL, 5 )
 		
-		self.btnCancel = wx.Button( self, wx.ID_ANY, u"Exit", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.btnCancel = wx.Button( self, wx.ID_ANY, "Exit", wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSizer4.Add( self.btnCancel, 0, wx.ALL, 5 )
 		
 		
@@ -152,37 +152,37 @@ class UploaderGUI ( wx.Frame ):
 		self.Layout()
 		self.m_menubar1 = wx.MenuBar( 0 )
 		self.m_menu3 = wx.Menu()
-		self.m_menuItem4 = wx.MenuItem( self.m_menu3, wx.ID_ANY, u"Database", wx.EmptyString, wx.ITEM_NORMAL )
+		self.m_menuItem4 = wx.MenuItem( self.m_menu3, wx.ID_ANY, "Database", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_menu3.AppendItem( self.m_menuItem4 )
 		
-		self.m_menuItem5 = wx.MenuItem( self.m_menu3, wx.ID_ANY, u"Incorrect IDs", wx.EmptyString, wx.ITEM_NORMAL )
+		self.m_menuItem5 = wx.MenuItem( self.m_menu3, wx.ID_ANY, "Incorrect IDs", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_menu3.AppendItem( self.m_menuItem5 )
 		
-		self.m_menubar1.Append( self.m_menu3, u"Settings" ) 
+		self.m_menubar1.Append( self.m_menu3, "Settings" ) 
 		
 		self.m_menu1 = wx.Menu()
-		self.m_menuItem1 = wx.MenuItem( self.m_menu1, wx.ID_ANY, u"MRI Scans Organizer", wx.EmptyString, wx.ITEM_NORMAL )
+		self.m_menuItem1 = wx.MenuItem( self.m_menu1, wx.ID_ANY, "MRI Scans Organizer", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_menu1.AppendItem( self.m_menuItem1 )
 		
-		self.m_menuItem6 = wx.MenuItem( self.m_menu1, wx.ID_ANY, u"Download CSVs", wx.EmptyString, wx.ITEM_NORMAL )
+		self.m_menuItem6 = wx.MenuItem( self.m_menu1, wx.ID_ANY, "Download CSVs", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_menu1.AppendItem( self.m_menuItem6 )
 		
-		self.m_menuItem61 = wx.MenuItem( self.m_menu1, wx.ID_ANY, u"Generate Reports", wx.EmptyString, wx.ITEM_NORMAL )
+		self.m_menuItem61 = wx.MenuItem( self.m_menu1, wx.ID_ANY, "Generate Reports", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_menu1.AppendItem( self.m_menuItem61 )
 		
-		self.m_menuItem81 = wx.MenuItem( self.m_menu1, wx.ID_ANY, u"View Log", wx.EmptyString, wx.ITEM_NORMAL )
+		self.m_menuItem81 = wx.MenuItem( self.m_menu1, wx.ID_ANY, "View Log", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_menu1.AppendItem( self.m_menuItem81 )
 		
-		self.m_menubar1.Append( self.m_menu1, u"Tools" ) 
+		self.m_menubar1.Append( self.m_menu1, "Tools" ) 
 		
 		self.m_menu2 = wx.Menu()
-		self.m_menuItem2 = wx.MenuItem( self.m_menu2, wx.ID_ANY, u"Help", wx.EmptyString, wx.ITEM_NORMAL )
+		self.m_menuItem2 = wx.MenuItem( self.m_menu2, wx.ID_ANY, "Help", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_menu2.AppendItem( self.m_menuItem2 )
 		
-		self.m_menuItem3 = wx.MenuItem( self.m_menu2, wx.ID_ANY, u"About", wx.EmptyString, wx.ITEM_NORMAL )
+		self.m_menuItem3 = wx.MenuItem( self.m_menu2, wx.ID_ANY, "About", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_menu2.AppendItem( self.m_menuItem3 )
 		
-		self.m_menubar1.Append( self.m_menu2, u"Help" ) 
+		self.m_menubar1.Append( self.m_menu2, "Help" ) 
 		
 		self.SetMenuBar( self.m_menubar1 )
 		
@@ -267,22 +267,22 @@ class UploaderGUI ( wx.Frame ):
 class dlgDownloads ( wx.Dialog ):
 	
 	def __init__( self, parent ):
-		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Download CSVs", pos = wx.DefaultPosition, size = wx.Size( 502,470 ), style = wx.CLOSE_BOX|wx.DEFAULT_DIALOG_STYLE|wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX|wx.RESIZE_BORDER )
+		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = "Download CSVs", pos = wx.DefaultPosition, size = wx.Size( 502,470 ), style = wx.CLOSE_BOX|wx.DEFAULT_DIALOG_STYLE|wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX|wx.RESIZE_BORDER )
 		
 		self.SetSizeHintsSz( wx.DefaultSize, wx.DefaultSize )
 		
 		bSizer12 = wx.BoxSizer( wx.VERTICAL )
 		
-		self.m_staticText26 = wx.StaticText( self, wx.ID_ANY, u"Download Experiment data as CSV files", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText26 = wx.StaticText( self, wx.ID_ANY, "Download Experiment data as CSV files", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText26.Wrap( -1 )
 		bSizer12.Add( self.m_staticText26, 0, wx.ALL, 5 )
 		
-		self.chDelta = wx.CheckBox( self, wx.ID_ANY, u"Include Deltas", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.chDelta = wx.CheckBox( self, wx.ID_ANY, "Include Deltas", wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSizer12.Add( self.chDelta, 0, wx.ALL, 5 )
 		
 		bSizer13 = wx.BoxSizer( wx.HORIZONTAL )
 		
-		self.m_staticText27 = wx.StaticText( self, wx.ID_ANY, u"Select directory", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText27 = wx.StaticText( self, wx.ID_ANY, "Select directory", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText27.Wrap( -1 )
 		bSizer13.Add( self.m_staticText27, 0, wx.ALL, 5 )
 		
@@ -296,14 +296,14 @@ class dlgDownloads ( wx.Dialog ):
 		
 		bSizer15 = wx.BoxSizer( wx.HORIZONTAL )
 		
-		self.m_button17 = wx.Button( self, wx.ID_ANY, u"Download", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_button17 = wx.Button( self, wx.ID_ANY, "Download", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_button17.SetFont( wx.Font( wx.NORMAL_FONT.GetPointSize(), 71, 90, 90, False, wx.EmptyString ) )
 		self.m_button17.SetForegroundColour( wx.Colour( 255, 255, 0 ) )
 		self.m_button17.SetBackgroundColour( wx.Colour( 0, 128, 64 ) )
 		
 		bSizer15.Add( self.m_button17, 0, wx.ALL, 5 )
 		
-		self.m_button18 = wx.Button( self, wx.ID_ANY, u"Cancel", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_button18 = wx.Button( self, wx.ID_ANY, "Cancel", wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSizer15.Add( self.m_button18, 0, wx.ALL, 5 )
 		
 		
@@ -342,24 +342,24 @@ class dlgDownloads ( wx.Dialog ):
 class dlgReports ( wx.Dialog ):
 	
 	def __init__( self, parent ):
-		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Reports", pos = wx.DefaultPosition, size = wx.Size( 502,470 ), style = wx.CLOSE_BOX|wx.DEFAULT_DIALOG_STYLE|wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX|wx.RESIZE_BORDER )
+		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = "Reports", pos = wx.DefaultPosition, size = wx.Size( 502,470 ), style = wx.CLOSE_BOX|wx.DEFAULT_DIALOG_STYLE|wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX|wx.RESIZE_BORDER )
 		
 		self.SetSizeHintsSz( wx.DefaultSize, wx.DefaultSize )
 		
 		bSizer12 = wx.BoxSizer( wx.VERTICAL )
 		
-		self.m_staticText26 = wx.StaticText( self, wx.ID_ANY, u"Generate Reports from Experiment Data (may include html plots which may launch in a browser)", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText26 = wx.StaticText( self, wx.ID_ANY, "Generate Reports from Experiment Data (may include html plots which may launch in a browser)", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText26.Wrap( 400 )
 		self.m_staticText26.SetFont( wx.Font( wx.NORMAL_FONT.GetPointSize(), 70, 90, 92, False, wx.EmptyString ) )
 		
 		bSizer12.Add( self.m_staticText26, 0, wx.ALL, 5 )
 		
-		self.chDelta = wx.CheckBox( self, wx.ID_ANY, u"Include Deltas", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.chDelta = wx.CheckBox( self, wx.ID_ANY, "Include Deltas", wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSizer12.Add( self.chDelta, 0, wx.ALL, 5 )
 		
 		bSizer13 = wx.BoxSizer( wx.HORIZONTAL )
 		
-		self.m_staticText27 = wx.StaticText( self, wx.ID_ANY, u"Select directory", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText27 = wx.StaticText( self, wx.ID_ANY, "Select directory", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText27.Wrap( -1 )
 		bSizer13.Add( self.m_staticText27, 0, wx.ALL, 5 )
 		
@@ -373,14 +373,14 @@ class dlgReports ( wx.Dialog ):
 		
 		bSizer15 = wx.BoxSizer( wx.HORIZONTAL )
 		
-		self.m_button17 = wx.Button( self, wx.ID_ANY, u"Generate", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_button17 = wx.Button( self, wx.ID_ANY, "Generate", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_button17.SetFont( wx.Font( wx.NORMAL_FONT.GetPointSize(), 70, 90, 90, False, wx.EmptyString ) )
 		self.m_button17.SetForegroundColour( wx.Colour( 255, 255, 0 ) )
 		self.m_button17.SetBackgroundColour( wx.Colour( 0, 128, 64 ) )
 		
 		bSizer15.Add( self.m_button17, 0, wx.ALL, 5 )
 		
-		self.m_button18 = wx.Button( self, wx.ID_ANY, u"Cancel", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_button18 = wx.Button( self, wx.ID_ANY, "Cancel", wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSizer15.Add( self.m_button18, 0, wx.ALL, 5 )
 		
 		
@@ -419,13 +419,13 @@ class dlgReports ( wx.Dialog ):
 class dlgIDS ( wx.Dialog ):
 	
 	def __init__( self, parent ):
-		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Incorrect IDs", pos = wx.DefaultPosition, size = wx.Size( -1,-1 ), style = wx.DEFAULT_DIALOG_STYLE|wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX|wx.RESIZE_BORDER )
+		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = "Incorrect IDs", pos = wx.DefaultPosition, size = wx.Size( -1,-1 ), style = wx.DEFAULT_DIALOG_STYLE|wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX|wx.RESIZE_BORDER )
 		
 		self.SetSizeHintsSz( wx.Size( 200,300 ), wx.DefaultSize )
 		
 		bSizer10 = wx.BoxSizer( wx.VERTICAL )
 		
-		self.m_staticText20 = wx.StaticText( self, wx.ID_ANY, u"Enter Incorrect IDs to replace in data uploads.  Press Enter key after entering text then click \"Save\". To remove, clear entries then \"Save\".", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText20 = wx.StaticText( self, wx.ID_ANY, "Enter Incorrect IDs to replace in data uploads.  Press Enter key after entering text then click \"Save\". To remove, clear entries then \"Save\".", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText20.Wrap( 500 )
 		bSizer10.Add( self.m_staticText20, 0, wx.ALL, 5 )
 		
@@ -444,8 +444,8 @@ class dlgIDS ( wx.Dialog ):
 		self.m_grid1.EnableDragColMove( False )
 		self.m_grid1.EnableDragColSize( True )
 		self.m_grid1.SetColLabelSize( 60 )
-		self.m_grid1.SetColLabelValue( 0, u"INCORRECT" )
-		self.m_grid1.SetColLabelValue( 1, u"CORRECT" )
+		self.m_grid1.SetColLabelValue( 0, "INCORRECT" )
+		self.m_grid1.SetColLabelValue( 1, "CORRECT" )
 		self.m_grid1.SetColLabelAlignment( wx.ALIGN_CENTRE, wx.ALIGN_CENTRE )
 		
 		# Rows
@@ -464,16 +464,16 @@ class dlgIDS ( wx.Dialog ):
 		
 		bSizer11 = wx.BoxSizer( wx.HORIZONTAL )
 		
-		self.btnSaveIds = wx.Button( self, wx.ID_ANY, u"Save", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.btnSaveIds = wx.Button( self, wx.ID_ANY, "Save", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.btnSaveIds.SetForegroundColour( wx.Colour( 255, 255, 0 ) )
 		self.btnSaveIds.SetBackgroundColour( wx.Colour( 0, 128, 64 ) )
 		
 		bSizer11.Add( self.btnSaveIds, 0, wx.ALL, 5 )
 		
-		self.btnCancelIds = wx.Button( self, wx.ID_ANY, u"Cancel", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.btnCancelIds = wx.Button( self, wx.ID_ANY, "Cancel", wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSizer11.Add( self.btnCancelIds, 0, wx.ALL, 5 )
 		
-		self.btnAddID = wx.Button( self, wx.ID_ANY, u"Add", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.btnAddID = wx.Button( self, wx.ID_ANY, "Add", wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSizer11.Add( self.btnAddID, 0, wx.ALL, 5 )
 		
 		
@@ -517,19 +517,19 @@ class dlgIDS ( wx.Dialog ):
 class dlgScans ( wx.Dialog ):
 	
 	def __init__( self, parent ):
-		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Scans organizer", pos = wx.DefaultPosition, size = wx.Size( 830,428 ), style = wx.DEFAULT_DIALOG_STYLE|wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX|wx.RESIZE_BORDER )
+		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = "Scans organizer", pos = wx.DefaultPosition, size = wx.Size( 830,428 ), style = wx.DEFAULT_DIALOG_STYLE|wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX|wx.RESIZE_BORDER )
 		
 		self.SetSizeHintsSz( wx.DefaultSize, wx.DefaultSize )
 		
 		bSizer5 = wx.BoxSizer( wx.VERTICAL )
 		
-		self.m_staticText13 = wx.StaticText( self, wx.ID_ANY, u"Step 1 Organize scans into the correct directory structure for XNAT uploads.\nStep 2 Upload MRI scans to XNAT.  This is run from the main application.\nPlease see Menu->Help for further detail.", wx.DefaultPosition, wx.Size( 700,-1 ), 0|wx.SUNKEN_BORDER )
+		self.m_staticText13 = wx.StaticText( self, wx.ID_ANY, "Step 1 Organize scans into the correct directory structure for XNAT uploads.\nStep 2 Upload MRI scans to XNAT.  This is run from the main application.\nPlease see Menu->Help for further detail.", wx.DefaultPosition, wx.Size( 700,-1 ), 0|wx.SUNKEN_BORDER )
 		self.m_staticText13.Wrap( -1 )
 		self.m_staticText13.SetFont( wx.Font( wx.NORMAL_FONT.GetPointSize(), 70, 90, 92, False, wx.EmptyString ) )
 		
 		bSizer5.Add( self.m_staticText13, 0, wx.ALL, 5 )
 		
-		self.chkOPEX = wx.CheckBox( self, wx.ID_ANY, u"Extract Subject ID as prefix (eg 1001DD01 to 1001DD)", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.chkOPEX = wx.CheckBox( self, wx.ID_ANY, "Extract Subject ID as prefix (eg 1001DD01 to 1001DD)", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.chkOPEX.SetValue(True) 
 		bSizer5.Add( self.chkOPEX, 0, wx.ALL, 5 )
 		
@@ -537,38 +537,38 @@ class dlgScans ( wx.Dialog ):
 		fgSizer2.SetFlexibleDirection( wx.BOTH )
 		fgSizer2.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
 		
-		self.m_staticText21 = wx.StaticText( self, wx.ID_ANY, u"Number of characters in prefix (subject ID)", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText21 = wx.StaticText( self, wx.ID_ANY, "Number of characters in prefix (subject ID)", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText21.Wrap( -1 )
 		fgSizer2.Add( self.m_staticText21, 0, wx.ALL, 5 )
 		
-		self.m_spinCtrlChars = wx.SpinCtrl( self, wx.ID_ANY, u"6", wx.DefaultPosition, wx.DefaultSize, wx.SP_ARROW_KEYS, 0, 20, 0 )
+		self.m_spinCtrlChars = wx.SpinCtrl( self, wx.ID_ANY, "6", wx.DefaultPosition, wx.DefaultSize, wx.SP_ARROW_KEYS, 0, 20, 0 )
 		fgSizer2.Add( self.m_spinCtrlChars, 0, wx.ALL, 5 )
 		
-		self.m_staticText10 = wx.StaticText( self, wx.ID_ANY, u"Input directory", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText10 = wx.StaticText( self, wx.ID_ANY, "Input directory", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText10.Wrap( -1 )
-		self.m_staticText10.SetToolTipString( u"Expects: SUBJECTID/Group/*.IMA (mixed series)" )
+		self.m_staticText10.SetToolTipString( "Expects: SUBJECTID/Group/*.IMA (mixed series)" )
 		
 		fgSizer2.Add( self.m_staticText10, 0, wx.ALL, 5 )
 		
-		self.txtInputScans = wx.DirPickerCtrl( self, wx.ID_ANY, wx.EmptyString, u"Select a folder for input", wx.DefaultPosition, wx.Size( 430,-1 ), wx.DIRP_DEFAULT_STYLE|wx.DIRP_DIR_MUST_EXIST )
+		self.txtInputScans = wx.DirPickerCtrl( self, wx.ID_ANY, wx.EmptyString, "Select a folder for input", wx.DefaultPosition, wx.Size( 430,-1 ), wx.DIRP_DEFAULT_STYLE|wx.DIRP_DIR_MUST_EXIST )
 		fgSizer2.Add( self.txtInputScans, 0, wx.ALL, 5 )
 		
-		self.m_staticText11 = wx.StaticText( self, wx.ID_ANY, u"Output sorted scans", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText11 = wx.StaticText( self, wx.ID_ANY, "Output sorted scans", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText11.Wrap( -1 )
-		self.m_staticText11.SetToolTipString( u"Outputs format: sortedscans/SUBJECTID/scans/series/*.IMA" )
+		self.m_staticText11.SetToolTipString( "Outputs format: sortedscans/SUBJECTID/scans/series/*.IMA" )
 		
 		fgSizer2.Add( self.m_staticText11, 0, wx.ALL, 5 )
 		
-		self.txtOutputScans = wx.DirPickerCtrl( self, wx.ID_ANY, wx.EmptyString, u"Select a folder", wx.DefaultPosition, wx.Size( 430,-1 ), wx.DIRP_DEFAULT_STYLE|wx.DIRP_DIR_MUST_EXIST )
+		self.txtOutputScans = wx.DirPickerCtrl( self, wx.ID_ANY, wx.EmptyString, "Select a folder", wx.DefaultPosition, wx.Size( 430,-1 ), wx.DIRP_DEFAULT_STYLE|wx.DIRP_DIR_MUST_EXIST )
 		fgSizer2.Add( self.txtOutputScans, 0, wx.ALL, 5 )
 		
-		self.m_staticText12 = wx.StaticText( self, wx.ID_ANY, u"Ignore directory (optional)", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText12 = wx.StaticText( self, wx.ID_ANY, "Ignore directory (optional)", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText12.Wrap( -1 )
-		self.m_staticText12.SetToolTipString( u"Optional - ignore these files (already done)" )
+		self.m_staticText12.SetToolTipString( "Optional - ignore these files (already done)" )
 		
 		fgSizer2.Add( self.m_staticText12, 0, wx.ALL, 5 )
 		
-		self.txtIgnoreScans = wx.DirPickerCtrl( self, wx.ID_ANY, wx.EmptyString, u"Select a folder", wx.DefaultPosition, wx.Size( 430,-1 ), wx.DIRP_DEFAULT_STYLE|wx.DIRP_DIR_MUST_EXIST )
+		self.txtIgnoreScans = wx.DirPickerCtrl( self, wx.ID_ANY, wx.EmptyString, "Select a folder", wx.DefaultPosition, wx.Size( 430,-1 ), wx.DIRP_DEFAULT_STYLE|wx.DIRP_DIR_MUST_EXIST )
 		fgSizer2.Add( self.txtIgnoreScans, 0, wx.ALL, 5 )
 		
 		
@@ -600,13 +600,13 @@ class dlgScans ( wx.Dialog ):
 class dlgHelp ( wx.Dialog ):
 	
 	def __init__( self, parent ):
-		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Help", pos = wx.DefaultPosition, size = wx.Size( 694,479 ), style = wx.DEFAULT_DIALOG_STYLE|wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX|wx.RESIZE_BORDER )
+		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = "Help", pos = wx.DefaultPosition, size = wx.Size( 694,479 ), style = wx.DEFAULT_DIALOG_STYLE|wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX|wx.RESIZE_BORDER )
 		
 		self.SetSizeHintsSz( wx.DefaultSize, wx.DefaultSize )
 		
 		bSizer5 = wx.BoxSizer( wx.VERTICAL )
 		
-		self.m_staticText25 = wx.StaticText( self, wx.ID_ANY, u"Quick User Guide", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText25 = wx.StaticText( self, wx.ID_ANY, "Quick User Guide", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText25.Wrap( -1 )
 		self.m_staticText25.SetFont( wx.Font( 14, 71, 90, 92, False, wx.EmptyString ) )
 		
@@ -641,13 +641,13 @@ class dlgHelp ( wx.Dialog ):
 class dlgConfig ( wx.Dialog ):
 	
 	def __init__( self, parent ):
-		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Configuration Settings", pos = wx.DefaultPosition, size = wx.Size( 499,320 ), style = wx.DEFAULT_DIALOG_STYLE|wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX|wx.RESIZE_BORDER )
+		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = "Configuration Settings", pos = wx.DefaultPosition, size = wx.Size( 499,320 ), style = wx.DEFAULT_DIALOG_STYLE|wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX|wx.RESIZE_BORDER )
 		
 		self.SetSizeHintsSz( wx.DefaultSize, wx.DefaultSize )
 		
 		bSizer6 = wx.BoxSizer( wx.VERTICAL )
 		
-		self.m_staticText12 = wx.StaticText( self, wx.ID_ANY, u"Database connection parameters", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText12 = wx.StaticText( self, wx.ID_ANY, "Database connection parameters", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText12.Wrap( -1 )
 		self.m_staticText12.SetFont( wx.Font( 14, 71, 90, 90, False, wx.EmptyString ) )
 		
@@ -657,31 +657,31 @@ class dlgConfig ( wx.Dialog ):
 		fgSizer3.SetFlexibleDirection( wx.BOTH )
 		fgSizer3.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
 		
-		self.m_staticText13 = wx.StaticText( self, wx.ID_ANY, u"Database config", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText13 = wx.StaticText( self, wx.ID_ANY, "Database config", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText13.Wrap( -1 )
-		self.m_staticText13.SetToolTipString( u"Reference is used as 'Database Config' in main GUI" )
+		self.m_staticText13.SetToolTipString( "Reference is used as 'Database Config' in main GUI" )
 		
 		fgSizer3.Add( self.m_staticText13, 0, wx.ALL, 5 )
 		
 		chConfigChoices = []
-		self.chConfig = wx.ComboBox( self, wx.ID_ANY, u"Enter config ref", wx.DefaultPosition, wx.DefaultSize, chConfigChoices, 0 )
+		self.chConfig = wx.ComboBox( self, wx.ID_ANY, "Enter config ref", wx.DefaultPosition, wx.DefaultSize, chConfigChoices, 0 )
 		fgSizer3.Add( self.chConfig, 0, wx.ALL, 5 )
 		
-		self.m_staticText14 = wx.StaticText( self, wx.ID_ANY, u"URL", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText14 = wx.StaticText( self, wx.ID_ANY, "URL", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText14.Wrap( -1 )
 		fgSizer3.Add( self.m_staticText14, 0, wx.ALL, 5 )
 		
 		self.txtURL = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 300,-1 ), 0 )
 		fgSizer3.Add( self.txtURL, 0, wx.ALL, 5 )
 		
-		self.m_staticText15 = wx.StaticText( self, wx.ID_ANY, u"Username", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText15 = wx.StaticText( self, wx.ID_ANY, "Username", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText15.Wrap( -1 )
 		fgSizer3.Add( self.m_staticText15, 0, wx.ALL, 5 )
 		
 		self.txtUser = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 200,-1 ), 0 )
 		fgSizer3.Add( self.txtUser, 0, wx.ALL, 5 )
 		
-		self.m_staticText16 = wx.StaticText( self, wx.ID_ANY, u"Password", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText16 = wx.StaticText( self, wx.ID_ANY, "Password", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText16.Wrap( -1 )
 		fgSizer3.Add( self.m_staticText16, 0, wx.ALL, 5 )
 		
@@ -696,14 +696,14 @@ class dlgConfig ( wx.Dialog ):
 		
 		bSizer8 = wx.BoxSizer( wx.HORIZONTAL )
 		
-		self.btnSaveConfig = wx.Button( self, wx.ID_ANY, u"Save", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.btnSaveConfig = wx.Button( self, wx.ID_ANY, "Save", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.btnSaveConfig.SetDefault() 
 		bSizer8.Add( self.btnSaveConfig, 0, wx.ALL, 5 )
 		
-		self.btnLoadConfig = wx.Button( self, wx.ID_ANY, u"Load", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.btnLoadConfig = wx.Button( self, wx.ID_ANY, "Load", wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSizer8.Add( self.btnLoadConfig, 0, wx.ALL, 5 )
 		
-		self.btnRemove = wx.Button( self, wx.ID_ANY, u"Remove", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.btnRemove = wx.Button( self, wx.ID_ANY, "Remove", wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSizer8.Add( self.btnRemove, 0, wx.ALL, 5 )
 		
 		
@@ -750,7 +750,7 @@ class dlgConfig ( wx.Dialog ):
 class dlgLogViewer ( wx.Dialog ):
 	
 	def __init__( self, parent ):
-		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Upload Log Output", pos = wx.DefaultPosition, size = wx.DefaultSize, style = wx.DEFAULT_DIALOG_STYLE|wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX|wx.RESIZE_BORDER )
+		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = "Upload Log Output", pos = wx.DefaultPosition, size = wx.DefaultSize, style = wx.DEFAULT_DIALOG_STYLE|wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX|wx.RESIZE_BORDER )
 		
 		self.SetSizeHintsSz( wx.Size( 600,600 ), wx.DefaultSize )
 		
@@ -761,7 +761,7 @@ class dlgLogViewer ( wx.Dialog ):
 		
 		bSizer17.Add( self.tcLog, 0, wx.ALL, 5 )
 		
-		self.m_button16 = wx.Button( self, wx.ID_ANY, u"Refresh", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_button16 = wx.Button( self, wx.ID_ANY, "Refresh", wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSizer17.Add( self.m_button16, 0, wx.ALL, 5 )
 		
 		

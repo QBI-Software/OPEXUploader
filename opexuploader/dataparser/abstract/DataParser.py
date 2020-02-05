@@ -9,7 +9,9 @@ Created on Thu Mar 2 2017
 
 @author: Liz Cooper-Williams, QBI
 """
-
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 import glob
 from datetime import datetime
 from os import R_OK, access
@@ -21,7 +23,7 @@ from config.dbquery import DBI
 
 class DataParser(object):
     def __init__(self, datafile=None, sheet=0,skiplines=0, header=None, etype=None):
-        msg = 'DataParser: datafile=%s sheet=%s skiplines=%s header=%s etype=%s' % (datafile, str(sheet),str(skiplines),str(header),etype)
+        msg = 'DataParser: datafile=%s sheet=%s skiplines=%s header=%s etype=%s' % (datafile, str(sheet),str(skiplines),str(header),str(etype))
         print(msg)
         logging.info(msg)
         self.datafile = datafile #full pathname to data file
@@ -181,3 +183,22 @@ def stripspaces(row,column):
     """
     val = str(row[column])
     return val.replace(" ",'')
+
+# def getID(subject, query=True):
+#
+#     df = pandas.read_csv('C:/Users/uqaho4/PycharmProjects/OPEXUploader/P1_subjectlist.csv')
+#
+#     subj = re.findall('\\d*', str(subject))[0]
+#
+#     try:
+#         subj = re.findall('\\d*', str(subject))[0]
+#
+#         subject_lookup= df.\
+#             set_index('ID').\
+#             filter(like=str(subj), axis=0).\
+#             index.\
+#             tolist()[0]
+#     except:
+#         subject_lookup = subject
+#
+#     return subject_lookup

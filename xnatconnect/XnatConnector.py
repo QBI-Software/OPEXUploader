@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 
 # -*- coding: utf-8 -*-
 """
@@ -20,9 +20,11 @@ from os.path import join, basename
 # import resource
 import datetime
 import pydicom as dicom
+# import dicom
 import pyxnat
 import pandas as pd
 from configobj import ConfigObj
+from pyxnat.core.errors import DatabaseError
 
 warnings.filterwarnings("ignore")
 DEBUG = 1
@@ -41,8 +43,13 @@ class XnatConnector:
         """
         Connect to xnat server via config
         """
-        self.conn = pyxnat.Interface(server=self.url, user=self.user, verify=True,
-                                     password=self.passwd, cachedir='/tmp')  # connection object
+        try:
+            self.conn = pyxnat.Interface(server=self.url, user=self.user, verify=True,
+                                         password=self.passwd)  # connection object
+
+            print(self.conn)
+        except DatabaseError as e:
+            raise e
 
     def testconnection(self):
         """
@@ -110,6 +117,19 @@ class XnatConnector:
         print("Subjects written to file:", outfilename)
         return outfilename
 
+    def get_structure(self, projectcode):
+        # type: (object) -> object
+        if self.conn is None:
+            self.connect()
+
+        return self.conn.inspect.structure() # Alan's
+
+    def get_data_types(self, projectcode, xsitype):
+        if self.conn is None:
+            self.connect()
+
+        return self.conn.inspect.datatypes(xsitype)
+
     def get_subjectid_bylabel(self, projectcode, label):
         """
         Find the XNAT ID for a subject by label
@@ -167,10 +187,17 @@ class XnatConnector:
                 del mandata[xsdtype + '/date']
             else:
                 expt_creation = datetime.datetime.now()
+
             expt_creation_date = expt_creation.strftime("%Y%m%d")
             expt_creation_time = expt_creation.strftime("%H:%M:%S")
             # create with mandatory data
-            expt = subject.experiment(exptid).create(**mandata)
+            try:
+                expt = subject.experiment(exptid).create(**mandata)
+
+            except Exception as e:
+                print("Cannot process file: %s" % e)
+
+
             if not expt.exists():
                 msg = 'Cannot create expt: %s' % exptid
                 raise ValueError(msg)
@@ -292,7 +319,7 @@ class XnatConnector:
             # opex
             visitid = basename(scandir).rsplit('_', 1)
             if len(visitid) > 1:
-                m = re.match('(\d{1,2})[mM]?$', visitid[1])
+                m = re.match('(\d){1,2}[mM]?$', visitid[1])
                 visitid = int(m.group(1))
                 done = 'done_%dm' % visitid
                 donepath = join(dirpath, done)
@@ -480,6 +507,7 @@ if __name__ == "__main__":
     # get current user's login details (linux) or local file (windows)
     home = expanduser("~")
     configfile = join(home, '.xnat.cfg')
+    print(configfile)
     parser = argparse.ArgumentParser(prog='XnatConnector',
                                      description='''\
         XnatConnector: Script for managing data in QBI XNAT db
@@ -492,6 +520,7 @@ if __name__ == "__main__":
     parser.add_argument('--m', action='store_true', help='delete experiments (opex,aborted)')
     parser.add_argument('--c1', action='store', help='change expt label from')
     parser.add_argument('--c2', action='store', help='change expt label to')
+    parser.add_argument('--getstr', action='store_true', help='get structure of database')
     parser.add_argument('--counts', action='store_true', help='Get experiment counts for subjects')
     parser.add_argument('--config', action='store', help='database configuration file (overrides ~/.xnat.cfg)')
     # Tests
@@ -527,6 +556,10 @@ if __name__ == "__main__":
                                             {'sample_quality': 'UNKNOWN'})  # 'status': 'SYSTEM_ERROR'
                     # for dtype in ['opex:cantabDMS','opex:cantabERT','opex:cantabMOT','opex:cantabPAL','opex:cantabSWM']:
                     #     xnat.delete_experiments(projectcode,dtype,{'status': 'COMPLETED'}) # 'status': 'SYSTEM_ERROR'
+
+            if (args.getstr is not None and args.getstr):
+                xnat.get_structure(projectcode)
+
         except ValueError as e:
             print("Error:", e)
 
@@ -536,3 +569,4 @@ if __name__ == "__main__":
 
     else:
         print("Failed to connect")
+

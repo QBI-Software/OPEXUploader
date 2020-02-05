@@ -22,16 +22,21 @@ class GodinParser(DataParser):
         DataParser.__init__(self, *args)
         # cleanup subjects
         self.data['ID'] = self.data.apply(lambda x: stripspaces(x, 0), axis=1)
+        # self.data['ID'] = self.data['ID'].apply(lambda x: getID(x))
         if self.info is None:
             self.info = {'prefix': 'GDN', 'xsitype': 'opex:godin'}
         # Replace field headers
-        self.fields = ['total']
+        self.fields = ['strenuous','moderate','light','total', 'sweat']
+        fields = ['strenuous','moderate','light','total', 'sweat']
+        cols = ['ID', 'Strenuous', 'Moderate', 'Light', 'Totalleisureactivityscore', 'Sweat(1,2,or3)']
         ncols = ['SubjectID']
-        for ix in range(0, 13, 3):
-            ncols += [c + '_' + str(ix) for c in self.fields]
-        cols = ['ID'] + [c for c in self.data.columns if c.startswith('Total')]
-        df = self.data[cols]
-        df.columns = ncols
+        renamecols = dict(list(zip(cols, ncols + fields)))
+
+        df = self.data.iloc[:,0:7]
+        df.dropna(axis=0, how='any', thresh=5, inplace=True)   # remove all empty rows
+        df.fillna(999, inplace=True) # replace any remaining na with 999
+        df.rename(columns= renamecols,
+                  inplace=True)
         df.reindex()
         self.data = df
         # sort subjects
@@ -66,9 +71,8 @@ class GodinParser(DataParser):
 
         motdata = {}
         for field in self.fields:
-            rfield = field + '_' + str(i)
-            if rfield in row and not np.isnan(row[rfield].iloc[0]):
-                mandata[xsd + '/' + field] = str(row[rfield].iloc[0])
+            if field in row and not np.isnan(row[field].iloc[0]):
+                mandata[xsd + '/' + field] = str(row[field].iloc[0])
         return (mandata, motdata)
 
     def validData(self, dvalues):
@@ -82,9 +86,12 @@ class GodinParser(DataParser):
         rtn = True
         if isinstance(dvalues, list):
             for d in dvalues:
-                if isinstance(d, str) or isinstance(d, unicode) or np.isnan(d):
+                if isinstance(d, str) or isinstance(d, str):
                     rtn = False
                     break
+
+            if all([np.isnan(d) for d in dvalues]):
+                rtn = False
 
         return rtn
 
@@ -102,41 +109,44 @@ if __name__ == "__main__":
     parser.add_argument('--filedir', action='store', help='Directory containing files',
                         default="Q:\\DATA\\DATA ENTRY\\XnatUploaded\\sampledata\\godin")
     parser.add_argument('--datafile', action='store', help='Filename of original data',
-                        default="GODIN_Data_entry_180717.xlsx")
+                        default="GODIN_20181220_FINAL_XR.xlsx")
     parser.add_argument('--sheet', action='store', help='Sheet name to extract',
                         default="0")
     args = parser.parse_args()
 
     inputfile = join(args.filedir, args.datafile)
     sheet = int(args.sheet)
-    skip = 2
-    header = 1
+    skip = 0 # 2 original
+    header = None # 1 original
     etype = 'Godin'
-    print("Input:", inputfile)
+    print(("Input:", inputfile))
     if access(inputfile, R_OK):
         try:
-            print("Loading ", inputfile)
+            print(("Loading ", inputfile))
             dp = GodinParser(inputfile, sheet, skip, header, etype)
             xsdtypes = dp.getxsd()
-            intervals = range(0, 13, 3)
+
+            intervals = list(range(0, 13, 3))
             for sd in dp.subjects:
-                print('\n***********SubjectID:', sd)
-                for i in intervals:
-                    print('Interval:', i)
-                    iheaders = [c + "_" + str(i) for c in dp.fields]
-                    sampleid = dp.getSampleid(sd, i)
-                    row = dp.subjects[sd]
-                    if iheaders[0] in row.columns:
-                        print('Sampleid:', sampleid)
-                        if not dp.validData(row[iheaders].values.tolist()[0]):
-                            print('empty data - skipping')
-                            continue
-                        (mandata, data) = dp.mapData(row[iheaders], i, xsdtypes)
-                        print(mandata)
-                        print(data)
+                if '1044' in sd:
+                    print(('\n***********SubjectID:', sd))
+                    for i in intervals:
+                        print(('Interval:', i))
+                        iheaders = dp.fields
+                        sampleid = dp.getSampleid(sd, i)
+
+                        row = dp.subjects[sd]
+                        if iheaders[0] in row.columns:
+                            print(('Sampleid:', sampleid))
+                            if not dp.validData(row[iheaders].values.tolist()[0]):
+                                print('empty data - skipping')
+                                continue
+                            (mandata, data) = dp.mapData(row[iheaders], i, xsdtypes)
+                            print(mandata)
+                            print(data)
 
         except Exception as e:
-            print("Error: ", e)
+            print(("Error: ", e))
 
     else:
-        print("Cannot access file: ", inputfile)
+        print(("Cannot access file: ", inputfile))

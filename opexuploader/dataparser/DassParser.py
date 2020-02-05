@@ -11,10 +11,15 @@ Created on Thu Mar 2 2017
 """
 
 import argparse
+import os
 from os import R_OK, access
 from os.path import join
 
 import numpy as np
+import sys
+
+sys.path.append(os.getcwd())
+# from DataParser import DataParser
 
 from opexuploader.dataparser.abstract.DataParser import DataParser
 
@@ -30,26 +35,30 @@ class DassParser(DataParser):
             ncols += [c + '_'+str(ix) for c in self.fields]
 
         dropcols=[] #remove check columns
-
+        #
+        self.data.set_index(list(self.data)[0], inplace=True)
         for n in range(3, len(self.data.columns), 12):
             start = n
             end = n + 9
             #print('Drop ', start, ' to ', end
             #print self.data.columns.tolist()[start:end]
             dropcols += self.data.columns.tolist()[start:end]
-        print('Selecting Totals columns for ', dropcols)
+        print(('Selecting Totals columns for ', dropcols))
         df = self.data.drop(columns=dropcols)
-        #check num cols match and delete end cols in case blank ones have been included
-        if len(ncols) < len(df.columns):
+
+        # #check num cols match and delete end cols in case blank ones have been included
+        if len(['ID'] + ncols) < len(df.columns):
             df = df[df.columns[0:len(ncols)]]
 
-        df.columns=ncols
-        df.reindex()
+        df.reset_index(inplace=True)
+        df.columns=['ID'] + ncols
+        df.set_index('ID', inplace=True)
+
         self.data=df
-        #sort subjects
+        # #sort subjects
         self.data['SubjectID'] = self.data.index
         self.sortSubjects('SubjectID')
-        print('Data load complete')
+        # print('Data load complete')
 
 
 
@@ -102,11 +111,43 @@ class DassParser(DataParser):
         rtn = True
         if isinstance(dvalues,list):
             for d in dvalues:
-                if isinstance(d,str) or isinstance(d,unicode) or np.isnan(d):
+                if isinstance(d,str) or isinstance(d,str) or np.isnan(d):
                     rtn = False
                     break
 
         return rtn
+########################################################################
+
+# path = "Q:\\DATA\\DATA ENTRY\\XnatUploaded\\sampledata\\dass"
+# filename = "DASS_20180907_XR.xlsx"
+#
+# data = pd.read_excel(join(path,filename), sheet=0, skiprows=1, header=0)
+# data
+# fields = ['depression', 'anxiety', 'stress']
+# ncols = []
+# for ix in range(0, 13, 3):
+#     ncols += [c + '_' + str(ix) for c in fields]
+#
+# dropcols = []  # remove check columns
+# data.set_index(list(data)[0], inplace=True)
+# for n in range(3, len(data.columns), 12):
+#     start = n
+#     end = n + 9
+#     print((start,end))
+#     # print('Drop ', start, ' to ', end
+#     # print self.data.columns.tolist()[start:end]
+#     dropcols += data.columns.tolist()[start:end]
+# print('Selecting Totals columns for ', dropcols)
+# df = data.drop(columns=dropcols)
+# df.head()
+#
+# df.columns = ['ID'] + ncols
+# # df.reindex()
+# df.set_index('ID', inplace=True)
+#
+# # check num cols match and delete end cols in case blank ones have been included
+# if len(['ID'] + ncols) < len(df.columns):
+#     df = df[df.columns[0:len(ncols)]]
 
 ########################################################################
 
@@ -118,30 +159,31 @@ if __name__ == "__main__":
 
              ''')
     parser.add_argument('--filedir', action='store', help='Directory containing files', default="Q:\\DATA\\DATA ENTRY\\XnatUploaded\\sampledata\\dass")
-    parser.add_argument('--datafile', action='store', help='Filename of original data', default="DASS Data Entry Plus Check_2018_03_07.xlsx")
+    parser.add_argument('--datafile', action='store', help='Filename of original data', default="DASS_20181105_XR.xlsx")
     parser.add_argument('--sheet', action='store', help='Sheet name to extract',
                         default="0")
     args = parser.parse_args()
 
     inputfile = join(args.filedir, args.datafile)
     sheet = int(args.sheet)
-    skip = 2
-    header =2
+    skip = 1
+    header = 0
     etype='DASS'
-    print("Input:", inputfile)
+    print(("Input:", inputfile))
     if access(inputfile, R_OK):
         try:
-            print("Loading ", inputfile)
+            print(("Loading ", inputfile))
             dp = DassParser(inputfile, sheet, skip, header,etype)
             xsdtypes = dp.getxsd()
-            intervals = range(0,13,3)
+            intervals = list(range(0,13,3))
+
             for sd in dp.subjects:
-                print('\n***********SubjectID:', sd)
+                print(('\n***********SubjectID:', sd))
                 for i in intervals:
-                    print('Interval:', i)
+                    print(('Interval:', i))
                     iheaders = [c + "_"+str(i) for c in dp.fields]
                     sampleid = dp.getSampleid(sd, i)
-                    print('Sampleid:', sampleid)
+                    print(('Sampleid:', sampleid))
                     row = dp.subjects[sd]
                     if not dp.validData(row[iheaders].values.tolist()[0]):
                         print('empty data - skipping')
@@ -151,7 +193,7 @@ if __name__ == "__main__":
                     print(data)
 
         except Exception as e:
-            print("Error: ", e)
+            print(("Error: ", e))
 
     else:
-        print("Cannot access file: ", inputfile)
+        print(("Cannot access file: ", inputfile))

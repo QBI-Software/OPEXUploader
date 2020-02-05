@@ -1,0 +1,9 @@
+COBAS,ELISAS,MULTIPLEX,IGF,INFLAM,SOMATO
+Prolactin,Ghrelin,GH,IGF1,il1beta,somatostatin
+Insulin,CathepsinB,Leptin,,il6,
+HGH,BetaHydroxy,BDNF,,il8cxcl8,
+Cortisol,,IGFBP7,,il10,
+,,IL1,,il12p70,
+,,IL4,,ifngamma,
+,,IL6,,tnfalpha,
+,,IL10,,,

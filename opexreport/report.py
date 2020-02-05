@@ -9,7 +9,7 @@ Created on Thu Mar 2 2017
 
 @author: Liz Cooper-Williams, QBI
 """
-
+import sys
 import argparse
 import glob
 import logging
@@ -22,8 +22,15 @@ import pandas
 import plotly.graph_objs as go
 from plotly import tools
 from plotly import offline
+# from config.dbquery import DBI
+
+sys.path.append('./config')
 from config.dbquery import DBI
+
+sys.path.append('./opexuploader')
+# from opexuploader.utils import findResourceDir
 from opexuploader.utils import findResourceDir
+
 #import cufflinks as cf
 
 
@@ -215,10 +222,25 @@ class OPEXReport(object):
         :param projectcode:
         :return:
         '''
-        etypes = sorted(self.xnat.conn.inspect.datatypes())
+        # etypes = sorted(self.xnat.conn.inspect.datatypes())
+
+        # etypes = ['opex:cantab' + t for t in ['PAL', 'SWM', 'MOT', 'DMS', 'ERT']] + \
+        #             ['opex:blood' + t for t in ['BdnfData', 'CobasData', 'ElisasData', 'IgfData', 'MultiplexData']] + \
+        #             ['opex:' + t for t in ['bpaqscale', 'dass', 'dexa', 'fcas',  'fitbit', 'fooddiary',
+        #                                    'godin', 'insomnia', 'ipaq', 'sf36', 'accelmonth', 'accelday',
+        #                                    'accelmonthalt', 'acceldayalt', 'amunetall', 'amunet', 'acer']] + \
+        #             ['opex:ashslong3', 'opex:ashslong2', 'opex:ashsraw', 'opex:mrijun'] + \
+        #             ['opex:cosmed', 'opex:health']
+
+        etypes = ['opex:fmri']
+
+
+        # etypes = ['opex:cosmed']
+
         columns = ['xnat:subjectData/SUBJECT_LABEL', 'xnat:subjectData/SUB_GROUP',
                    'xnat:subjectData/GENDER_TEXT', 'xnat:subjectData/DOB']
         etypes.append('xnat:subjectData')
+        self.xnat.connect()
         try:
             for etype in etypes:
                 if etype.startswith('opex'):
@@ -227,6 +249,7 @@ class OPEXReport(object):
                     # print(fields)
                     criteria = [(etype + '/SUBJECT_ID', 'LIKE', '*'), 'AND']
                     df_expts = self.xnat.getSubjectsDataframe(projectcode, etype, fields, criteria)
+                    print(df_expts)
                     if df_expts is not None:
                         #Filter out invalid
                         df_expts = df_expts[df_expts['data_valid'] != 'invalid']
@@ -246,7 +269,10 @@ class OPEXReport(object):
                         logging.warning(msg)
         except Exception as e:
             raise ValueError(e)
+
         return True
+
+
 
     def deltaValues(self, df_expts):
         """
@@ -772,7 +798,9 @@ class OPEXReport(object):
 ########################################################################
 
 if __name__ == "__main__":
-    from xnatconnect.XnatConnector import XnatConnector  # Only for testing
+    sys.path.append('./xnatconnect')
+    from XnatConnector import XnatConnector  # Only for testing
+    # from xnatconnect.XnatConnector import XnatConnector  # Only for testing
 
     parser = argparse.ArgumentParser(prog='OPEX Report',
                                      description='''\
@@ -781,6 +809,7 @@ if __name__ == "__main__":
     parser.add_argument('database', action='store', help='select database config from xnat.cfg to connect to')
     parser.add_argument('projectcode', action='store', help='select project by code')
     parser.add_argument('--output', action='store', help='output directory for csv files')
+    parser.add_argument('--missing', action='store', help='calculate missing values')
 
     args = parser.parse_args()
     print("Connecting to database")
@@ -806,6 +835,10 @@ if __name__ == "__main__":
             op.downloadOPEXExpts(projectcode=projectcode, outputdir=outputdir, deltas=True)
             op.generateCantabReport(projectcode=projectcode, outputdir=outputdir, deltas=True)
             op.generateBloodReport(projectcode=projectcode, outputdir=outputdir, deltas=True)
+
+        if args.missing is not None and args.missing:
+            # op.calculateMissing(projectcode=projectcode)
+            op.printMissingExpts(projectcode=projectcode)
 
     except ValueError as e:
         print("Error: ", e)

@@ -1,0 +1,34 @@
+Expt,interval,total,xsitype,prefix,date_provided,name,option
+HEALTH,3,5,opex:health,MX,y,HEALTH,--health
+ACER,6,3,opex:acer,AC,y,ACE-R,--acer
+CANTAB DMS,1,9,opex:cantabDMS,DMS,y,CANTAB,--cantab
+CANTAB ERT,1,9,opex:cantabERT,ERT,y,CANTAB,--cantab
+CANTAB MOT,1,9,opex:cantabMOT,MOT,y,CANTAB,--cantab
+CANTAB PAL,1,9,opex:cantabPAL,PAL,y,CANTAB,--cantab
+CANTAB SWM,1,9,opex:cantabSWM,SWM,y,CANTAB,--cantab
+VWM,3,5,opex:amunet,AM,y,AMUNET,--amunet
+DASS,3,5,opex:dass,DASS,n,DASS,--dass
+IPAQ,3,5,opex:ipaq,IPQ,y,IPAQ,--ipaq
+ISI,3,5,opex:insomnia,INS,y,ISI and PSQI,--isi
+PSQI,3,5,opex:psqi,PSQ,y,ISI and PSQI,--psqi
+GODIN,3,5,opex:godin,GDN,y,GODIN,--godin
+COBAS,1,23,opex:bloodCobasData,COBAS,n,BLOOD,--blood
+ELISAS,1,23,opex:bloodElisasData,ELS,n,BLOOD,--blood
+IGF,1,23,opex:bloodIgfData,IGF,n,BLOOD,--blood
+MULTIPLEX,1,23,opex:bloodMultiplexData,MPX,n,BLOOD,--blood
+MR Sessions,6,3,xnat:mrSessionData,MR,y,MRIscans,--mri
+MRI ASHS,6,3,opex:mriashs,ASHS,n,ASHS and Freesurfer,--mriashs
+MRI FS,6,3,opex:mrifs,FS,n,ASHS and Freesurfer,--mrifs
+DEXA,3,5,opex:dexa,DXA,n,DEXA,--dexa
+COSMED,3,5,opex:cosmed,COS,y,COSMED,--cosmed
+FMRI,6,3,opex:fmri,FMRI,n,FMRI,--fmri
+FITBIT,6,3,opex:fitbit,FITBIT,y,FITBIT,--fitbit
+SF36,6,10,opex:sf36,SF,y,SF36,--sf36
+FOODDIARY,6,10,opex:food_diary,FD,y,FOODDIARY,--fooddiary
+ACCELEROMETRY,6,10,opex:accel,ACL,y,ACCELEROMETRY,--accelmonth
+AMUNETALL,6,10,opex:amunetall,AMA,y,AMUNETALL,--amunetall
+ASHSRaw,6,10,opex:ashsraw,ASHSR,y,ASHSRaw,--mriashsraw
+INFLAM,6,5,opex:bloodInflamData,INFLAM,y,BLOOD,--blood
+SOMATO,6,5,opex:bloodSomatostatinData,SOMATO,y,BLOOD,--blood
+TASKRET,6,5,opex:fmritaskret,TASKRET,Y,TASKRET,--taskret
+TASKENCODE,6,5,opex:fmritaskencode,TASKENCODE,Y,TASKENCODE,--taskencode

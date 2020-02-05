@@ -5,48 +5,35 @@ from opexuploader.utils import findResourceDir
 
 class TestResources(unittest.TestCase):
     def setUp(self):
-        self.rootdir = 'D:\\Projects\\OPEXUploader'
+        self.testdir = os.path.dirname(os.path.realpath(__file__))
+        (self.rootdir, _) = os.path.split(self.testdir)
         print('Init Root dir: ', self.rootdir)
 
-    def test_Tests(self):
-        os.chdir(os.path.join(self.rootdir, 'tests'))
-        print('Tests Current dir:', os.getcwd())
+    def test_ResourceDir(self):
         resourcedir = findResourceDir()
         print('Resource dir: ', resourcedir)
         expected = 'resources'
         self.assertEqual(os.path.basename(resourcedir), expected)
 
     def test_Root(self):
-        os.chdir(self.rootdir)
-        print('Root Current dir:', os.getcwd())
-        resourcedir = findResourceDir()
-        print('Resource dir: ', resourcedir)
-        expected = 'resources'
-        self.assertEqual(os.path.basename(resourcedir), expected)
+        expected = 'OPEXUploader'
+        self.assertEqual(os.path.basename(self.rootdir), expected)
 
-    def test_Subdir(self):
-        os.chdir(os.path.join(self.rootdir,'opexuploader'))
-        print('Subdir: Current dir:', os.getcwd())
-        resourcedir = findResourceDir()
-        print('Resource dir: ', resourcedir)
-        expected = 'resources'
-        self.assertEqual(os.path.basename(resourcedir), expected)
+    def test_UploaderDir(self):
+        expected = os.path.join(self.rootdir,'opexuploader')
+        print('Testing: ', expected)
+        self.assertTrue(os.path.exists(expected))
 
-    def test_SubSubdir(self):
-        os.chdir(os.path.join(self.rootdir,'opexuploader','dataparser'))
-        print('Subsubdir: Current dir:', os.getcwd())
-        resourcedir = findResourceDir()
-        print('Resource dir: ', resourcedir)
-        expected = 'resources'
-        self.assertEqual(os.path.basename(resourcedir), expected)
+    def test_DataparserDir(self):
+        expected = os.path.join(self.rootdir, 'opexuploader','dataparser')
+        print('Testing: ', expected)
+        self.assertTrue(os.path.exists(expected))
 
-    def test_SubSubSubdir(self):
-        os.chdir(os.path.join(self.rootdir,'opexuploader','dataparser','abstract'))
-        print('SubSubSubdir: Current dir:', os.getcwd())
+    def test_FieldsDir(self):
         resourcedir = findResourceDir()
-        print('Resource dir: ', resourcedir)
-        expected = 'resources'
-        self.assertEqual(os.path.basename(resourcedir), expected)
+        expected = os.path.join(resourcedir, 'fields')
+        print('Testing: ', expected)
+        self.assertTrue(os.path.exists(expected))
 
 
 

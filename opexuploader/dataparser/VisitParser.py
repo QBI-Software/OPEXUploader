@@ -1,4 +1,5 @@
-from __future__ import print_function
+
+
 # -*- coding: utf-8 -*-
 """
 Utility script: VisitParser
@@ -18,14 +19,16 @@ import logging
 from opexuploader.dataparser.abstract.DataParser import DataParser, stripspaces
 
 VERBOSE = 0
+
+
 class VisitParser(DataParser):
 
     def __init__(self, *args):
         DataParser.__init__(self, *args)
-        #self.opex = pd.read_csv(join(self.resource_dir, 'opex.csv'))
+        # self.opex = pd.read_csv(join(self.resource_dir, 'opex.csv'))
         self.expts = dict()
 
-    def getSubjectData(self,sd):
+    def getSubjectData(self, sd):
         """
         Extract subject data from input data
         :param sd:
@@ -49,14 +52,13 @@ class VisitParser(DataParser):
         """
         rtn = isinstance(d, datetime)
         if rtn:
-            checks ="%s" % d
+            checks = "%s" % d
             if checks != 'NaT':
                 thisdate = datetime.today()
-                rtn= d <= thisdate
+                rtn = d <= thisdate
             else:
                 rtn = False
         return rtn
-
 
     def updateGenders(self, projectcode=None, xnat=None):
         """
@@ -70,7 +72,7 @@ class VisitParser(DataParser):
             print('Cannot run update genders as data is not present')
             return 0
 
-        xnatgenders={'F':'female', 'M': 'male'}
+        xnatgenders = {'F': 'female', 'M': 'male'}
         for i, sd in self.data.iterrows():
             subject_id = self.getValidSid(sd['ID'])
             if not subject_id:
@@ -78,7 +80,7 @@ class VisitParser(DataParser):
             g = sd['Sex']
             if g == 'U':
                 continue
-            gender = xnatgenders[g]            # if subject in database, else skip
+            gender = xnatgenders[g]  # if subject in database, else skip
 
             if xnat is not None:
                 project = xnat.get_project(projectcode)
@@ -96,7 +98,7 @@ class VisitParser(DataParser):
                 print(msg)
 
     def getValidSid(self, sid):
-        if isinstance(sid,int):
+        if isinstance(sid, int):
             checksid = False
         else:
             checksid = sid.replace(" ", "")
@@ -114,8 +116,8 @@ class VisitParser(DataParser):
         intvals = [str(i) for i in range(0, 13)]
         # get each experiment and check date matches - these are upload dates by default as dates were not provided with the data
         #  ['DEXA', 'COBAS', 'ELISAS', 'MULTIPLEX', 'MRI ASHS', 'MRI FS', 'FMRI', 'DASS']
-        dateless = self.dbi.getDatelessExpts() #opex['Expt'][self.opex['date_provided'] == 'n'].values
-        print("Dateless expts: ",dateless)
+        dateless = self.dbi.getDatelessExpts()  # opex['Expt'][self.opex['date_provided'] == 'n'].values
+        print("Dateless expts: ", dateless)
         for i, sd in self.data.iterrows():
             subject_id = self.getValidSid(sd['ID'])
             if not subject_id:
@@ -137,7 +139,7 @@ class VisitParser(DataParser):
                                 if se == "PREPOST":
                                     for sexpt in ['PRE', 'POST']:
                                         exptid = "%s_%s_%sm_%s_%d" % (prefix, subject_id, intval, sexpt.lower(), 1)
-                                        #save data
+                                        # save data
                                         self.expts[exptid] = d
                                 else:
                                     exptid = "%s_%s_%sm_%s_%d" % (prefix, subject_id, intval, se.lower(), 1)
@@ -148,7 +150,7 @@ class VisitParser(DataParser):
                         if expt in ['MRI ASHS', 'MRI FS', 'FMRI']:
                             eint = "MRI_" + intval
                         # assessment B
-                        elif expt in ['DEXA', 'DASS', 'GODIN', 'PSQI','Insomnia']:
+                        elif expt in ['DEXA', 'DASS', 'GODIN', 'PSQI', 'Insomnia']:
                             eint = "DEXA_" + intval
                             if expt != 'DEXA':
                                 exptid += 'M'  # M added to some IDs
@@ -156,7 +158,7 @@ class VisitParser(DataParser):
                         elif expt in ['CANTAB', 'ACER']:
                             eint = "CANTAB_" + intval
                         else:
-                            eint ='na'
+                            eint = 'na'
                         if eint not in sd:
                             continue
                         d = sd[eint]
@@ -173,14 +175,14 @@ class VisitParser(DataParser):
         :return:
         """
         print("**Uploading dates to XNAT**")
-        missing =[]
-        matches=[]
+        missing = []
+        matches = []
         if xnat is not None:
             project = xnat.get_project(projectcode)
         else:
             raise IOError("XNAT not connected")
 
-        for eid in self.expts.keys():
+        for eid in list(self.expts.keys()):
             d = self.expts.get(eid)
             prefix = eid.split('_')[0]
             subject_id = eid.split('_')[1]
@@ -201,11 +203,11 @@ class VisitParser(DataParser):
             #         continue
             if e is not None and e.exists():
                 exptid = e.id()
-                msg = 'Found expt: %s %s : %s [%s]' % (subject_id,xtype, exptid,eid)
-                #print(msg)
+                msg = 'Found expt: %s %s : %s [%s]' % (subject_id, xtype, exptid, eid)
+                # print(msg)
                 logging.debug(msg)
                 xnatexpt = xnat.updateExptDate(s, exptid, d, xtype)
-                if xnatexpt is not None: #not updated if not different
+                if xnatexpt is not None:  # not updated if not different
                     # remove or update comment
                     comments = xnatexpt.attrs.get(xtype + '/comments')
                     if len(comments) > 0:
@@ -221,11 +223,10 @@ class VisitParser(DataParser):
             else:
                 msg = "Expt not found: %s" % eid
                 logging.debug(msg)
-                #print msg
-
+                # print msg
 
         print("Total updates: ", len(matches))
-        return (missing,matches)
+        return (missing, matches)
 
 
 ########################################################################
@@ -239,22 +240,22 @@ if __name__ == "__main__":
 
              ''')
 
-    parser.add_argument('--file', action='store', help='File with data', default="Q:\\DATA\\DATA ENTRY\\XnatUploaded\\sampledata\\visit\\Visits.xlsx")
+    parser.add_argument('--file', action='store', help='File with data',
+                        default="Q:\\DATA\\DATA ENTRY\\XnatUploaded\\sampledata\\visit\\Visits.xlsx")
     parser.add_argument('--sheet', action='store', help='Sheet name to extract', default=0)
     args = parser.parse_args()
 
     inputfile = args.file
     print("Input:", inputfile)
     try:
-        print("Loading",inputfile)
-        dp = VisitParser(inputfile,args.sheet,1)
-        #dp.updateGenders()
+        print("Loading", inputfile)
+        dp = VisitParser(inputfile, args.sheet, 1)
+        # dp.updateGenders()
         dp.processData()
         # print(output
         print("**Processed dates**")
-        for eid in dp.expts.keys():
+        for eid in list(dp.expts.keys()):
             print(eid, ": ", dp.expts.get(eid))
 
     except Exception as e:
         print(e)
-

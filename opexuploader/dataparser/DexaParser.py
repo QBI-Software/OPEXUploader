@@ -12,12 +12,14 @@ Created on Thu Mar 2 2017
 
 import argparse
 import glob
+import os
 from os import R_OK, access
 from os.path import join
 
 import numpy as np
 import pandas as pd
-
+import sys
+sys.path.append(os.getcwd())
 from opexuploader.dataparser.abstract.DataParser import DataParser,stripspaces
 
 DEBUG = 0
@@ -31,18 +33,15 @@ class DexaParser(DataParser):
             self.fields = pd.read_excel(fields, header=0, sheetname='dexa_fields')
             df_header = pd.read_excel(fields, header=0, sheetname='dexa_header')
             self.header = df_header['concatenated'].tolist()
-            if len(self.data.columns) != len(self.header):
-                msg = 'Unexpected number of columns: data=%d fields=%d' % (len(self.data.columns), len(self.header))
-                raise ValueError(msg)
             self.data.columns = self.header
-            print("Loaded rows=", len(self.data['ID']))
+            print(("Loaded rows=", len(self.data['ID'])))
             #extract subject info
             df_subj = self.data.iloc[:,0:4]
             df_subj['SubjectID'] = df_subj.apply(lambda x: stripspaces(x, 'ID'), axis=1)
             #Split data into intervals
             self.intervals = {0:'BASELINE', 3:'MIDPOINT',6:'ENDPOINT', 9:'MID-FOLLOW-UP', 12:'FOLLOW-UP'}
             self.df = dict()
-            for i,intval in self.intervals.items():
+            for i,intval in list(self.intervals.items()):
                 cols = [c for c in self.header if c.startswith(intval)]
                 simplecols = []
                 for col in cols:
@@ -67,7 +66,7 @@ class DexaParser(DataParser):
                 if len(str(sid)) == 6:
                     sidkey = self._DataParser__checkSID(sid)
                     self.subjects[sidkey] = dict()
-                    for i, intval in self.intervals.items():
+                    for i, intval in list(self.intervals.items()):
                         data = self.df[i]
                         self.subjects[sidkey][i]= data[data[subjectfield] == sid]
             msg = 'Subjects loaded=%d' % len(self.subjects)
@@ -118,7 +117,7 @@ if __name__ == "__main__":
             Reads files in a directory and extracts data for upload to XNAT
 
              ''')
-    parser.add_argument('--filedir', action='store', help='Directory containing files', default="D:\\Projects\\Bartlett_OPEX\\data")
+    parser.add_argument('--filedir', action='store', help='Directory containing files', default="Q:\\DATA\\DATA ENTRY\\XnatUploaded\\sampledata\\dexa")
     parser.add_argument('--sheet', action='store', help='Sheet name to extract',
                         default="0")
     parser.add_argument('--fields', action='store', help='Fields to extract',
@@ -129,25 +128,24 @@ if __name__ == "__main__":
     sheet = int(args.sheet)
     fields = args.fields
     skip = 4
-    header = None
-    print("Input:", inputdir)
+    print(("Input:", inputdir))
     if access(inputdir, R_OK):
         seriespattern = 'DXA Data entry*.xlsx'
         etype = 'DEXA'
         try:
             files = glob.glob(join(inputdir, seriespattern))
-            print("Files:", len(files))
+            print(("Files:", len(files)))
             for f2 in files:
-                print("Loading ", f2)
-                dp = DexaParser(f2, sheet, skip, header, etype)
+                print(("Loading ", f2))
+                dp = DexaParser(fields, f2, sheet, skip, None, etype)
                 xsdtypes = dp.getxsd()
                 #dp.sortSubjects()
                 for sd in dp.subjects:
-                    print('\n***********SubjectID:', sd)
-                    for i, row in dp.subjects[sd].items():
-                        print('Interval:', dp.intervals[i])
+                    print(('\n***********SubjectID:', sd))
+                    for i, row in list(dp.subjects[sd].items()):
+                        print(('Interval:', dp.intervals[i]))
                         sampleid = dp.getSampleid(sd, i)
-                        print('Sampleid:', sampleid)
+                        print(('Sampleid:', sampleid))
                         (mandata, data) = dp.mapData(row, i, xsdtypes)
                         print(mandata)
                         print(data)
@@ -158,7 +156,7 @@ if __name__ == "__main__":
 
 
         except Exception as e:
-            print("Error: ", e)
+            print(("Error: ", e))
 
     else:
-        print("Cannot access directory: ", inputdir)
+        print(("Cannot access directory: ", inputdir))

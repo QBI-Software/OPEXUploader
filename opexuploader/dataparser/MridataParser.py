@@ -15,13 +15,49 @@ import glob
 from datetime import datetime
 from os import R_OK, access
 from os.path import join
-
+import re
+import pandas as pd
 from opexuploader.dataparser.abstract.DataParser import DataParser, stripspaces
 
+
+def extract_subj(string):
+    subject = re.search("(\\d{4})+([A-z]{2})", string).group(0)
+    interval = re.search("(?<=ses-).*", string).group(0)
+    if interval == '01':
+        interval = '0'
+
+    return (subject, int(interval))
+#
+# extract_subj("sub-1001DS_ses-06")
+#
+#
+# subject = re.search("(\\d{4})+([A-z]{2})","sub-1001DS_ses-01").group(0)
+# re.search("(?<=ses-).*", "sub-1001DS_ses-01").group(0)
+#
+#
+# inputdir = r"Q:\DATA\DATA ENTRY\XnatUploaded\sampledata\mridata"
+#
+# df = pd.read_excel(join(inputdir, "ASHS_xs_volumes.xlsx"))
+# df[['Subject','interval']] = df['subjname'].apply(lambda s: extract_subj(s)).apply(pd.Series)
+# sheet = 1
+# skip = 0
+# header = None
+# f2 = join(inputdir, "ASHS_xs_volumes.xlsx")
+# etype = 'MRI ASHS'
+#
+# MridataParser(f2, sheet, skip, header, etype).fields
+#
+# ['Subject', 'interval'] + MridataParser(f2, sheet, skip, header, etype).fields
 VERBOSE = 0
 class MridataParser(DataParser):
     def __init__(self, *args):
         DataParser.__init__(self, *args)
+        df = self.data
+        df[['Subject', 'interval']] = df['subjname'].apply(lambda s: extract_subj(s)).apply(pd.Series)
+        # cols = ['Subject', 'interval'] + self.fields
+
+        self.data = df
+        self.sortSubjects('Subject')
         if self.getPrefix() =='ASHS':
             self.data = self.normalizeICV()
         #sort subjects
@@ -149,18 +185,18 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     inputdir = args.filedir
-    print("Input:", inputdir)
+    print(("Input:", inputdir))
     if access(inputdir, R_OK):
         sheet = 1
         skip = 0
         header = None
 
-        seriespattern = '*.csv'
+        seriespattern = '*.xlsx' # originally .csv
         try:
             files = glob.glob(join(inputdir, seriespattern))
-            print("Files:", len(files))
+            print(("Files:", len(files)))
             for f2 in files:
-                print("Loading ", f2)
+                print(("Loading ", f2))
                 etype = 'MRI'
                 if 'ASHS' in f2:
                     etype += ' ASHS'
@@ -182,6 +218,6 @@ if __name__ == "__main__":
                                 print(msg1)
 
         except Exception as e:
-            print("ERROR: ", e)
+            print(("ERROR: ", e))
     else:
-        print("Cannot access directory: ", inputdir)
+        print(("Cannot access directory: ", inputdir))

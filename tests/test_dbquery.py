@@ -1,8 +1,11 @@
-import unittest2 as unittest
 from os.path import join
+
+import pandas
+import unittest2 as unittest
+
 from config.dbquery import DBI
 from opexuploader.utils import findResourceDir
-import pandas
+
 
 class TestDBquery(unittest.TestCase):
     def setUp(self):
@@ -16,14 +19,14 @@ class TestDBquery(unittest.TestCase):
 
     def test_getIDs(self):
         data = self.dbi.getIDs()
-        self.assertGreater(len(data),0)
+        self.assertGreater(len(data), 0)
 
     def test_updateIDs(self):
-        df = pandas.read_csv(join('..','resources', 'incorrectIds.csv'))
+        df = pandas.read_csv(join('..', 'resources', 'incorrectIds.csv'))
         idlist = [(d['INCORRECT'], d['CORRECT']) for i, d in df.iterrows()]
         cnt = self.dbi.addIDs(idlist)
         expected = len(idlist)
-        self.assertEqual(expected,cnt)
+        self.assertEqual(expected, cnt)
 
     def test_getRunOptions(self):
         data = self.dbi.getRunOptions()
@@ -43,7 +46,7 @@ class TestDBquery(unittest.TestCase):
         data = self.dbi.getInfo(etype)
         print(etype, ": ", data)
         self.assertGreater(len(data), 0)
-        self.assertDictEqual(expected,data)
+        self.assertDictEqual(expected, data)
 
     def test_getInfo_missing(self):
         etype = 'CANTAB'
@@ -55,12 +58,12 @@ class TestDBquery(unittest.TestCase):
         incorrectid = '1040DR'
         correctid = '1040DA'
         cid = self.dbi.getCorrectID(incorrectid)
-        self.assertEqual(correctid,cid)
+        self.assertEqual(correctid, cid)
 
     def test_getCorrectID_missing(self):
         incorrectid = '1020HC'
         cid = self.dbi.getCorrectID(incorrectid)
-        self.assertEqual(incorrectid,cid)
+        self.assertEqual(incorrectid, cid)
 
     def test_getDatelessExpts(self):
         data = self.dbi.getDatelessExpts()
@@ -71,22 +74,19 @@ class TestDBquery(unittest.TestCase):
         self.assertGreater(len(data), 0)
 
     def test_getXsitypeFromPrefix(self):
-        prefix ='MPX'
-        expected ='opex:bloodMultiplexData'
+        prefix = 'MPX'
+        expected = 'opex:bloodMultiplexData'
         data = self.dbi.getXsitypeFromPrefix(prefix)
-        self.assertEqual(expected,data)
+        self.assertEqual(expected, data)
 
     def test_getTotal(self):
-        expt ='Godin'
+        expt = 'GODIN'
         expected = 5
         data = self.dbi.getTotal(expt)
-        self.assertEqual(expected,data)
+        self.assertEqual(expected, data)
 
     def test_getInterval(self):
-        expt ='Godin'
+        expt = 'GODIN'
         expected = 3
         data = self.dbi.getInterval(expt)
-        self.assertEqual(expected,data)
-
-
-
+        self.assertEqual(expected, data)

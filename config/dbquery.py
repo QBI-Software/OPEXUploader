@@ -1,3 +1,5 @@
+import sys
+print(sys.version)
 import sqlite3
 from os.path import join
 from os import access, R_OK, W_OK
@@ -55,6 +57,20 @@ class DBI():
         self.conn.close()
         return cnt
 
+    def addFields(self, fieldslist, table):
+        """
+        Save changes to Incorrect and Correct IDs - all are replaced
+        :param idlist:
+        :return: number of ids added (total)
+        """
+        if self.c is None:
+            self.getconn()
+        cnt = self.c.executemany('INSERT INTO opexids VALUES (?,?)', idlist).rowcount
+        self.conn.commit()
+        self.conn.close()
+        return cnt
+
+
     def getCorrectID(self,sid):
         """
         Get correct ID if it exists in lookup table
@@ -93,7 +109,7 @@ class DBI():
         """
         if self.c is None:
             self.getconn()
-        self.c.execute("SELECT fieldname FROM opexfields WHERE expt=?", (etype,))
+        self.c.execute("SELECT DISTINCT fieldname FROM opexfields WHERE expt=?", (etype,))
         data = [d[0] for d in self.c.fetchall()]
         return data
 
@@ -169,4 +185,5 @@ if __name__ == "__main__":
 
     else:
         raise IOError("cannot access db")
+
 

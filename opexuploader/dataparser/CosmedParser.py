@@ -11,7 +11,7 @@ COSMED data requires further calculation and filtering before compiling for uplo
     - cosmed_xnat: map XnatField to Parameter
     - cosmed_fields: shows how data is collected - not read directly
     - cosmed_data: header fields for parsing data
-3. Load data file with skip=0 sheetname='Data'
+3. Load data file with skip=0 sheet_name='Data'
     - SubjectID = cell(1,1)
     - date = cell(0,4) - format d/m/yyyy
     - time = cell(1,4) - format hh:mm:ss AM/PM
@@ -19,7 +19,7 @@ COSMED data requires further calculation and filtering before compiling for uplo
         + Find phase=EXERCISE - last time point - extract data fields as per cosmed_fields
         + subset EXERCISE data at 3min intervals
         + subset RECOVERY data at 1min interval
-4. Load data file with skip=0 sheetname='Results'
+4. Load data file with skip=0 sheet_name='Results'
     - extract line 5 for headers
     - read params and Max for xnat
 5. Generate phase data from subsets
@@ -39,6 +39,7 @@ import argparse
 import glob
 import logging
 import re
+import os
 from datetime import datetime, time
 from os import R_OK, access, mkdir
 from os.path import join, basename, split, isdir, dirname, abspath
@@ -46,7 +47,9 @@ from os.path import join, basename, split, isdir, dirname, abspath
 import numpy as np
 import pandas as pd
 from openpyxl import load_workbook
+import sys
 
+sys.path.append(os.getcwd())
 from opexuploader.dataparser.abstract.DataParser import DataParser,stripspaces
 
 DEBUG = 0
@@ -60,9 +63,9 @@ class CosmedParser(DataParser):
         self.testonly = testonly
         # Load fields
         fieldsfile = join(self.getResourceDir(), "cosmed_fields.xlsx")
-        self.subjectdataloc = pd.read_excel(fieldsfile, header=0, sheetname='cosmed')
-        self.fields = pd.read_excel(fieldsfile, header=0, sheetname='cosmed_xnat')
-        self.datafields = pd.read_excel(fieldsfile, header=0, sheetname='cosmed_data')
+        self.subjectdataloc = pd.read_excel(fieldsfile, header=0, sheet_name='cosmed')
+        self.fields = pd.read_excel(fieldsfile, header=0, sheet_name='cosmed_xnat')
+        self.datafields = pd.read_excel(fieldsfile, header=0, sheet_name='cosmed_data')
 
         # Get list of subjects - parse individual files
         self.subjects = dict()
@@ -75,22 +78,23 @@ class CosmedParser(DataParser):
         # Load efficiency data from single file
         self.effdata_cols = {'0': [9, 12], '3': [13, 16], '6': [17, 20], '9': [21, 24],'12':[25,28]}
         self.effdata = self.__loadEfficiencydata(datafile)
+
         # Load data from files
         self.loaded = self.__loadData()
 
     def getResourceDir(self):
-        resource_dir = glob.glob(join(dirname(__file__), "resources"))
+        resource_dir = glob.glob(join('opexuploader', "resources"))
         middir = ".."
         ctr = 1
         while len(resource_dir) <= 0 and ctr < 5:
-            resource_dir = glob.glob(join(dirname(__file__), middir, "resources"))
+            resource_dir = glob.glob(join('opexuploader', middir, "resources"))
             middir = join(middir, "..")
             ctr += 1
         return abspath(resource_dir[0])
 
     def __loadEfficiencydata(self, datafile):
         # Load efficiency data from single file
-        effdata = pd.read_excel(datafile, sheetname=0, header=1)
+        effdata = pd.read_excel(datafile, sheet_name=0, header=1)
         effdata.drop(effdata.index[0], inplace=True)
         effdata['SubjectID'] = effdata.apply(lambda x: stripspaces(x, 'ID'), axis=1)
         logging.info("Loaded Efficiency: %d", len(effdata))
@@ -102,6 +106,10 @@ class CosmedParser(DataParser):
         cols = ['SubjectID', 'interval', 'date', 'time', 'filename'] + self.fields['Parameter'].tolist()
         self.data = {i: [] for i in cols}
         f = None
+        files = [f for f in self.files if f not in ['Q:\\DATA\\COSMEDdata\\30sec\\1050DP_12MonthF_30sec_20180221.xlsx',
+                                                    "Q:\\DATA\\COSMEDdata\\30sec\\1205SJ_3MonthC_30sec_20180928.xlsx",
+                                                    "Q:\\DATA\\COSMEDdata\\30sec\\1203LB_3MonthC_30sec_20180223.xlsx"]]
+
         try:
             for f in self.files:
                 filename = basename(f)
@@ -118,7 +126,7 @@ class CosmedParser(DataParser):
                     msg = "File: %s" % filename
                     logging.info(msg)
 
-                df_file_data = pd.read_excel(f, header=0, sheetname='Data')
+                df_file_data = pd.read_excel(f, header=0, sheet_name='Data')
                 if 'Dyspnea' in df_file_data.columns:
                     # Replace LEVEL with int
                     df_file_data['Dyspnea'] = df_file_data['Dyspnea'].apply(lambda r: self.extractLevel(r))
@@ -129,20 +137,22 @@ class CosmedParser(DataParser):
                     df_file_data.insert(len(df_file_data.columns),'Dyspnea','')
                 df_data_ex = df_file_data[df_file_data['Phase'] == 'EXERCISE']
                 df_data_rec = df_file_data[df_file_data['Phase'] == 'RECOVERY']
-                df_file_results = pd.read_excel(f, header=0, sheetname='Results', skiprows=4)
+                df_file_results = pd.read_excel(f, header=0, sheet_name='Results', skiprows=4)
                 if (df_file_data.iloc[0, 3] == 'Test Time'):
                     ftime = df_file_data.iloc[0, 4]  # format with date
                 else:
                     ftime = ''
                 fdata.append(ftime)
                 self.data['time'].append(ftime)
+
                 protocoldata = self.parseProtocol(df_file_results, df_data_ex, self.fields['Parameter'].tolist()[0:4])
                 metabolicdata = self.parseMetabolic(df_file_results, self.fields['Parameter'].tolist()[4:8])
                 cardiodata = self.parseCardio(df_data_ex, self.fields['Parameter'].tolist()[8:14])
                 effdata = self.parseEfficiency(self.effdata, fdata[0], self.effdata_cols[fdata[1]])
                 recoverydata = self.calcRecovery(df_data_ex, df_data_rec)
                 row = fdata + protocoldata + metabolicdata + cardiodata + effdata + recoverydata
-                print("Row: ", row)
+
+                print(("Row: ", row))
 
                 if not self.testonly:
                     # Generate phase data as separate tab
@@ -154,10 +164,10 @@ class CosmedParser(DataParser):
                 num = len(self.data['SubjectID'])
                 # Check SubjectIDs are correct
                 self.data['SubjectID'] = [self._DataParser__checkSID(sid) for sid in self.data['SubjectID']]
-                for c in self.data.keys():
+                for c in list(self.data.keys()):
                     if len(self.data[c]) != num:
                         msg = "Missing data - unable to compile: %s = %d (expected %d)" % (c, len(self.data[c]), num)
-                        print msg
+                        print(msg)
                         raise ValueError(msg)
                 self.df = pd.DataFrame.from_dict(self.data)
                 msg = "COSMED Data Load completed: %d files [%d rows]" % (len(self.files),len(self.df))
@@ -173,7 +183,7 @@ class CosmedParser(DataParser):
             else:
                 raise ValueError("Error: Data load failed - empty data")
         except Exception as e:
-            print(len(self.data), ' files loaded')
+            print((len(self.data), ' files loaded'))
             if f is not None:
                 msg = 'ERROR in File: %s - %s' % (f, e)
             else:
@@ -191,7 +201,7 @@ class CosmedParser(DataParser):
         :return:
         """
         # dataval = row['Dyspnea']
-        if (isinstance(dataval, str) or isinstance(dataval, unicode)) and dataval.startswith('LEVEL'):
+        if (isinstance(dataval, str) or isinstance(dataval, str)) and dataval.startswith('LEVEL'):
             dval = dataval.split("_")
             return int(dval[1])
 
@@ -207,13 +217,14 @@ class CosmedParser(DataParser):
         """
         pattern = '^(\d{4}\S{2})_(\d{1,2}).*(\d{8})\.xlsx$'
         m = re.search(pattern,filename)
+        fparts = filename.split("_")
         if m is not None:
             self.data['SubjectID'].append(m.group(1))
             self.data['interval'].append(m.group(2))
             self.data['date'].append(m.group(3))
             self.data['filename'].append(filename)
-        # fparts = filename.split("_")
-        # if len(fparts) == 4:
+
+        if len(fparts) == 4:
         #     # split to ID, interval, date
         #     self.data['SubjectID'].append(fparts[0])
         #     self.data['interval'].append(fparts[1][0])
@@ -277,11 +288,14 @@ class CosmedParser(DataParser):
         :return:
         """
         for field in fieldnames:
-            max = df_data[field].iloc[-1]
-            if max is None or (isinstance(max, float) and np.isnan(max)):
-                max = ''
-            self.data[field].append(max)
-        loadeddata = [self.data[f][-1] for f in fieldnames]
+            if field in df_data.columns:
+                max = df_data[field].iloc[-1]
+                if max is None or (isinstance(max, float) and np.isnan(max)):
+                    max = ''
+                self.data[field].append(max)
+            else:
+                continue
+        loadeddata = [self.data[f][-1] for f in fieldnames if f in df_data.columns]
         logging.info('Cardio: %s', loadeddata)
         return loadeddata
 
@@ -294,7 +308,7 @@ class CosmedParser(DataParser):
         """
         fields = {1: 'HRR1', 5: 'HRR3', 9: 'HRR5'}
         if df_ex.empty or df_data.empty:
-            for field in fields.itervalues():
+            for field in fields.values():
                 self.data[field].append('')
         else:
             t0 = df_data['t'].iloc[0]
@@ -320,7 +334,7 @@ class CosmedParser(DataParser):
                 else:
                     d=''
                 self.data[fields[i]].append(d)
-        loadeddata = [self.data[f][-1] for f in fields.itervalues()]
+        loadeddata = [self.data[f][-1] for f in fields.values()]
         logging.info('Recovery: %s', loadeddata)
         return loadeddata
 
@@ -466,7 +480,7 @@ class CosmedParser(DataParser):
         if self.df is not None:
             sids = self.df['SubjectID'].unique()
             ids = [i for i in sids if len(i) == 6]
-            intervals = range(0, 13, 3)
+            intervals = list(range(0, 13, 3))
             for sid in ids:
                 sidkey = self._DataParser__checkSID(sid)
                 self.subjects[sidkey] = dict()
@@ -529,14 +543,14 @@ class CosmedParser(DataParser):
 ########################################################################
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(prog='Parse MRI Analysis',
+    parser = argparse.ArgumentParser(prog='Parse Cosmed data',
                                      description='''\
             Reads files in a directory and extracts data for upload to XNAT
 
              ''')
-    parser.add_argument('--filedir', action='store', help='Directory containing xnatpaths.txt (paths for COSMED)', default="Q:\\DATA\\DATA ENTRY\\XnatUploaded\\sampledata\\cosmed")
+    parser.add_argument('--filedir', action='store', help='Directory containing xnatpaths.txt (paths for COSMED)', default="Q:\\DATA\\COSMEDdata\\txtlocation\\cosmed")
     parser.add_argument('--subdir', action='store', help='Full Subdirectory for individual files')
-    parser.add_argument('--datafile', action='store', help='Full path to VEVCO2 file')
+    parser.add_argument('--datafile', action='store', help='Full path to VEVCO2 file', default='Q:\\DATA\\COSMEDdata\\VEVCO2 Values\\VO2data_VEVCO2_30sec_20181221_XR.xlsx')
 
     args = parser.parse_args()
 
@@ -544,7 +558,7 @@ if __name__ == "__main__":
     inputsubdir = args.subdir
     datafile = args.datafile
 
-    print("Input:", inputdir)
+    print(("Input:", inputdir))
     if access(inputdir, R_OK):
         dp = CosmedParser(inputdir, inputsubdir, datafile, True)
         if dp.df.empty:
@@ -553,16 +567,16 @@ if __name__ == "__main__":
         dp.sortSubjects()
 
         for sd in dp.subjects:
-            print('\n***********SubjectID:', sd)
-            for i, row in dp.subjects[sd].items():
+            print(('\n***********SubjectID:', sd))
+            for i, row in list(dp.subjects[sd].items()):
                 sampleid = dp.getSampleid(sd, i)
-                print('Sampleid: ', sampleid)
+                print(('Sampleid: ', sampleid))
                 (mandata, data) = dp.mapData(row, i, xsd)
-                print('MANDATA: ', mandata)
-                print('DATA: ', data)
+                print(('MANDATA: ', mandata))
+                print(('DATA: ', data))
 
     else:
-        print("Cannot access directory: ", inputdir)
+        print(("Cannot access directory: ", inputdir))
         inputdir = "..\\..\\" + inputdir
         if access(inputdir, R_OK):
-            print("But can access this one: ", inputdir)
+            print(("But can access this one: ", inputdir))

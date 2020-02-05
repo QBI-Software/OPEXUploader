@@ -9,10 +9,11 @@ Created on Thu Mar 2 2017
 """
 
 import argparse
-from os import R_OK, access
+from os import R_OK, access, getcwd
 from os.path import join
 
 import numpy as np
+import sys
 
 from opexuploader.dataparser.abstract.DataParser import DataParser, stripspaces
 
@@ -26,12 +27,13 @@ class PsqiParser(DataParser):
             raise ValueError(msg)
         # cleanup subjects
         self.data['ID'] = self.data.apply(lambda x: stripspaces(x, 0), axis=1)
+        # self.data['ID'] = self.data['ID'].apply(lambda x: getID(x))
         if self.info is None:
             self.info = {'prefix': 'PSQ', 'xsitype': 'opex:psqi'}
         # Replace field headers
-        self.fields = ['c'+str(i) for i in range(1,8)] # + ['total']
-        ncols = ['SubjectID'] + self.fields + ['total']
-        cols = ['ID'] + [c for c in self.data.columns if (isinstance(c,unicode) or isinstance(c,str)) and c.startswith('Component')] + ['total']
+        self.fields = ['c'+str(i) for i in range(1,8)] + ['total']
+        ncols = ['SubjectID'] + self.fields
+        cols = ['ID'] + [c for c in self.data.columns if (isinstance(c,str) or isinstance(c,str)) and c.startswith('Component')] + ['total']
         df = self.data[cols]
         df.columns = ncols
         df.reindex()
@@ -70,8 +72,8 @@ class PsqiParser(DataParser):
             if field in row and not np.isnan(row[field].iloc[0]):
                 motdata[xsd + '/' + field] = str(int(row[field].iloc[0]))
                 #totalcols += int(row[field].iloc[0])
-        if not np.isnan(row['total'].iloc[0]):
-            motdata[xsd + '/total'] = str(int(row['total'].iloc[0]))
+        # if not np.isnan(row['total'].iloc[0]):
+        #     motdata[xsd + '/total'] = str(int(row['total'].iloc[0]))
         return (mandata, motdata)
 
     def validData(self, dvalues):
@@ -85,9 +87,12 @@ class PsqiParser(DataParser):
         rtn = True
         if isinstance(dvalues, list):
             for d in dvalues:
-                if isinstance(d, str) or isinstance(d, unicode) or np.isnan(d):
+                if isinstance(d, str) or isinstance(d, str):
                     rtn = False
                     break
+
+            if all([np.isnan(d) for d in dvalues]):
+                rtn = False
 
         return rtn
 
@@ -105,7 +110,7 @@ if __name__ == "__main__":
     parser.add_argument('--filedir', action='store', help='Directory containing files',
                         default="Q:\\DATA\\DATA ENTRY\\XnatUploaded\\sampledata\\psqi")
     parser.add_argument('--datafile', action='store', help='Filename of original data',
-                        default="PSQI data entry_FINAL_FORMULAS_Liz.xlsx")
+                        default="testpsqi.xlsx")
     parser.add_argument('--sheet', action='store', help='Sheet name to extract',
                         default="0")
     args = parser.parse_args()
@@ -115,37 +120,41 @@ if __name__ == "__main__":
     skip = 1
     header = 1
     etype = 'PSQI'
-    print("Input:", inputfile)
+    print(("Input:", inputfile))
     if access(inputfile, R_OK):
         try:
-            print("Loading ", inputfile)
-            intervals = range(0, 10, 3)
+            print(("Loading ", inputfile))
+            intervals = list(range(0, 10, 3))
             for sheet in range(0, 4):
                 i = intervals[sheet]
-                print('Interval:', i)
+                print(('Interval:', i))
                 try:
                     dp = PsqiParser(inputfile, sheet, skip, header, etype)
                 except ValueError as e:
-                    print(e.args[0])
+                    print((e.args[0]))
                     continue
                 xsdtypes = dp.getxsd()
 
                 for sd in dp.subjects:
-                    print('\n***********SubjectID:', sd)
+                    print(('\n***********SubjectID:', sd))
                     sampleid = dp.getSampleid(sd, i)
 
+
                     row = dp.subjects[sd]
-                    if not dp.validData(row[dp.fields].values.tolist()[0]):
-                        #print('empty data - skipping')
-                        continue
-                    print('Sampleid:', sampleid)
-                    (mandata, data) = dp.mapData(row, i, xsdtypes)
-                    print(mandata)
-                    print(data)
+                    print((row[dp.fields].values.tolist()[0]))
+                    print((dp.validData(row[dp.fields].values.tolist()[0])))
+
+                    # if not dp.validData(row[dp.fields].values.tolist()[0]):
+                    #     print('empty data - skipping')
+                    #     continue
+                    # print('Sampleid:', sampleid)
+                    # (mandata, data) = dp.mapData(row, i, xsdtypes)
+                    # print(mandata)
+                    # print(data)
             print("Complete")
         except Exception as e:
-            print("Error: ", e)
+            print(("Error: ", e))
 
 
     else:
-        print("Cannot access file: ", inputfile)
+        print(("Cannot access file: ", inputfile))

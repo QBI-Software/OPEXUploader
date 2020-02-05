@@ -11,7 +11,7 @@ Created on Thu Feb 23 10:58:21 2017
 
 @author: Liz Cooper-Williams, QBI
 """
-import ConfigParser
+import configparser
 import argparse
 import csv
 import glob

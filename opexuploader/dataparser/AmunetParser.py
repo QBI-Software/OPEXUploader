@@ -16,6 +16,7 @@ import fnmatch
 import glob
 import logging
 import re
+import os
 import shutil
 from datetime import date
 from os import listdir, R_OK, access
@@ -24,7 +25,9 @@ from os.path import join, isfile, split, basename
 import pandas
 from numpy import nan
 from pandas import Series
+import sys
 
+sys.path.append(os.getcwd())
 from opexuploader.dataparser.abstract.DataParser import DataParser
 
 VERBOSE = 0
@@ -38,6 +41,7 @@ class AmunetParser(DataParser):
         self.dates = dict()
         self.subjects = dict()
         self.interval = None
+        self.sortSubjects()
 
     def sortSubjects(self, subjectfield='S_Full name'):
         '''Sort data into subjects by participant ID'''
@@ -55,8 +59,8 @@ class AmunetParser(DataParser):
                 sidkey = self._DataParser__checkSID(sid)
                 self.subjects[sidkey] = self.data[self.data[subjectfield] == sid]
                 if VERBOSE:
-                    print('Subject:', sid, 'with datasets=', len(self.subjects[sid]))
-            print('Subjects loaded=', len(self.subjects))
+                    print(('Subject:', sid, 'with datasets=', len(self.subjects[sid])))
+            print(('Subjects loaded=', len(self.subjects)))
 
     def getRowvisit(self, row, pdates):
         d = pdates['visit'][pdates['subject'] == row['S_Full name']]
@@ -107,7 +111,7 @@ class AmunetParser(DataParser):
             except:
                 visitdate = row['Date']  # .replace("-",".")
                 # visitdate = visitdate + " 00:00:00"
-        print("Visit date=", visitdate)
+        print(("Visit date=", visitdate))
         return visitdate
 
     def mapAEVdata(self, row, i):
@@ -208,7 +212,7 @@ class AmunetParser(DataParser):
                 else:
                     fdateobj = date(int(fdate[0:4]), int(fdate[4:6]), int(fdate[6:9]))
             except ValueError:
-                print("cannot create date from: ", fdate)
+                print(("cannot create date from: ", fdate))
                 continue
 
             if self.dates.get(fid) is not None:
@@ -216,7 +220,7 @@ class AmunetParser(DataParser):
             else:
                 self.dates[fid] = [fdateobj]
 
-        print(self.dates)
+        print((self.dates))
         # Output to a csvfile
         csvfile = join(dirpath, 'amunet_participantdates.csv')
         with open(csvfile, 'wb') as f:
@@ -273,7 +277,7 @@ def extractDateInfo(dirpath, ext='zip'):
     participantdates = dict()
     seriespattern = '*.' + ext
     zipfiles = glob.glob(join(dirpath, seriespattern))
-    print("Total files: ", len(zipfiles))
+    print(("Total files: ", len(zipfiles)))
     # Extract date from filename - expect
     rid = re.compile('^(\d{4}.{2})')
     rdate = re.compile('(\d{8})\.zip$')
@@ -300,9 +304,16 @@ def extractDateInfo(dirpath, ext='zip'):
         else:
             participantdates[fid] = [fdateobj]
 
-    print("Loaded:", len(participantdates))
+    print(("Loaded:", len(participantdates)))
     return participantdates
 
+# interval = str(0)
+# sheet  = 0
+#
+# inputdir = "Q:\\DATA\\DATA ENTRY\\XnatUploaded\\sampledata\\amunet"
+# f2 = "Q:\\DATA\\DATA ENTRY\\XnatUploaded\\sampledata\\amunet\\0m\\BaseMar18converted_results.xlsx"
+# sheet=0,skiplines=0, header=None, etype=None
+# dp = AmunetParser('0', f2, sheet)
 
 ########################################################################
 
@@ -313,7 +324,7 @@ if __name__ == "__main__":
 
              ''')
     parser.add_argument('--filedir', action='store', help='Directory containing files',
-                        default="..\\..\\sampledata\\amunet")
+                        default="Q:\\DATA\\DATA ENTRY\\XnatUploaded\\sampledata\\amunet")
     # parser.add_argument('--datelist', action='store', help='Generate list of dates from dir', default="1")
 
     args = parser.parse_args()
@@ -327,7 +338,7 @@ if __name__ == "__main__":
         if inputdir not in ['0m', '3m', '6m', '9m', '12m']:
             continue
         interval = inputdir[0:-1]
-        print('Interval:', interval)
+        print(('Interval:', interval))
         inputdir = join(topinputdir, inputdir)
         print(inputdir)
         # Get dates from zip files
@@ -344,18 +355,18 @@ if __name__ == "__main__":
         shutil.copyfile(dates_csv, join(inputdir, basename(dates_csv)))
         # Get xls files
         files = glob.glob(join(inputdir, seriespattern))
-        print("Loading Files:", len(files))
+        print(("Loading Files:", len(files)))
         for f2 in files:
-            print("Loading", f2)
+            print(("Loading", f2))
             dp = AmunetParser(interval, f2, sheet)
             xsdtypes = dp.getxsd()
             # dp.interval = interval
             for sd in dp.subjects:
-                print('\n*****SubjectID:', sd)
+                print(('\n*****SubjectID:', sd))
                 for i, row in dp.subjects[sd].iterrows():
                     sampleid = dp.getSampleid(sd, row)
                     row.replace(nan, '', inplace=True)
-                    print('Sampleid:', sampleid)
+                    print(('Sampleid:', sampleid))
                     if 'AEV_Average total error' in row:
                         (mandata, motdata) = dp.mapAEVdata(row, i)
                     else:

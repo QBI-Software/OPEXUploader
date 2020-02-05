@@ -9,81 +9,131 @@ Created on Thu Mar 2 2017
 
 @author: Liz Cooper-Williams, QBI
 """
+from __future__ import print_function
 
 import argparse
 import glob
-import re
+import os
+import sys
 from datetime import datetime
 from os import R_OK, access
 from os.path import join
 
 import pandas
 
+sys.path.append(os.getcwd())
 from opexuploader.dataparser.abstract.DataParser import DataParser
 
 DEBUG = 0
+
+
 class BloodParser(DataParser):
 
     def __init__(self, *args, **kwargs):
         DataParser.__init__(self, *args)
         if self.data is None:
             raise ValueError('BloodParser: Data not loaded')
-        self.type=''
+        self.type = ''
         if 'type' in kwargs:
             self.type = kwargs.get('type')
             self.fields = self.dbi.getFields(self.type)
             self.info = self.dbi.getInfo(self.type)
-            #self.fields = self.getFieldsFromFile(self.type)
+            # self.fields = self.getFieldsFromFile(self.type)
+
         elif self.etype is not None:
             self.type = self.etype
-
-        # Multiplex has different headers vs Cobas
-        if self.type == 'MULTIPLEX':
-            print('Headers for ', self.type)
-            colnames = {'Date': 'A_Date', 'Participant ID ': 'Participant ID', 'Timepoint': 'Sample ID','IGFBP-7':'IGFBP7'}
+        print('Rename Headers for ', self.type)
+        ## Rename columns in dataframe
+        if self.type == 'IGF':
+            colnames = {'Date': 'A_Date',
+                        'Participant ID ': 'Participant ID',
+                        'Timepoint': 'Sample ID',
+                        'IGF-1': 'IGF1'}
             self.data = self.data.rename(index=str, columns=colnames)
-            self.data.insert(0, 'R_No.', range(len(self.data)))
+
+        elif self.type == 'SOMATO':
+            colnames = {'Date': 'A_Date',
+                        'Participant ID ': 'Participant ID',
+                        'Timepoint': 'Sample ID',
+                        'Somatostatin': 'somatostatin'}
+            self.data = self.data.rename(index=str, columns=colnames)
+
+        elif self.type == 'BDNF':
+            colnames = {'Date': 'A_Date',
+                        'Participant ID ': 'Participant ID',
+                        'Timepoint': 'Sample ID'}
+            self.data = self.data.rename(index=str, columns=colnames)
+
+        elif self.type == 'MULTIPLEX':
+            colnames = {'Date': 'A_Date',
+                        'Participant ID ': 'Participant ID',
+                        'Timepoint': 'Sample ID',
+                        'IGFBP-7': 'IGFBP7'}
+            self.data = self.data.rename(index=str, columns=colnames)
+
+        elif self.type == 'INFLAM':
+            print('Headers for ', self.type)
+            colnames = {'Date': 'A_Date',
+                        'Participant ID ': 'Participant ID',
+                        'Timepoint': 'Sample ID',
+                        'IFNγ': 'ifngamma',
+                        'IL-10': 'il10',
+                        'IL-12(p70)': 'il12p70',
+                        'IL-1β': 'il1beta',
+                        'IL-6': 'il6',
+                        'IL-8': 'il8cxcl8',
+                        'TNFα': 'tnfalpha'
+                        }
+            self.data = self.data.rename(index=str, columns=colnames)
+
         elif self.type == 'ELISAS':
-            colnames = ['BetaHydroxy','Sample ID','A_Date','R_No.','Participant ID','Timepoint']
-            try:
-                df = self.data[colnames]
-                self.data = df
-            except Exception as e:
-                raise ValueError(e)
-            #self.data = self.data.rename(index=str, columns=colnames)
+            colnames = {'Date': 'A_Date',
+                        'Participant ID ': 'Participant ID',
+                        'Timepoint': 'Sample ID',
+                        'Beta-H (ng/ul)': 'BetaHydroxy'}
+            self.data = self.data.rename(index=str, columns=colnames)
+
         elif self.type == 'COBAS':
-            # Rename columns to field names
+            # Name unnamed columns to field names
             if self.fields[0] not in self.data.columns:
                 colnames = {}
-                v=1
+                v = 1
                 for i in range(len(self.fields)):
                     colnames['Value.' + str(v)] = self.fields[i]
                     v = v + 2
+            else:
+                colnames = {'Date': 'A_Date',
+                            'Participant ID ': 'Participant ID',
+                            'Timepoint': 'Sample ID',
+                            'Prolactin': 'Prolactin',
+                            'Insulin': 'Insulin',
+                            'HGH': 'HGH',
+                            'Cortisol': 'Cortisol'}
 
-                df = self.data.rename(index=str, columns=colnames)
-                print("Renamed columns: ", colnames)
-                self.data = df
-        elif self.type =='IGF':
-            colnames = {'Date': 'A_Date', 'Participant ID ': 'Participant ID', 'Timepoint': 'Sample ID',
-                        'IGF-1': 'IGF1'}
             self.data = self.data.rename(index=str, columns=colnames)
-            self.data.insert(0, 'R_No.', range(len(self.data)))
+
+        # Insert Row Number column
+        if 'R_No.' not in self.data.columns:
+            self.data.insert(0, 'R_No.', list(range(len(self.data))))
+
         # Remove NaT rows
         i = self.data.query('A_Date =="NaT"')
         if not i.empty:
             self.data.drop(i.index[0], inplace=True)
             print('NaT row dropped')
+
         # Organize data into subjects
-        subjectfield ='Participant ID'
+        subjectfield = 'Participant ID'
         if subjectfield not in self.data.columns:
             raise ValueError('Subject ID field not present: ', subjectfield)
-        self.data[subjectfield] = self.data[subjectfield].str.replace(" ","")
+        self.data[subjectfield] = self.data[subjectfield].str.replace(" ", "")
         self.sortSubjects(subjectfield)
         if self.subjects is not None:
             print('BloodParser: subjects loaded successfully')
+        self.subjectfield = subjectfield
 
-    def getInterval(self,rowval):
-        print('getinterval',rowval)
+    def getInterval(self, rowval):
+        print('getinterval', rowval)
 
     def getFieldsFromFile(self, type):
         """
@@ -91,7 +141,7 @@ class BloodParser(DataParser):
         :param self:
         :return:
         """
-        fields=[]
+        fields = []
         try:
             fieldsfile = join(self.resource_dir, 'blood_fields.csv')
             df = pandas.read_csv(fieldsfile, header=0)
@@ -101,11 +151,11 @@ class BloodParser(DataParser):
             raise e
         return fields
 
-    def getPrepostOptions(self,i):
+    def getPrepostOptions(self, i):
         options = ['fasted', 'pre', 'post']
         return options[i]
 
-    def parseSampleID(self,sampleid):
+    def parseSampleID(self, sampleid):
         """
         Splits sample id
         :param sampleid: 0-0-S-a gives interval-prepost-S-a
@@ -120,27 +170,16 @@ class BloodParser(DataParser):
             prepost = ""
         return (interval, prepost)
 
-    def parseTimepoint(self,timepoint):
-        m = re.search('^(\d{1,2})m\s(\w+)', timepoint)
-        interval = m.group(1)
-        prepost = m.group(2)
-        return (interval, prepost)
-
     def getSampleid(self, sd, row):
         """
         Generate a unique id for data sample
         :param row:
         :return:
         """
-        if 'Timepoint' in row:
-            (interval, prepost) = self.parseTimepoint(row['Timepoint'])
-            m_sid = re.search('(\d{1,2})', row['R_No.'])
-            id = "%s_%dm_%s_%s" % (sd, int(interval), prepost, int(m_sid.group(1)))
-            # print('Timepoint: id=', id)
-        elif 'Sample ID' in row:
+        if 'Sample ID' in row:
             parts = row['Sample ID'].split("-")
-            id = "%s_%dm_%s_%s" % (sd, int(parts[0]), self.getPrepostOptions(int(parts[1])), int(row['R_No.']))
-            # print('SampleID: id=', id)
+            id = "%s_%dm_%s_%s" % (sd, int(parts[0]), self.getPrepostOptions(int(parts[1]), int(row['R_No.'])))
+
         else:
             raise ValueError("Sample ID column missing")
         return id
@@ -151,7 +190,7 @@ class BloodParser(DataParser):
         :param orig:
         :return:
         """
-        if isinstance(orig, pandas.Timestamp):
+        if isinstance(orig, pandas.Timestamp) or isinstance(orig, datetime):
             dt = orig
         elif "/" in orig:
             dt = datetime.strptime(orig, "%d/%m/%Y %H:%M:%S")
@@ -161,35 +200,39 @@ class BloodParser(DataParser):
             dt = orig
         return dt.strftime("%Y.%m.%d %H:%M:%S")
 
+    def getxsd(self):
+        xsd = {'MULTIPLEX': 'opex:bloodMultiplexData',
+               'BDNF': 'opex:bloodBdnfData',
+               'COBAS': 'opex:bloodCobasData',
+               'ELISAS': 'opex:bloodElisasData',
+               'INFLAM': 'opex:bloodInflamData',
+               'IGF': 'opex:bloodIgfData',
+               'SOMATO': 'opex:bloodSomatostatinData'}
+        return xsd[self.type]
+
     def mapData(self, row, i, xsd=None):
         """
         Maps required fields from input rows
         :param row:
         :return:
         """
-        if self.type=='ELISAS':
-            (interval,prepost) = self.parseTimepoint(row['Timepoint'])
-            sample_id = row['Sample ID']
-            sample_num = str(row['R_No.'])
-        else:
-            (interval, prepost) = self.parseSampleID(row['Sample ID'])
-            sample_id = row['Sample ID']
-            sample_num = str(row['R_No.'])
+        (interval, prepost) = self.parseSampleID(row['Sample ID'])
 
         if xsd is None:
-            xsd = self.getxsd() #[self.type]
+            xsd = self.getxsd()
+
         mandata = {
             xsd + '/interval': str(interval),
-            xsd + '/sample_id': sample_id,  # row number in this data file for reference
-            xsd + '/sample_quality': 'Good',  # default - check later if an error
-            xsd + '/data_valid': 'Checked',
-            xsd + '/date' : self.formatADate(row['A_Date']),
-            xsd + '/comments' : 'Date analysed',
+            xsd + '/sample_id': row['Sample ID'],  # row number in this data file for reference
+            xsd + '/sample_quality': 'Unknown',  # default - check later if an error
+            xsd + '/data_valid': 'Initial',
+            xsd + '/date': self.formatADate(row['A_Date']),
+            xsd + '/comments': 'Date analysed not collected',
             xsd + '/prepost': prepost,
-            xsd + '/sample_num' : sample_num
+            xsd + '/sample_num': str(row['R_No.'])
 
         }
-        #Different fields for different bloods
+        # Different fields for different bloods
         data = {}
         for ctab in self.fields:
             if ctab in row:
@@ -197,35 +240,40 @@ class BloodParser(DataParser):
                     print(ctab, ' = ', row[ctab])
                 data[xsd + '/' + ctab] = str(row[ctab])
 
-        return (mandata,data)
-
-
+        return (mandata, data)
 
 
 ########################################################################
 
 if __name__ == "__main__":
     import sys
+
     parser = argparse.ArgumentParser(prog=sys.argv[0],
                                      description='''\
             Reads files in a directory and extracts data ready to load to XNAT database
 
              ''')
+    TEST_TYPE = 'MULTIPLEX'
+    TEST_DIR = '../../data'
 
-    parser.add_argument('--filedir', action='store', help='Directory containing files', default="D:\\Dropbox\\worktransfer\\opex\\IGF")
+
+    parser.add_argument('--filedir', action='store', help='Directory containing files', default=TEST_DIR)
     parser.add_argument('--sheet', action='store', help='Sheet name to extract', default="0")
-    parser.add_argument('--type', action='store', help='Type of blood sample', default="IGF")
+    parser.add_argument('--type', action='store', help='Type of blood sample', default=TEST_TYPE)
     args = parser.parse_args()
 
-    inputdir = args.filedir
+    inputdir = args.filedir + TEST_TYPE
     sheet = int(args.sheet)
     skip = 1
-    header=None
+    header = None
     etype = args.type
-    if args.type =='MULTIPLEX' or args.type =='IGF':
-        skip =0
-    elif args.type=='ELISAS':
-        skip=34
+    if args.type == 'MULTIPLEX' or args.type == 'BDNF' or args.type == 'INFLAM':
+        skip = 0
+    elif args.type == 'ELISAS' or args.type == 'SOMATO':
+        skip = 0
+        sheet = 2
+    elif args.type == 'IGF':
+        skip = 0
     print("Input:", inputdir)
     if access(inputdir, R_OK):
         seriespattern = '*.xlsx'
@@ -234,23 +282,20 @@ if __name__ == "__main__":
             files = glob.glob(join(inputdir, seriespattern))
             print("Files:", len(files))
             for f2 in files:
-                print("\n****Loading",f2)
-                dp = BloodParser(f2,sheet,skip, header,etype)
+                print("\n****Loading", f2)
+                dp = BloodParser(f2, sheet, skip, header, etype)
+                dp.sortSubjects(dp.subjectfield)
 
                 for sd in dp.subjects:
                     print('ID:', sd)
                     for i, row in dp.subjects[sd].iterrows():
-                        dob = dp.formatADate(str(dp.subjects[sd]['A_Date'][i]))
-                        uid = dp.getPrefix() + "_" + dp.getSampleid(sd,row)
-                        print(i, 'Visit:', uid, 'Date', dob)
-                        (d1,d2) = dp.mapData(row,i)
-                        print(d1)
+                        # dob = dp.formatADate(str(dp.subjects[sd]['A_Date'][i]))
+                        # uid = dp.type + "_" + dp.getSampleid(sd, row)
+                        # print(i, 'Visit:', uid, 'Date', dob)
+                        (d1, d2) = dp.mapData(row, i)
+                        # print(d1)
                         print(d2)
-
-
-
         except ValueError as e:
             print(e)
-
     else:
         print("Cannot access directory: ", inputdir)
