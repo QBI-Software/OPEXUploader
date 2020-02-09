@@ -178,7 +178,7 @@ class BloodParser(DataParser):
         """
         if 'Sample ID' in row:
             parts = row['Sample ID'].split("-")
-            id = "%s_%dm_%s_%s" % (sd, int(parts[0]), self.getPrepostOptions(int(parts[1]), int(row['R_No.'])))
+            id = "%s_%dm_%s_%d" % (sd, int(parts[0]), self.getPrepostOptions(int(parts[1])), int(row['R_No.']))
 
         else:
             raise ValueError("Sample ID column missing")
@@ -253,7 +253,7 @@ if __name__ == "__main__":
             Reads files in a directory and extracts data ready to load to XNAT database
 
              ''')
-    TEST_TYPE = 'MULTIPLEX'
+    TEST_TYPE = 'SOMATO'
     TEST_DIR = '../../data'
 
 
@@ -263,17 +263,17 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     inputdir = args.filedir + TEST_TYPE
-    sheet = int(args.sheet)
-    skip = 1
     header = None
     etype = args.type
-    if args.type == 'MULTIPLEX' or args.type == 'BDNF' or args.type == 'INFLAM':
-        skip = 0
+    # Set Excel sheet no
+    sheet = int(args.sheet)
+    # Skip x rows in Excel sheet before data
+    skip = 0  # DEFAULT
+    if args.type == 'COBAS':
+        skip = 1
     elif args.type == 'ELISAS' or args.type == 'SOMATO':
-        skip = 0
         sheet = 2
-    elif args.type == 'IGF':
-        skip = 0
+
     print("Input:", inputdir)
     if access(inputdir, R_OK):
         seriespattern = '*.xlsx'

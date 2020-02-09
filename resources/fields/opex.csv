@@ -32,3 +32,5 @@ INFLAM,6,5,opex:bloodInflamData,INFLAM,y,BLOOD,--blood
 SOMATO,6,5,opex:bloodSomatostatinData,SOMATO,y,BLOOD,--blood
 TASKRET,6,5,opex:fmritaskret,TASKRET,Y,TASKRET,--taskret
 TASKENCODE,6,5,opex:fmritaskencode,TASKENCODE,Y,TASKENCODE,--taskencode
+BDNF,1,23,opex:bloodBdnfData,BDNF,n,BLOOD,--blood
+ADHERENCE,6,10,opex:adherence,ADHERE,n,ADHERENCE,--adherence
