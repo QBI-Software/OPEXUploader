@@ -124,7 +124,8 @@ def loadFields():
                 'SF36': 'sf36_fields.csv',
                 'FOODDIARY': 'fooddiary_fields.csv',
                 'ACCELEROMETRY': 'accel_fields.csv',
-                'AMUNETALL': 'amunetall_fields.csv'
+                'AMUNETALL': 'amunetall_fields.csv',
+                'ADHERENCE': 'adherence_fields.csv'
                 }
 
     for expt in csvfiles.keys():
