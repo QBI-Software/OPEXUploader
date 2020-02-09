@@ -3,42 +3,34 @@ Title:      Adherence Parser
 Author:     Alan Ho
 Date:       26/03/2019
 Description:    Parses adherence rates and HRs from training diaries
-"""
-from __future__ import print_function
 
-"""
 Developer Notes:
 
 1. Consider making separate parser for the LIT group
 2. Add the XnatConnector functionality to look up a specific cosmed HR value
-
 """
+from __future__ import print_function
 
-# MODULES ------------------
-import pandas as pd
-import numpy as np
-import os
-from os.path import basename, dirname, join, expanduser
-from datetime import datetime
 import argparse
-import logging
-import sys
+import glob
+import os
 import re
-from configobj import ConfigObj
+from os.path import basename, join, expanduser
 
+import numpy as np
+import pandas as pd
+
+from opexuploader.dataparser.abstract.DataParser import DataParser
 from xnatconnect.XnatConnector import XnatConnector
 
-class AdherenceParser:
 
-    def __init__(self, filepath):
-        self.filepath = filepath
-        self.training_file = pd.ExcelFile(self.filepath)
-        print(self.training_file)
+class AdherenceParser(DataParser):
 
-        self.type = re.findall('(?<=Diary-)[A-Z]{3}', basename(self.filepath))[0]
-        self.fields = ['THR_min_ave', 'THR_min_percent', 'HR_ave03', 'HR_max0', 'HR_maxp03', 'HR_ave46', 'HR_max3', 'HR_maxp46']
+    def __init__(self, *args):
+        DataParser.__init__(self, *args)
+        self.training_file = pd.ExcelFile(self.datafile)
+        self.type = re.findall('(?<=Diary-)[A-Z]{3}', basename(self.datafile))[0]
         self.extraction = {'AIT': extract_AIT, 'MIT': extract_MIT, 'LIT': extract_LIT}
-
         self.getData()
 
 
@@ -60,9 +52,6 @@ class AdherenceParser:
             except Exception as e:
                 print(("ERROR:", e))
 
-    def getxsd(self):
-        xsd = 'opex:adherence'
-        return xsd
 
     def getSampleid(self, sd):
         """
@@ -331,32 +320,26 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     inputdir = args.inputdir
+    print("Input:", inputdir)
+    if os.access(inputdir, os.R_OK):
+        seriespattern = 'Training-Diary-*.xlsx'
 
-    # inputdir = "Q:\\DATA\\DATA ENTRY\\Training Diaries"
+        try:
+            files = glob.glob(join(inputdir, seriespattern))
+            print("Files:", len(files))
+            for f2 in files:
+                print("\n****Loading", f2)
+                dp = AdherenceParser(f2)
+                dp.sortSubjects()
+                for sd in dp.subjects:
+                    sampleid = dp.getSampleid(sd)
+                    print('Sample ID: ' + sampleid)
+                    row = dp.subjects[sd]
+                    (mandata, motdata) = dp.mapData(row)
+                    print(motdata)
+        except ValueError as e:
+            print(e)
 
-
-    files = ['Training-Diary-AIT_20181123.xlsx', 'Training-Diary-MIT_20181123.xlsx', 'Training-Diary-LIT_20181220.xlsx']
-    files = ['Training-Diary-AIT_20181123.xlsx']
-
-    print(files)
-    # path = join(inputdir, files[0])
-
-    for f2 in files:
-        print('Running {}'.format(f2))
-
-        path = join(inputdir, f2)
-
-        dp = AdherenceParser(filepath=path)
-        # for key in dp.errors:
-        #     if dp.errors[key][key] is not None:
-        #         print key
-        #         print dp.errors[key][key].set_index('Session')
-
-        for sd in dp.subjects:
-            sampleid = dp.getSampleid(sd)
-            print('Sample ID: ' + sampleid)
-            row = dp.subjects[sd]
-            (mandata, motdata) = dp.mapData(row)
-            print(motdata)
-
+    else:
+        print("Cannot access directory: ", inputdir)
 
