@@ -338,7 +338,7 @@ if __name__ == "__main__":
         if inputdir not in ['0m', '3m', '6m', '9m', '12m']:
             continue
         interval = inputdir[0:-1]
-        print(('Interval:', interval))
+        print('Interval:', interval)
         inputdir = join(topinputdir, inputdir)
         print(inputdir)
         # Get dates from zip files

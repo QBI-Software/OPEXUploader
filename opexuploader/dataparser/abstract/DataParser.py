@@ -12,14 +12,17 @@ Created on Thu Mar 2 2017
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
-import glob
+
+import logging
 from datetime import datetime
 from os import R_OK, access
-from os.path import join, basename, splitext, dirname, abspath
-from opexuploader.utils import findResourceDir
+from os.path import join, basename, splitext
+
 import pandas
-import logging
+
 from config.dbquery import DBI
+from opexuploader.utils import findResourceDir
+
 
 class DataParser(object):
     def __init__(self, datafile=None, sheet=0,skiplines=0, header=None, etype=None):

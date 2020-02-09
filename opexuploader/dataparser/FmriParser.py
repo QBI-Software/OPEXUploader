@@ -22,7 +22,6 @@ from os import R_OK, access, listdir, mkdir, listdir
 from os.path import join, expanduser, dirname, abspath, basename
 from datetime import datetime
 
-sys.path.append(os.getcwd())
 from opexuploader.dataparser.abstract.DataParser import DataParser
 
 
@@ -30,22 +29,18 @@ from opexuploader.dataparser.abstract.DataParser import DataParser
 
 class FMRIParser(DataParser):
 
-    def __init__(self, inputdir, fieldsfile='resources/fields/fmri.xlsx', *args):
+    def __init__(self, inputdir, fieldsfile='fmri.xlsx', *args):
         DataParser.__init__(self, *args)
-
         self.inputdir = inputdir
-        self.fieldsfile = fieldsfile
+        self.fieldsfile = os.path.join(self.resource_dir, 'fields', fieldsfile)
 
         self.lookup()
-        # self.fields = ['accProportions_Obj_5 ']
         self.getdata()
         self.sortSubjects('Subject')
 
 
     def lookup(self):
-        lookup = \
-            pd.read_excel(self.fieldsfile, index_col=0)[['XnatField']]. \
-                to_dict(orient='index')
+        lookup = pd.read_excel(self.fieldsfile, index_col=0)[['XnatField']].to_dict(orient='index')
 
         for key in lookup:
             value = lookup[key]['XnatField']
@@ -84,9 +79,6 @@ class FMRIParser(DataParser):
                         sort_values(['Subject', 'interval'])
 
 
-    def getxsd(self):
-        return 'opex:fmri'
-
     def getSampleid(self, sd, row):
         """
         Generate Unique sample ID - append prefix for subtypes
@@ -118,12 +110,6 @@ class FMRIParser(DataParser):
             motdata[xsd + '/' + field] = str(row[field])
         return (mandata, motdata)
 
-
-
-
-def check_fmri(type, interval=0, subjects = ['1001DS', '1224CL']):
-    data = dp.data[['Subject', 'interval'] + [type + '_' + str(i) for i in [3, 5]]].query('interval == {} & Subject in {}'.format(interval, subjects))
-    return(data)
 
 
 ##########################################

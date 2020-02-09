@@ -24,7 +24,7 @@ from abstract.DataParser import DataParser
 
 class AmunetParserXML(DataParser):
 
-    def __init__(self, pathtofile,pathtoerrors=None, *args):
+    def __init__(self, pathtofile, pathtoerrors=None, *args):
         DataParser.__init__(self, *args)
         self.fields = None
         self.datafile = None
@@ -431,11 +431,14 @@ if __name__ == '__main__':
     parser.add_argument('--filter', action='store', help='Filter Type',
                         default="NoFilter")
 
+    parser.add_argument('--errors', action='store', help='Full path and filename of errors template',
+                        default="C:\\Users\\uqaho4\\Desktop\\hMWM\\errors_template.csv")
+
     args = parser.parse_args()
 
     root_dir = args.filedir
     interval_dir = ['1. 0M_Baseline','2. 3M_Interim','3. 6M_Post','4. 9M_Maintenance','5. 12M_Final']
-    errors_path = "C:\\Users\\uqaho4\\Desktop\\hMWM\\errors_template.csv"
+    errors_path = args.errors
 
 
     output_filename = "batch_{}_{}.csv".format(args.filter, datetime.today().strftime("%Y-%m-%d"))
