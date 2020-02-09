@@ -260,7 +260,7 @@ if __name__ == "__main__":
     ###
 
     parser = argparse.ArgumentParser(prog="Amunet Filter",
-                                     description="Filters and analyses amunet data from amunetParser_new.py")
+                                     description="Filters and analyses amunet data from AmunetParser_XML.py")
     parser.add_argument('--filedir', help='Specify the directory of the amunet raw data file', action='store',
                         default='C:\\Users\\uqaho4\\Desktop\\hMWM\\Batches')
     parser.add_argument('--filename', help='Specify the filename of the raw amunet file', action='store',

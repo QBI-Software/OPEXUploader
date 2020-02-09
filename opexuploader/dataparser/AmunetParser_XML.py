@@ -4,26 +4,25 @@ TITLE  - Virtual Water Maze Parser
 @author Alan Ho, QBI 2018
 """
 
-import sys
-import os
-import sys
-import re
-import zipfile
-import pandas as pd
-import numpy as np
 import argparse
-import logging
 import csv
-from os.path import join, splitext
-from datetime import datetime
+import logging
+import os
+import re
 import xml.etree.ElementTree as ET
+import zipfile
+from datetime import datetime
+from os.path import join, splitext
 
-sys.path.append('C:/Users/uqaho4/PycharmProjects/OPEXUploader')
-from opexuploader.dataparser.abstract.DataParser import DataParser
+import numpy as np
+import pandas as pd
+
+from abstract.DataParser import DataParser
+
 
 # logging.basicConfig(filename='amunet.log',level=logging.DEBUG)
 
-class amunetParser(DataParser):
+class AmunetParserXML(DataParser):
 
     def __init__(self, pathtofile,pathtoerrors=None, *args):
         DataParser.__init__(self, *args)
@@ -414,11 +413,6 @@ def filter_by_errors(df, errors):
     return joined[pd.isnull(joined['marker'])][df.reset_index().columns]
 
 
-# pathtofile = r'Q:\DATA\DATA ENTRY\hMWM results\1. 0M_Baseline\1177VM_Amunet 2_0Month_20180321.zip'
-# dp = amunetParser(pathtofile, errors_path)
-#
-# dp.data.\
-#     query("MinimalDistanceFromGoal != 0 & trials > 1")
 ########################################################################################################
 
 if __name__ == '__main__':
@@ -441,8 +435,6 @@ if __name__ == '__main__':
 
     root_dir = args.filedir
     interval_dir = ['1. 0M_Baseline','2. 3M_Interim','3. 6M_Post','4. 9M_Maintenance','5. 12M_Final']
-    # interval_dir = ['5. 12M_Final']
-    # errors_path = "Q:\\DATA\\DATA ENTRY\\hMWM results\\errors_template.csv"
     errors_path = "C:\\Users\\uqaho4\\Desktop\\hMWM\\errors_template.csv"
 
 
@@ -457,9 +449,9 @@ if __name__ == '__main__':
     if 'y' in single_file:
         pathtofile= input("Specify path to file ")
         if 'y' in correct_errors:
-            dp = amunetParser(pathtofile, errors_path)
+            dp = AmunetParserXML(pathtofile, errors_path)
         else:
-            dp = amunetParser(pathtofile)
+            dp = AmunetParserXML(pathtofile)
 
         save_file = input('Save to file? [y/n]')
         if 'y' in save_file:
@@ -477,8 +469,6 @@ if __name__ == '__main__':
                 print(mandata)
                 print(data)
 
-# "Q:\DATA\DATA ENTRY\hMWM results\4. 9M_Maintenance"
-    # "Q:\\DATA\\DATA ENTRY\\hMWM results\\1. 0M_Baseline\\1054MR_Amunet1_12Month_20180503.zip"
     else:
         msg = """***** AMUNET PARSER ****** \n Run on {} """.format(datetime.today())
         print(msg)
@@ -500,9 +490,9 @@ if __name__ == '__main__':
                 filetopath = join(path, f2)
                 try:
                     if 'n' in correct_errors:
-                        dp = amunetParser(filetopath)
+                        dp = AmunetParserXML(filetopath)
                     elif 'y':
-                        dp = amunetParser(filetopath, errors_path)
+                        dp = AmunetParserXML(filetopath, errors_path)
 
                     print((dp.data))
 

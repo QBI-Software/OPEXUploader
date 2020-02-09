@@ -47,7 +47,7 @@ class XnatConnector:
             self.conn = pyxnat.Interface(server=self.url, user=self.user, verify=True,
                                          password=self.passwd)  # connection object
 
-            print(self.conn)
+            print("Connected to XNAT")
         except DatabaseError as e:
             raise e
 

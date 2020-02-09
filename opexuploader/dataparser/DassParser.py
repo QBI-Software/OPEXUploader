@@ -18,9 +18,6 @@ from os.path import join
 import numpy as np
 import sys
 
-sys.path.append(os.getcwd())
-# from DataParser import DataParser
-
 from opexuploader.dataparser.abstract.DataParser import DataParser
 
 VERBOSE = 0
@@ -40,8 +37,6 @@ class DassParser(DataParser):
         for n in range(3, len(self.data.columns), 12):
             start = n
             end = n + 9
-            #print('Drop ', start, ' to ', end
-            #print self.data.columns.tolist()[start:end]
             dropcols += self.data.columns.tolist()[start:end]
         print(('Selecting Totals columns for ', dropcols))
         df = self.data.drop(columns=dropcols)

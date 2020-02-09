@@ -1,31 +1,17 @@
 # -*- coding: utf-8 -*-
 """
-Utility script: AmunetParser
-Reads an excel or csv file with data and extracts per subject
-run from console/terminal with (example):
->python AmunetParser.py --filedir "data" --sheet "Sheetname_to_extract"
+Utility script: MissingParser
 
-Created on Thu Mar 2 2017
 
-@author: Liz Cooper-Williams, QBI
+@author: Alan HO, QBI
 """
 
 import argparse
-import csv
-import fnmatch
 import glob
-import logging
-import re
-import shutil
-from datetime import date
-from os import listdir, R_OK, access
-from os.path import join, isfile, split, basename
-import pandas as pd
-from numpy import nan
-from pandas import Series
-import sys
+from os.path import join
 
-sys.path.append('C:/Users/uqaho4/PycharmProjects/OPEXUploader')
+import pandas as pd
+
 from opexuploader.dataparser.abstract.DataParser import DataParser
 
 
