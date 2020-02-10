@@ -8,21 +8,13 @@
 copyright (c) Alan Ho, 2018
 """
 
-import pandas as pd
-import numpy as np
-import sys
-import re
-import os
 import argparse
-from openpyxl import load_workbook
-import logging
-from logging.handlers import RotatingFileHandler
+import os
+import re
+from os.path import join, dirname, basename
 
-from os import R_OK, access, listdir, mkdir, listdir
-from os.path import join, expanduser, dirname, abspath, basename
-from datetime import datetime
+import pandas as pd
 
-sys.path.append('C:/Users/uqaho4/PycharmProjects/OPEXUploader')
 from opexuploader.dataparser.abstract.DataParser import DataParser
 
 ashslong_dict = {

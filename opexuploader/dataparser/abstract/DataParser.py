@@ -75,16 +75,6 @@ class DataParser(object):
             raise ValueError("Unable to get ids from file", e)
         return info
 
-    # def __findResourcesdir(self):
-    #     resource_dir = glob.glob(join(dirname(__file__), "resources"))
-    #     middir = ".."
-    #     ctr = 1
-    #     while len(resource_dir) <= 0 and ctr < 5:
-    #         resource_dir = glob.glob(join(dirname(__file__), middir, "resources"))
-    #         middir = join(middir, "..")
-    #         ctr += 1
-    #     return abspath(resource_dir[0])
-
     def __checkSID(self,sid):
         """
         Replace known incorrect IDs from db
@@ -187,21 +177,3 @@ def stripspaces(row,column):
     val = str(row[column])
     return val.replace(" ",'')
 
-# def getID(subject, query=True):
-#
-#     df = pandas.read_csv('C:/Users/uqaho4/PycharmProjects/OPEXUploader/P1_subjectlist.csv')
-#
-#     subj = re.findall('\\d*', str(subject))[0]
-#
-#     try:
-#         subj = re.findall('\\d*', str(subject))[0]
-#
-#         subject_lookup= df.\
-#             set_index('ID').\
-#             filter(like=str(subj), axis=0).\
-#             index.\
-#             tolist()[0]
-#     except:
-#         subject_lookup = subject
-#
-#     return subject_lookup

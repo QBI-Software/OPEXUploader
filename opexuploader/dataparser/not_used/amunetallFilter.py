@@ -10,6 +10,7 @@ import argparse
 from datetime import datetime
 from functools import reduce
 from itertools import product
+from os import path
 from os.path import join
 
 import matplotlib.pyplot as plt
@@ -109,7 +110,7 @@ class amunetAnalysis:
             }
 
         listofresults = [results[i]['sum_results'] for i in range(0, 5)]
-        self.filterdata = pd.read_csv('C:\\Users\\uqaho4\Desktop\hMWM\P1_subjectlist.csv'). \
+        self.filterdata = pd.read_csv(path.join(self.inputdir,'P1_subjectlist.csv')). \
             rename(columns={'ID': 'Subject', 'group': 'Exercise'}). \
             filter(items=['Subject', 'Exercise']). \
             query('Exercise in ("AIT", "MIT", "LIT")'). \
@@ -262,13 +263,13 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog="Amunet Filter",
                                      description="Filters and analyses amunet data from AmunetParser_XML.py")
     parser.add_argument('--filedir', help='Specify the directory of the amunet raw data file', action='store',
-                        default='C:\\Users\\uqaho4\\Desktop\\hMWM\\Batches')
+                        default='Q:\\DATA\\DATA ENTRY\\hMWM\\Batches')
     parser.add_argument('--filename', help='Specify the filename of the raw amunet file', action='store',
                         default='batch_NoFilter_2019-01-24.csv')
     parser.add_argument('--outdir', help='Specify output dir for results', action='store',
-                        default='C:\\Users\\uqaho4\\Desktop\\hMWM\\Results')
+                        default='Q:\\DATA\\DATA ENTRY\\hMWM\\Results')
     parser.add_argument('--errorfile', help='specify the path to the error file which contains the clinician errors',
-                        action='store', default="C:\\Users\\uqaho4\\Desktop\\hMWM\\errors_template.csv")
+                        action='store', default="Q:\\DATA\\DATA ENTRY\\hMWM\\errors_template.csv")
 
     parser.add_argument('--analyse', help='specify the analysis to be run', action='store')
 
@@ -291,7 +292,7 @@ if __name__ == "__main__":
     elif args.analyse == 'print-filtered':
         result = amunet.filterdata
         print(result)
-        result.to_csv(r'C:\Users\uqaho4\Desktop\Opex Report\Data\filteredamunet.csv')
+        result.to_csv(path.join(inputdir,'Opex Report','Data','filteredamunet.csv'))
 
     elif args.analyse == 'graph-delta':
 

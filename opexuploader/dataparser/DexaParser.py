@@ -19,7 +19,7 @@ from os.path import join
 import numpy as np
 import pandas as pd
 import sys
-sys.path.append(os.getcwd())
+
 from opexuploader.dataparser.abstract.DataParser import DataParser,stripspaces
 
 DEBUG = 0

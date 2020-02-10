@@ -1,6 +1,5 @@
-import sys
 
-sys.path.append('C:/Users/uqaho4/PycharmProjects/OPEXUploader')
+
 from xnatconnect.XnatConnector import XnatConnector
 from opexreport.report import OPEXReport
 from os.path import join, expanduser

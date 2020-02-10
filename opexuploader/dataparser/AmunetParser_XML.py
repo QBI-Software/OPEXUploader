@@ -399,7 +399,7 @@ def lookup_errors(errorfilepath = 'Q:\\DATA\\DATA ENTRY\\hMWM results\\hMWM_new_
 
     return errors_df[['Subject', 'interval', 'experiments', 'trials']]
 
-def correct_subjects(subject, pathtosubjectfile='C:/Users/uqaho4/PycharmProjects/OPEXUploader/P1_subjectlist.csv', idfield='ID'):
+def correct_subjects(subject, pathtosubjectfile, idfield='ID'):
     correct_subs = pd.read_csv(pathtosubjectfile)
     subj_no = re.findall('\\d+',subject)[0]
 
@@ -423,16 +423,16 @@ if __name__ == '__main__':
 
              ''')
     parser.add_argument('--filedir', action='store', help='Directory containing files',
-                        default="C:\\Users\\uqaho4\\Desktop\\hMWM")
+                        default="Q:\\DATA\\DATA ENTRY\\hMWM")
 
     parser.add_argument('--outdir', action='store', help='Path / filename of raw data',
-                        default="C:\\Users\\uqaho4\\Desktop\\hMWM\\Batches")
+                        default="Q:\\DATA\\DATA ENTRY\\hMWM\\Batches")
 
     parser.add_argument('--filter', action='store', help='Filter Type',
                         default="NoFilter")
 
     parser.add_argument('--errors', action='store', help='Full path and filename of errors template',
-                        default="C:\\Users\\uqaho4\\Desktop\\hMWM\\errors_template.csv")
+                        default="Q:\\DATA\\DATA ENTRY\\hMWM\\errors_template.csv")
 
     args = parser.parse_args()
 
