@@ -61,6 +61,7 @@ build_exe_options = {
 }
 
 bdist_msi_options = {
+    'add_to_path': True,
     "upgrade_code": "{31DE0573-9957-4CAB-AC04-7832DCA70922}" #get uid from first installation regedit
     }
 
