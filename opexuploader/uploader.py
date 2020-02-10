@@ -79,7 +79,7 @@ logger = logging.getLogger('opex')
 handler = RotatingFileHandler(filename=logfile, maxBytes=4000000000)
 logger.addHandler(handler)
 
-DEBUG = 0  # TODO Testing
+DEBUG = 0  # Flag when Testing
 
 
 ### Main class for upload of all dataparser types
@@ -1139,10 +1139,9 @@ if __name__ == "__main__":
     runoption = args.expt
     rundir = args.exptdata
     projectcode = args.projectcode
-    TEST = False  ## TODO TESTING WITHOUT XNAT CONNECTION ##
 
     try:
-        if not TEST:
+        if not DEBUG:
             if uploader.xnat.testconnection():
                 print("Connected")
                 # Check project code is correct
