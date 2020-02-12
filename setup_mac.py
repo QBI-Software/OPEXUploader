@@ -29,8 +29,10 @@
 #     Specify matplotlib backends with '-'
 #     > /Library/Frameworks/Python.framework/Versions/2.7/bin/python2.7 setup_mac.py py2app --matplotlib-backends='-' > build.log
 #
+# Create DMG with Disk Utilities -> blank image 500MB -> create -> mount then drag in opexuploader.app -> convert
+# Upload compressed DMG file to github
 #
-#### Import lib bugs #####
+#### Import lib bugs 2018 - may be fixed now #####
 #     Macholib version=1.7 required to prevent endless recursions - also need to downgrade py2app==0.10 and fix MachO header error: bug in MachOGraph line 49:
 #  change loader=loader.filename TO loader_path=loader.filename
 #

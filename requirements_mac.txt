@@ -1,2 +1,4 @@
-macholib==1.7
-py2app==0.1
+macholib==1.14
+py2app==0.21
+pyobjc-core=5.3
+pyobjc-framework-cocoa=5.3
