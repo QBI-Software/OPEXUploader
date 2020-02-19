@@ -76,13 +76,13 @@ class BloodParser(DataParser):
             colnames = {'Date': 'A_Date',
                         'Participant ID ': 'Participant ID',
                         'Timepoint': 'Sample ID',
-                        'IFNγ': 'ifngamma',
+                        u'IFN\u03b3': 'ifngamma',
                         'IL-10': 'il10',
                         'IL-12(p70)': 'il12p70',
-                        'IL-1β': 'il1beta',
+                        u'IL-1\u03b2': 'il1beta',
                         'IL-6': 'il6',
                         'IL-8': 'il8cxcl8',
-                        'TNFα': 'tnfalpha'
+                        u'TNF\u03B1': 'tnfalpha'
                         }
             self.data = self.data.rename(index=str, columns=colnames)
 
@@ -111,7 +111,7 @@ class BloodParser(DataParser):
                             'Cortisol': 'Cortisol'}
 
             self.data = self.data.rename(index=str, columns=colnames)
-
+        print('Colnames: ', self.data.columns.tolist())
         # Insert Row Number column
         if 'R_No.' not in self.data.columns:
             self.data.insert(0, 'R_No.', list(range(len(self.data))))
@@ -132,8 +132,8 @@ class BloodParser(DataParser):
             print('BloodParser: subjects loaded successfully')
         self.subjectfield = subjectfield
 
-    def getInterval(self, rowval):
-        print('getinterval', rowval)
+    # def getInterval(self, rowval):
+    #     print('getinterval', rowval)
 
     def getFieldsFromFile(self, type):
         """
@@ -253,8 +253,8 @@ if __name__ == "__main__":
             Reads files in a directory and extracts data ready to load to XNAT database
 
              ''')
-    TEST_TYPE = 'SOMATO'
-    TEST_DIR = '../../data'
+    TEST_TYPE = 'INFLAM'
+    TEST_DIR = '../../data/'
 
 
     parser.add_argument('--filedir', action='store', help='Directory containing files', default=TEST_DIR)
@@ -284,7 +284,6 @@ if __name__ == "__main__":
             for f2 in files:
                 print("\n****Loading", f2)
                 dp = BloodParser(f2, sheet, skip, header, etype)
-                dp.sortSubjects(dp.subjectfield)
 
                 for sd in dp.subjects:
                     print('ID:', sd)

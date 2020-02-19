@@ -13,7 +13,7 @@
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 """
-__version__ = '2.0.0'
+__version__ = '2.0.1'
 __author__ = 'Liz Cooper-Williams'
 
 import argparse
@@ -79,7 +79,7 @@ logger = logging.getLogger('opex')
 handler = RotatingFileHandler(filename=logfile, maxBytes=4000000000)
 logger.addHandler(handler)
 
-DEBUG = 0  # Flag when Testing
+DEBUG = 1  # Flag when Testing
 
 
 ### Main class for upload of all dataparser types

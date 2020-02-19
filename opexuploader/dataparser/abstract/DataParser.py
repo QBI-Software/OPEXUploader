@@ -93,10 +93,11 @@ class DataParser(object):
     def _loadData(self):
         if self.ftype =='.xlsx' or self.ftype == '.xls':
             if self.header is None:
-                self.data = pandas.read_excel(self.datafile, skiprows=self.skiplines, sheet_name=self.sheet, skip_blank_lines=True)
+                self.data = pandas.read_excel(self.datafile, skiprows=self.skiplines, sheet_name=self.sheet,
+                                              skip_blank_lines=True, encoding='utf-8')
             else:
                 self.data = pandas.read_excel(self.datafile, skiprows=self.skiplines, sheet_name=self.sheet,
-                                              skip_blank_lines=True, header=self.header)
+                                              skip_blank_lines=True, header=self.header, encoding='utf-8')
         elif self.ftype == '.csv':
             self.data = pandas.read_csv(self.datafile, skip_blank_lines=True)
         else:
