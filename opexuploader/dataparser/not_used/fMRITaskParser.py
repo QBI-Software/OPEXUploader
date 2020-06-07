@@ -7,10 +7,10 @@ import re
 import sys
 import argparse
 
-from os.path import basename, dirname
+from os.path import basename
 
 sys.path.append(os.getcwd())
-from opexuploader.dataparser.MRIParserJunjie import JunjieParser
+from opexuploader.dataparser.not_used.MRIParserJunjie import JunjieParser
 
 
 class fMRITaskParser(JunjieParser):

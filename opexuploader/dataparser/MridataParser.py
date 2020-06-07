@@ -121,6 +121,8 @@ class MridataParser(DataParser):
         :return: id
         """
         sampleid = self.getPrefix() + '_' + sd + '_' + str(row['interval'])
+        if self.etype == 'TASKRET' or self.etype == 'TASKENCODE':
+            sampleid += 'M%s%s' % (str(row['condition']), str(row['load']))
         if hasattr(row, 'version') and len(row['version']) > 0:
             sampleid += '_' + str(row['version'])
         return sampleid
@@ -200,11 +202,13 @@ if __name__ == "__main__":
     args = parser.parse_args()
     inputdir = args.filedir
     print("Input:", inputdir)
+    # Output of all vars
+    allprint = False
     if access(inputdir, R_OK):
-        sheet = 1
+        # sheet = 1
         skip = 0
         header = None
-
+        tabs = 1
         seriespattern = '*.xlsx'  # originally .csv
         try:
             files = glob.glob(path.join(inputdir, seriespattern))
@@ -216,34 +220,40 @@ if __name__ == "__main__":
                     etype += ' ASHS'
                 elif 'FreeSurf'.lower() in f2.lower():
                     etype += ' FS'
+                elif 'TASK'.lower() in f2.lower():
+                    etype = 'TASKRET'
+                    # sheet = 0
+                    tabs = 3  # Data upload file has 3 tabs: Bind, Bind3, Bind5
                 elif 'FMRI'.lower() in f2.lower():
                     etype = 'FMRI'
-                    sheet = 0
+                    # sheet = 0
                 else:
                     raise ValueError("Cannot determine MRI type from filename: requires one of ASHS, FreeSurf, FMRI in the xlsx filename")
                 msg = "Running %s" % etype
                 print(msg)
-                dp = MridataParser(f2, sheet, skip, header, etype)
-                xsd = dp.getxsd()[etype]
-                print('XSD: %s' % xsd)
-                for sd in dp.subjects:
-                    for i, row in dp.subjects[sd].iterrows():
-                        msg = '**SubjectID: %s Visit: %dm' % (sd, int(row['interval']))
-                        print(msg)
-                        sampleid = dp.getSampleid(sd, row)
-                        print(sampleid)
-                        # Print every field value for every subject
-                        for ctab in dp.fields:
-                            if ctab in row:
-                                msg1 = "Field: %s = %d" % (ctab, row[ctab])
-                                print(msg1)
-                        # Print XNAT upload data for every subject
-                        (mandata, motdata) = dp.mapData(row, i, xsd)
-                        print(mandata)
-                        print(motdata)
-                    # just print one subject
-                    break
-
+                for tab in range(tabs):
+                    sheet = tab
+                    dp = MridataParser(f2, sheet, skip, header, etype)
+                    xsd = dp.getxsd()[etype]
+                    print('XSD: %s' % xsd)
+                    for sd in dp.subjects:
+                        for i, row in dp.subjects[sd].iterrows():
+                            msg = '**SubjectID: %s Visit: %dm' % (sd, int(row['interval']))
+                            print(msg)
+                            sampleid = dp.getSampleid(sd, row)
+                            print(sampleid)
+                            # Print every field value for every subject
+                            if allprint:
+                                for ctab in dp.fields:
+                                    if ctab in row:
+                                        msg1 = "Field: %s = %s" % (ctab, str(row[ctab]))
+                                        print(msg1)
+                            # Print XNAT upload data for every subject
+                            (mandata, motdata) = dp.mapData(row, i, xsd)
+                            print(mandata)
+                            print(motdata)
+                        # just print one subject for testing
+                        break
 
         except Exception as e:
             print("ERROR: ", e)

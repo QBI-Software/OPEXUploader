@@ -5,6 +5,7 @@ import pandas
 import sqlite3
 from os.path import join
 BASEDIR = '..'
+# Test with 'opexconfig_test.db'
 DBNAME = join(BASEDIR, 'resources', 'opexconfig.db')
 
 def setupDB():
@@ -113,6 +114,7 @@ def loadFields():
                 'ASHS and Freesurfer': 'MRI_fields.csv',
                 'ASHSRaw': 'ashsraw_fields.csv',
                 'FMRI': 'MRI_fields.csv',
+                'TASKRET': 'MRI_fields.csv',
                 'COSMED': 'cosmed_fields.csv',
                 'DEXA': 'dexa_fields.csv',
                 'GODIN': 'godin_fields.csv',
@@ -129,11 +131,10 @@ def loadFields():
                 }
 
     for expt in csvfiles.keys():
-        print("Loading exptfields: ", expt)
-        print(expt)
+        print("Loading/Checking exptfields for: ", expt)
         fname = csvfiles[expt]
         df = pandas.read_csv(join(BASEDIR, "resources", "fields", fname), header=0)
-        print(df)
+        # print(df)
         # Get column name for expt
         c.execute('SELECT expt FROM expts WHERE name=?', (expt,))
         for info in c.fetchall():
@@ -145,7 +146,7 @@ def loadFields():
                 if len(c.fetchall()) <= 0:
                     if isinstance(f, str) or isinstance(f, unicode):
                         sql = "INSERT INTO opexfields(expt,fieldname) VALUES(\'%s\',\'%s\')" % (colname, f)
-                        print sql
+                        print(sql)
                         c.execute(sql)
     conn.commit()
     conn.close()
