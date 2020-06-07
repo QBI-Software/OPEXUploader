@@ -24,24 +24,28 @@ VERBOSE = 0
 class MridataParser(DataParser):
     def __init__(self, *args):
         DataParser.__init__(self, *args)
+
         # Replace column name Visit with interval if exists
         if 'Visit' in self.data.columns:
             self.data.rename(columns={'Visit': 'interval'}, inplace=True)
         # remove any spaces in 'interval' and 'version' column names
         self.data.rename(columns={'version ': 'version', 'interval ': 'interval'}, inplace=True)
-        self.sortSubjects('Subject')
+
         if self.getPrefix() == 'ASHS':
             self.data = self.normalizeICV()
         elif self.getPrefix() == 'FMRI':
             # check if column headers need mapping to XNAT fields
             if self.fields[0] not in self.data.columns:
                 df_fieldmap = pd.read_csv(path.join(self.resource_dir, 'fields', 'MRI_fields.csv'))
-                if df_fieldmap.columns[0] in self.data.columns:
+                if df_fieldmap.FMRImap[0] in self.data.columns:
                     cols = dict(zip(df_fieldmap.FMRImap, df_fieldmap.FMRI))
                     self.data.rename(columns=cols, inplace=True)
                 else:
                     msg = 'FMRI fields do not correspond to XNAT fields or FMRImap fields in MRI_fields.csv - exiting'
                     raise ValueError(msg)
+
+        # Sort rows into subjects
+        self.sortSubjects('Subject')
 
 
     def normalizeICV(self):
