@@ -219,31 +219,18 @@ class OPEXReport(object):
     def downloadOPEXExpts(self, projectcode, outputdir, deltas=False):
         '''
         CSV downloads for each expt type
+        - currently just CANTAB, BLOOD and FMRI
         :param projectcode:
         :return:
         '''
-        # etypes = sorted(self.xnat.conn.inspect.datatypes())
-
-        # etypes = ['opex:cantab' + t for t in ['PAL', 'SWM', 'MOT', 'DMS', 'ERT']] + \
-        #             ['opex:blood' + t for t in ['BdnfData', 'CobasData', 'ElisasData', 'IgfData', 'MultiplexData']] + \
-        #             ['opex:' + t for t in ['bpaqscale', 'dass', 'dexa', 'fcas',  'fitbit', 'fooddiary',
-        #                                    'godin', 'insomnia', 'ipaq', 'sf36', 'accelmonth', 'accelday',
-        #                                    'accelmonthalt', 'acceldayalt', 'amunetall', 'amunet', 'acer']] + \
-        #             ['opex:ashslong3', 'opex:ashslong2', 'opex:ashsraw', 'opex:mrijun'] + \
-        #             ['opex:cosmed', 'opex:health']
-
-        etypes = ['opex:fmri']
-
-
-        # etypes = ['opex:cosmed']
-
+        etypes = sorted(self.xnat.conn.inspect.datatypes())
         columns = ['xnat:subjectData/SUBJECT_LABEL', 'xnat:subjectData/SUB_GROUP',
                    'xnat:subjectData/GENDER_TEXT', 'xnat:subjectData/DOB']
         etypes.append('xnat:subjectData')
         self.xnat.connect()
         try:
             for etype in etypes:
-                if etype.startswith('opex'):
+                if etype.startswith('opex:cantab') or etype.startswith('opex:blood') or etype.startswith('opex:fmri'):
                     fields = self.xnat.conn.inspect.datatypes(etype)
                     fields = columns + fields
                     # print(fields)
