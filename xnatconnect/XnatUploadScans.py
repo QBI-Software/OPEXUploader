@@ -27,7 +27,7 @@ import dicom
 import pyxnat
 
 warnings.filterwarnings("ignore")
-DEBUG = 1
+SKIP_OWNER_CHECK = 1
 
 
 class XnatConnector:
@@ -178,7 +178,7 @@ class XnatConnector:
                     print('Scan ID: %s  Scan type=%s' % (scan_id, scan_type))
 
                     scan_pi = self.getPI(scan_files[0])
-                    if DEBUG or proj_pi in scan_pi or proj_pi in owners:
+                    if SKIP_OWNER_CHECK or proj_pi in scan_pi or proj_pi in owners:
                         logging.info("Owner verified:  scan=%s project=%s", scan_pi, proj_pi)
                     else:
                         logging.warning("Owner does not match - skipping upload: scan=%s project=", scan_pi, proj_pi)

@@ -67,14 +67,15 @@ class AccelParser(DataParser):
         return upload_dir[self.location]
 
 
-    def mapData(self, i, row):
+    def mapData(self, i, row, xsd=None):
         """
         Map SWM data to row input data
         :param row: pandas series row data
         :return: data kwargs structure to load to xnat expt
         """
 
-        xsd = self.getxsd()
+        if xsd is None:
+            xsd = self.getxsd()
 
         mandata = {
             xsd + '/interval': str(row['interval']),

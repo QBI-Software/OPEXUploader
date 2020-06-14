@@ -90,3 +90,19 @@ class TestDBquery(unittest.TestCase):
         expected = 3
         data = self.dbi.getInterval(expt)
         self.assertEqual(expected, data)
+
+    def test_getInfo_TASK(self):
+        """ Checking taskret and taskencode """
+        expt = 'TASKRET'
+        expected = 'opex:fmritaskret'
+        data = self.dbi.getInfo(expt)
+        self.assertEqual(expected, data['xsitype'])
+        fields = self.dbi.getFields(expt)
+        self.assertGreater(len(fields), 0)
+        expt = 'TASKENCODE'
+        expected = 'opex:fmritaskencode'
+        data = self.dbi.getInfo(expt)
+        self.assertEqual(expected, data['xsitype'])
+        fields = self.dbi.getFields(expt)
+        self.assertGreater(len(fields), 0)
+

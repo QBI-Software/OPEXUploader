@@ -37,13 +37,14 @@ class MissingParser(DataParser):
     def getxsd(self):
         return 'opex:missing'
 
-    def mapData(self, row, i):
+    def mapData(self, row, i, xsd=None):
         """
         Map SWM data to row input data
         :param row: pandas series row data
         :return: data kwargs structure to load to xnat expt
         """
-        xsd  = self.getxsd()
+        if xsd is None:
+            xsd = self.getxsd()
 
         mandata = {
             xsd + '/interval': str(i),

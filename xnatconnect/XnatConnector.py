@@ -27,7 +27,7 @@ from configobj import ConfigObj
 from pyxnat.core.errors import DatabaseError
 
 warnings.filterwarnings("ignore")
-DEBUG = 1
+DEBUG = 0
 VERBOSE = 0
 
 

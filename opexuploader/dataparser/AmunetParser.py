@@ -307,14 +307,6 @@ def extractDateInfo(dirpath, ext='zip'):
     print(("Loaded:", len(participantdates)))
     return participantdates
 
-# interval = str(0)
-# sheet  = 0
-#
-# inputdir = "Q:\\DATA\\DATA ENTRY\\XnatUploaded\\sampledata\\amunet"
-# f2 = "Q:\\DATA\\DATA ENTRY\\XnatUploaded\\sampledata\\amunet\\0m\\BaseMar18converted_results.xlsx"
-# sheet=0,skiplines=0, header=None, etype=None
-# dp = AmunetParser('0', f2, sheet)
-
 ########################################################################
 
 if __name__ == "__main__":

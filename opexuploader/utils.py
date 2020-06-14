@@ -4,6 +4,9 @@ from os.path import join, abspath, dirname
 
 
 ##### Global functions
+from config.dbquery import DBI
+
+
 def findResourceDir():
     # resource dir is at top level of cwd
     base = getcwd()
@@ -24,3 +27,21 @@ def findResourceDir():
         msg = 'Resources dir located to: %s ' % abspath(resource_dir)
         logging.info(msg)
     return abspath(resource_dir)
+
+
+def directory_names_for_blood_samples():
+    """
+    Get a list of the required directory names for detecting type of Blood sample
+    :return: list of names
+    """
+    resource_dir = findResourceDir()
+    configdb = join(resource_dir, 'opexconfig.db')
+    if not access(configdb, R_OK):
+        print(configdb)
+        raise IOError('Cannot find config database {}'.format(configdb))
+    try:
+        dbi = DBI(configdb)
+        expts = dbi.getExptsByName('BLOOD')
+        return expts
+    except Exception as e:
+        raise e

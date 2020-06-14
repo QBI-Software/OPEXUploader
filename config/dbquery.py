@@ -166,6 +166,13 @@ class DBI():
         data = self.c.fetchone()[0]
         return data
 
+    def getExptsByName(self, name):
+        if self.c is None:
+            self.getconn()
+        self.c.execute("SELECT expt FROM expts WHERE name=?", (name,))
+        data = [d[0] for d in self.c.fetchall()]
+        return data
+
 
 if __name__ == "__main__":
     configdb = join('..','resources', 'opexconfig.db')

@@ -25,16 +25,17 @@ from opexuploader.utils import findResourceDir
 
 
 class DataParser(object):
-    def __init__(self, datafile=None, sheet=0,skiplines=0, header=None, etype=None):
-        msg = 'DataParser: datafile=%s sheet=%s skiplines=%s header=%s etype=%s' % (datafile, str(sheet),str(skiplines),str(header),str(etype))
+    def __init__(self, datafile=None, sheet=0, skiplines=0, header=None, etype=None):
+        msg = 'DataParser: datafile=%s sheet=%s skiplines=%s header=%s etype=%s' % (
+        datafile, str(sheet), str(skiplines), str(header), str(etype))
         print(msg)
         logging.info(msg)
-        self.datafile = datafile #full pathname to data file
+        self.datafile = datafile  # full pathname to data file
         self.resource_dir = findResourceDir()
         configdb = join(self.resource_dir, 'opexconfig.db')
-        if not access(configdb,R_OK):
+        if not access(configdb, R_OK):
             print(configdb)
-            raise IOError('Cannot find config database')
+            raise IOError('Cannot find config database {}'.format(configdb))
         try:
             self.dbi = DBI(configdb)
             self.etype = etype
@@ -45,10 +46,10 @@ class DataParser(object):
                 self.info = None
                 self.fields = None
             self.subjects = None
-            #self.incorrect = self.dbi.getIDs()
-            if (self.datafile is not None and len(self.datafile)> 0):
-                (bname, extn)= splitext(basename(self.datafile))
-                self.ftype = extn #extension - xlsx or csv
+            self.incorrect = self.dbi.getIDs()
+            if self.datafile is not None and len(self.datafile) > 0:
+                (bname, extn) = splitext(basename(self.datafile))
+                self.ftype = extn  # extension - xlsx or csv
                 self.sheet = sheet
                 self.skiplines = skiplines
                 self.header = header
@@ -75,7 +76,7 @@ class DataParser(object):
             raise ValueError("Unable to get ids from file", e)
         return info
 
-    def __checkSID(self,sid):
+    def __checkSID(self, sid):
         """
         Replace known incorrect IDs from db
         :param sid:
@@ -84,20 +85,25 @@ class DataParser(object):
         if self.dbi is not None:
             rsid = self.dbi.getCorrectID(sid)
             if rsid != sid:
-                msg ='Subject: %s corrected to %s' % (sid,rsid)
+                msg = 'Subject: %s corrected to %s' % (sid, rsid)
                 logging.warning(msg)
         else:
             rsid = sid
         return rsid
 
     def _loadData(self):
-        if self.ftype =='.xlsx' or self.ftype == '.xls':
-            if self.header is None:
-                self.data = pandas.read_excel(self.datafile, skiprows=self.skiplines, sheet_name=self.sheet,
-                                              skip_blank_lines=True, encoding='utf-8')
-            else:
-                self.data = pandas.read_excel(self.datafile, skiprows=self.skiplines, sheet_name=self.sheet,
-                                              skip_blank_lines=True, header=self.header, encoding='utf-8')
+        if self.ftype == '.xlsx' or self.ftype == '.xls':
+            try:
+                if self.header is None:
+                    self.data = pandas.read_excel(self.datafile, skiprows=self.skiplines, sheet_name=self.sheet,
+                                                  skip_blank_lines=True, encoding='utf-8')
+                else:
+                    self.data = pandas.read_excel(self.datafile, skiprows=self.skiplines, sheet_name=self.sheet,
+                                                  skip_blank_lines=True, header=self.header, encoding='utf-8')
+            except IndexError as e:
+                msg = 'Excel sheet number/name expected was {} but not found: '.format(self.sheet) + e.message
+                logging.error(msg)
+                print(msg)
         elif self.ftype == '.csv':
             self.data = pandas.read_csv(self.datafile, skip_blank_lines=True)
         else:
@@ -145,9 +151,8 @@ class DataParser(object):
         dt = datetime.fromordinal(dateoffset + int(orig))
         return dt.strftime("%Y%m%d")
 
-
     def getPrefix(self):
-        prefix=None
+        prefix = None
         if self.info is not None:
             prefix = self.info['prefix']
         return prefix
@@ -168,7 +173,8 @@ def convertExcelDate(orig):
     dt = datetime.fromordinal(dateoffset + int(orig))
     return dt
 
-def stripspaces(row,column):
+
+def stripspaces(row, column):
     """
     Strips out whitespace before, within, after a value in column of row
     :param row:
@@ -176,5 +182,4 @@ def stripspaces(row,column):
     :return:
     """
     val = str(row[column])
-    return val.replace(" ",'')
-
+    return val.replace(" ", '')
