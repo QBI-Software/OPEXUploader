@@ -1,52 +1,77 @@
 # OPEXUploader
 A user's guide for data upload to XNAT modules for the OPEX project.
 
+This can be viewed directly in the OPEX Uploader App under Help.
+
 ## User Guide for Data Uploads
 
 ### Settings
 
+A few settings are required for use of the OPEX Uploader.
+
 #### Database
 
-On first use, you will need to add your XNAT login details.
+On first use, you will need to setup your XNAT login details (and you will need admin privileges in XNAT).
 
 1. From the Menu, select "Settings" then "Database"
-1. In the dropdown box, enter a name for the db config (eg 'opex')
-1. Enter username and password
+1. In the dropdown box, enter a name to describe this connection (eg 'opex' or 'dev-opex')
+1. Enter username and password (these are stored in plain text so ensure you do not re-use important passwords here)
 1. **Save**
 
-Note this file is saved in your user home directory, called '.xnat.cfg'
+Note this file is saved in your user home directory, called '.xnat.cfg'.
+
+Multiple connections can be entered here.
 
 #### Incorrect IDs
 
+Occasionally, Subject IDs are not entered in the same format as XNAT or have been mis-typed.  
+The OPEX Uploader will not "guess" an ID if it cannot find it in XNAT - it will however, report these unfound IDs in a file at the end of the upload called `missing.csv` in a directory called 'report'.
+If possible, change the entry in the data files. Otherwise, the incorrect ID can be entered here and it will be automatically mapped to the correct Subject ID during upload (for all datatypes).  
+
 1. From the Menu, select "Settings" then "Incorrect IDs"
 1. To change a value, just click in the box then click **Save**
-1. To add a new value, click on Add, to add a new row, then enter values, and **Save**
+1. To add a new value, click on Add, then enter values, and **Save**
 1. To remove a value, clear the data then click **Save**
 
 ### Getting started
 
-**Test the connection** first after selecting the database configuration and entering the project code (eg 'P1').  
+**Test the connection** first 
 
-Before a run, it is good to check **TEST RUN** to ensure data is OK - it will not be loaded to the database.  Note, that datafiles must be closed if being viewed in Excel. (See Setup for initial use.)
+1. select the database configuration
+1. enter the project code (eg 'P1').
+1. click **Test Connection**  
 
-The following steps refer to the **XnatUploaded** directory on the share drive.  It is best to copy the main data files here except for MRI scans, and Amunet and COSMED subdirectories which are too large.
+#### Data File Locations
+The paths listed in the parentheses below refer to the **XnatUploaded** directory on the share drive.  It is best to copy the main data files here except for MRI scans, and Amunet and COSMED subdirectories which are too large.
 
-All data upload is recorded in a log file in your user directory called logs/xnatupload.log.
+All data upload is recorded in a log file in your user directory called `logs/xnatupload.log` which can be viewed in the OPEX Uploader by clicking on the 'VIEW LOG' button.
 
-### Batch Upload
+#### TEST Run
+Before a run, do a trial run to ensure data is OK and there are no errors. 
+The data will be extracted from the required datafiles, and formatted ready for upload to XNAT but the data will not actually be uploaded:
+1. check **TEST RUN only**
+1. click **RUN**
 
-There is now an option to combine regular data uploads.  Follow the guidelines in the sections below to put the correct data files in the ```XnatUploaded/sampledata``` folders (this should then be entered in the Input directory field).  Select the **Bulk Upload** option from the Data Type dropdown and click 'RUN'.
+**Note, on Windows, datafiles to be uploaded must be closed before the run if they are being viewed in Excel.**
 
-These datasets are currently included:
+#### Upload data
+Once files are in place, to upload them to XNAT, the procedure is:
 
-1. CANTAB
-1. DEXA
-1. DASS
-1. GODIN
-1. INSOMNIA
-1. PSQI
-1. BLOODS (all)
-1. Visits (final)
+1. Select the `Database config` (connection)
+1. Enter the `project code` (eg P1)
+2. Select the required datatype from the `Data Type dropdown`
+1. Select the directory containing the files for upload for `Input data directory`
+3. Click 'RUN'
+
+Specific details for each datatype are noted below.
+
+#### Updating existing data
+Normally, on data upload, each Sample ID is checked to see if it already exists in XNAT and if so, the data is skipped.  This is to ensure the data in XNAT is not overwritten as it can be manually edited in XNAT directly and this should remain the 'Source of Truth'.
+
+However, if a sample has data that was incorrect on upload or has been analysed differently and the data in XNAT **is** to be overwitten
+
+1. Check 'Update existing data for selected experiment type'
+1. Click 'RUN'
 
 ### CANTAB data (XnatUploaded/sampledata/cantab)
 
@@ -54,7 +79,7 @@ Downloaded excel sheet called 'RowBySession' should be copied into this director
 
 1. Select this directory as input
 1. Select 'CANTAB' from the Data Type dropdown
-1. Check 'Skip ABORTED'
+1. [OPTIONAL] If new subjects are present, check 'Create Subjects from CANTAB' to automatically generate new Subjects (use with caution)
 1. Click 'RUN'
 
 ### AMUNET data (XnatUploaded/sampledata/amunet)
@@ -74,10 +99,33 @@ Copy data file to this directory.  Add a column for the visit interval called 'V
 
 ### Blood data (XnatUploaded/sampledata/blood)
 
-Copy data files to appropriate subdirectories ('COBAS', 'MULTIPLEX','ELISAS'), then select the subdirectory eg XnatUploaded/sampledata/blood/COBAS as Input.
+There are several types of BLOOD sample data:
+1. COBAS
+2. MULTIPLEX
+3. ELISAS
+4. INFLAM (Inflammation)
+5. IGF
+6. SOMATO (Somatostatin)
 
-1. Check that headings are in the second row (eg Prolactin, etc) although the script should rename them if the columns are still in the same order
+Make sure the data files are stored in folders of the same name (the naming of the files doesn't matter) eg:
+```shell script
+|- sampledata
+|   | - blood
+|       | - COBAS 
+|         | - Cobas_datafile.xlsx
+|       | - MULTIPLEX 
+|         | - Multiplex_datafile.xlsx
+```
+In the OPEX Uploader, select the subdirectory as Input, eg `sampledata/blood/COBAS` 
+
+#### Data formatting
+1. The field names for all types are in `blood_fields.csv` - https://github.com/QBI-Software/OPEXUploader/blob/master/resources/fields/blood_fields.csv
+1. For COBAS, check that the headings are in the SECOND row (eg Prolactin, Insulin etc) in the Excel file  
+1. For ELISAS and SOMATO, check that the data is in the THIRD TAB in the Excel file
+
+#### Upload with OPEX Uploader
 1. Select 'BLOOD' from the Data Type dropdown
+1. Select the subdirectory as Input, eg `sampledata/blood/COBAS` 
 1. Click 'RUN'
 
 ### COSMED data (XnatUploaded/sampledata/cosmed)
@@ -152,9 +200,50 @@ Both steps involve the script copying scans around 5GB in total which can take a
 
 Both ASHS and Freesurfer hippocampal volume data can be uploaded.  (NB, Fields for cortical volumes are still under discussion)
 
-1. Copy data file to this directory and rename if necessary with 'ASHS' or 'FreeSurf' in the filename
-1. Two additional columns are required: 'Subject' and 'Visit'
+1. Copy data file to this directory and **ensure either 'ASHS' or 'FreeSurf' is in the filename**
+1. Two additional columns are required: 
+    - 'Subject' : containing Subject IDs as found in XNAT 
+    - 'Visit' or 'interval': sample collection interval as integer (eg 6 for 6 mth)
+    - 'version': [OPTIONAL] if a new method is being used and the data is not to be overwritten for the same sample, enter a code here which will be appended to the sample id
+1. For the Input data directory, browse to the directory containing the data files
+1. In the OPEX uploader, select 'ASHS and Freesurfer' from the Data Type dropdown
 1. Click 'RUN'
+
+### FMRI data
+
+There are several types of FMRI data. 
+3. MRI analysis data - fMRI behaviour (FMRI)
+4. MRI analysis data - fMRI Task Encoding (TASKENCODE)
+5. MRI analysis data - fMRI Task Retrieval (TASKRET)
+                  
+As the upload data is in a machine-readable format, either the OPEX Uploader App or the XNAT Spreadsheet upload functionality can be used.
+
+#### Upload via OPEX Uploader
+1. Format the data for upload:
+    - If necessary, replace the data headings with those in the `MRI_fields.csv` file: https://github.com/QBI-Software/OPEXUploader/blob/master/resources/fields/MRI_fields.csv
+    - For FMRI data, the FMRImap data headings can be used instead
+    - For TASKRET and TASKENCODE data, the parser expects 3 tabs (Bind, Bind3, Bind5) in an XLSX file - if these are not present, add empty ones
+1. If a new method is being used, to prevent overwriting original data, add a 'version' column with a code eg 'J2020' which will be appended to the SampleID and added to the comments field.
+1. In the OPEX Uploader app, select the required data type from the dropdown list (see above abbreviations)
+1. Select the data folder (the name doesn't matter nor do the filenames)
+1. Click 'RUN'
+
+#### Upload via the XNAT Spreadsheet uploader (XnatUploaded\sampledata\spreadsheet_upload)
+
+When data is able to match the headings directly, it is possible to use the Spreadsheet upload option in XNAT.  
+Guidelines for this are in the OPEX XNAT User guide.  
+
+- Instructions are here:  https://wiki.xnat.org/documentation/how-to-use-xnat/upload-experiment-data-via-spreadsheet
+- Download the template for opex:fmritaskret
+- The template shows the exact names and order required for the data headers
+- To provide a generated ID, this base formula can be added in Excel in the ID column:
+
+```
+=CONCATENATE(prefix,"_",subjectid, "_",interval)
+
+```
+
+
 
 ### Visits (XnatUploaded/sampledata/visit)
 
@@ -171,20 +260,26 @@ so it is extracted from the participants file after these data have been uploade
 1. Save to a new file called 'Visits.xlsx' (can overwrite)
 1. A new line of headers needs to be added - see the existing file 'Visits.xlsx'
 1. Insert a new column called BLOOD_FASTED_3 which has the same values as DEXA_3 (3mth Assessment)
-1. A LOT of data will need cleaning up which I have done via Excel "find and replace" and "formats -> date -> yyyy-mm-dd" (if in doubt, leave it out)
+1. A LOT of data will need cleaning up which can be done via Excel "find and replace" to remove comments in number columns, etc 
+- in Excel for the date columns, change "formats -> date -> yyyy-mm-dd"
 
 Only experiments which exist in the database will be updated and only if the date is different so a comment "Date updated" is entered which can be checked on XNAT.
 
-### FMRI data (XnatUploaded\sampledata\spreadsheet_upload)
 
-When data is able to match the headings directly, it is quicker to use XNAT's Spreadsheet upload option.  Guidelines for this are in the OPEX XNAT User guide.  It mostly involves setting up the columns in the right order with the headers matching the template exactly.  
+### Batch Upload
 
-If an ID is to be generated, it is usually:
+There is now an option to combine regular data uploads.  Follow the guidelines in the sections below to put the correct data files in the ```XnatUploaded/sampledata``` folders (this should then be entered in the Input directory field).  Select the **Bulk Upload** option from the Data Type dropdown and click 'RUN'.
 
-```
-=CONCATENATE(prefix,"_",subjectid, "_",interval)
+These datasets are currently included:
 
-```
+1. CANTAB
+1. DEXA
+1. DASS
+1. GODIN
+1. INSOMNIA
+1. PSQI
+1. BLOODS (all)
+1. Visits (final)
 
 
 ## General Housekeeping
