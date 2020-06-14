@@ -28,6 +28,7 @@
 # distutils problem with Python2.7 - a copy of 'distutils' from main Python lib is in build dir - copy it into "lib" after build run
 
 import sys
+import io
 from os import environ
 from os.path import join
 
@@ -69,7 +70,7 @@ setup(
     name=application_title,
     version=__version__ ,
     description='QBI OPEX XNAT Uploader',
-    long_description=open('README.md').read(),
+    long_description=io.open('README.md', encoding='utf-8').read(),
     author='Liz Cooper-Williams, QBI',
     author_email='e.cooperwilliams@uq.edu.au',
     maintainer='QBI Custom Software, UQ',
