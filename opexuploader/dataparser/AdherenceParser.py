@@ -63,9 +63,10 @@ class AdherenceParser(DataParser):
         id = 'ADHERE_' + sd
         return id
 
-    def mapData(self, row):
+    def mapData(self, row, xsd=None):
 
-        xsd = self.getxsd()
+        if xsd is None:
+            xsd = self.getxsd()
 
         mandata = {
             # xsd + '/date': str(self.date),

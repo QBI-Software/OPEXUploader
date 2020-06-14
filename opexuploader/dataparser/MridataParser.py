@@ -1,25 +1,31 @@
 # -*- coding: utf-8 -*-
 """
 Utility script: MridataParser
-Reads an excel or csv file with MRI analysis data and extracts per subject
-run from console/terminal with (example):
+Reads an excel or csv file with MRI analysis data and extracts one sample per subject.
+
+Run from console/terminal with (example):
+
 >python MridataParser.py --filedir "data" --sheet "Sheetname_to_extract"
 
-Created on Thu Mar 2 2017
+@created on Thu Mar 2 2017
+
+@last_modified: 13 Jun 2020
 
 @author: Liz Cooper-Williams, QBI
 """
 
 import argparse
 import glob
+import logging
 from datetime import datetime
 from os import R_OK, access, path
-import logging
+
 import pandas as pd
 
 from opexuploader.dataparser.abstract.DataParser import DataParser
 
 VERBOSE = 0
+
 
 class MridataParser(DataParser):
     def __init__(self, *args):
@@ -46,7 +52,6 @@ class MridataParser(DataParser):
 
         # Sort rows into subjects
         self.sortSubjects('Subject')
-
 
     def normalizeICV(self):
         """
@@ -123,7 +128,7 @@ class MridataParser(DataParser):
         sampleid = self.getPrefix() + '_' + sd + '_' + str(row['interval'])
         if self.etype == 'TASKRET' or self.etype == 'TASKENCODE':
             sampleid += 'M%s%s' % (str(row['condition']), str(row['load']))
-        if hasattr(row, 'version') and len(row['version']) > 0:
+        if hasattr(row, 'version') and not pd.isna(row['version']) and len(str(row['version'])) > 0:
             sampleid += '_' + str(row['version'])
         return sampleid
 
@@ -146,7 +151,7 @@ class MridataParser(DataParser):
         :param row: pandas series row data
         :return: data kwargs structure to load to xnat expt
         """
-        if hasattr(row, 'version'):
+        if hasattr(row, 'version') and not pd.isna(row['version']) and len(str(row['version'])) > 0:
             version = 'Version %s' % str(row['version'])
             sample_id = '%s_%s' % (str(i), str(row['version']))
         else:
@@ -188,9 +193,10 @@ if __name__ == "__main__":
             Reads files in a directory and extracts data for upload to XNAT for the following:
                   1. MRI analysis data - ASHS
                   2. MRI analysis data - FreeSurfer
-                  3. MRI analysis data - fMRI behaviour
-                  4. MRI analysis data - fMRI TaskRet
-                  
+                  3. MRI analysis data - fMRI behaviour (FMRI)
+                  4. MRI analysis data - fMRI Task Encoding (TASKENCODE)
+                  5. MRI analysis data - fMRI Task Retrieval (TASKRET)
+                 
             Fields for each type are shown in MRI_fields.csv.  These need to be present in the upload file.
             Include columns for 'SUBJECT, INTERVAL, VERSION' 
             Example data: '1001DS', 12, 'MZ2020'
@@ -205,7 +211,6 @@ if __name__ == "__main__":
     # Output of all vars
     allprint = False
     if access(inputdir, R_OK):
-        # sheet = 1
         skip = 0
         header = None
         tabs = 1
@@ -220,15 +225,17 @@ if __name__ == "__main__":
                     etype += ' ASHS'
                 elif 'FreeSurf'.lower() in f2.lower():
                     etype += ' FS'
-                elif 'TASK'.lower() in f2.lower():
+                elif 'TASKENCODE'.lower() in f2.lower():
+                    etype = 'TASKENCODE'
+                    tabs = 3  # Data upload file has 3 tabs: Bind, Bind3, Bind5
+                elif 'TASKRET'.lower() in f2.lower():
                     etype = 'TASKRET'
-                    # sheet = 0
                     tabs = 3  # Data upload file has 3 tabs: Bind, Bind3, Bind5
                 elif 'FMRI'.lower() in f2.lower():
                     etype = 'FMRI'
-                    # sheet = 0
                 else:
-                    raise ValueError("Cannot determine MRI type from filename: requires one of ASHS, FreeSurf, FMRI in the xlsx filename")
+                    raise ValueError(
+                        "Cannot determine MRI type from filename: requires one of ASHS, FreeSurf, FMRI in the xlsx filename")
                 msg = "Running %s" % etype
                 print(msg)
                 for tab in range(tabs):
