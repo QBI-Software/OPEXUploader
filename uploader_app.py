@@ -4,7 +4,7 @@ import sys
 import threading
 from multiprocessing import freeze_support
 from os import access, R_OK, mkdir
-from os.path import join, expanduser, dirname, split
+from os.path import join, expanduser, dirname, split, basename
 from shutil import copyfile
 
 import certifi
@@ -20,7 +20,7 @@ from opexuploader.bulk_uploader import BulkUploader
 from opexuploader.gui.uploadergui import UploaderGUI, dlgScans, dlgConfig, dlgHelp, dlgIDS, dlgDownloads, dlgReports, \
     dlgLogViewer
 from opexuploader.uploader import OPEXUploader
-from opexuploader.utils import findResourceDir
+from opexuploader.utils import findResourceDir, directory_names_for_blood_samples
 from xnatconnect.XnatConnector import XnatConnector
 from xnatconnect.XnatOrganizeFiles import Organizer
 
@@ -699,29 +699,53 @@ class OPEXUploaderGUI(UploaderGUI):
         """
         self.tcResults.Clear()
         runoption = self.runoptions.get(self.chOptions.GetValue())[2:]
-        if self.cbChecks.GetValue():
-            status = 'Running %s [TEST MODE]' % self.chOptions.GetValue()
-        else:
-            status = 'Running %s' % self.chOptions.GetValue()
-        self.m_statusBar1.SetStatusText(status)
-        (db, proj) = self.__loadConnection()
+
+        valid = True
         if self.dirname is None or len(self.dirname) <= 0:
             dlg = wx.MessageDialog(self, "Data directory not specified", "OPEX Uploader", wx.OK)
             dlg.ShowModal()  # Show it
             dlg.Destroy()
-        else:
+            valid = False
+        elif runoption == 'blood':
+            dirlist = directory_names_for_blood_samples()
+            if basename(self.dirname) not in dirlist:
+                msg = "To detect type of blood sample, expect folder to be named as one of %s" % (", ").join(dirlist)
+                dlg = wx.MessageDialog(self, msg, "OPEX Uploader - Blood samples", wx.OK)
+                dlg.ShowModal()  # Show it
+                dlg.Destroy()
+                valid = False
+        if valid:
+            # Display status
+            status = 'Running %s' % self.chOptions.GetValue()
+            if runoption == 'blood':
+                status += ": " + basename(self.dirname)
+            if self.cbChecks.GetValue():
+                status += ' [TEST MODE]'
+            self.m_statusBar1.SetStatusText(status)
+            # Connect to XNAT
+            (db, proj) = self.__loadConnection()
             # Load uploader args
             args = argparse.ArgumentParser(prog='OPEX Uploader')
             args.config = join(expanduser('~'), '.xnat.cfg')
             args.database = db
             args.projectcode = proj
             args.create = self.cbCreateSubject.GetValue()
-            # args.skiprows = self.cbSkiprows.GetValue()
             args.checks = self.cbChecks.GetValue()
             args.update = self.cbUpdate.GetValue()
             # Add MRI scan options
             args.opexid = self.m_chkExtractid.GetValue()
             args.subjectchars = self.m_spinChars.GetValue()
+
+            # Summary confirmation
+            msg = 'Running XNAT Upload for %s' % self.chOptions.GetValue()
+            if args.checks:
+                msg += ' in TEST mode'
+            if args.update:
+                msg += ' with OVERWRITE data ON'
+            if args.create:
+                msg += ' with CREATE New Subjects from datafile ON'
+            logging.info(msg)
+            print(msg)
 
             uploader = OPEXUploader(args)
             uploader.config()
@@ -736,7 +760,6 @@ class OPEXUploaderGUI(UploaderGUI):
                     print("...Connected")
                     t = UploadThread(self, uploader, proj, self.dirname, runoption)
                     t.start()
-                    # uploader.runDataUpload(proj, self.dirname, runoption)
                 else:
                     raise ConnectionError('Not connected')
 
@@ -753,11 +776,6 @@ class OPEXUploaderGUI(UploaderGUI):
             except Exception as e:
                 logging.error(e)
                 print("ERROR:", e)
-                # finally:  # Processing complete
-                #     uploader.xnatdisconnect()
-                #     logging.info("FINISHED")
-                #     print("FINISHED - see xnatupload.log for details")
-                #     self.m_statusBar1.SetStatusText('Done')
 
 
 ##############################################################################
