@@ -109,12 +109,12 @@ There are several types of BLOOD sample data:
 
 Make sure the data files are stored in folders of the same name (the naming of the files doesn't matter) eg:
 ```shell script
-├── sampledata
-|   └── blood
-|       ├── COBAS 
-|         └── Cobas_datafile.xlsx
-|       ├── MULTIPLEX 
-|         └── Multiplex_datafile.xlsx
+- sampledata
+|   - blood
+|       - COBAS 
+|         - Cobas_datafile.xlsx
+|       - MULTIPLEX 
+|         - Multiplex_datafile.xlsx
 ```
 In the OPEX Uploader, select the subdirectory as Input, eg `sampledata/blood/COBAS` 
 
