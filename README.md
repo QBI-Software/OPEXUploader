@@ -109,17 +109,17 @@ There are several types of BLOOD sample data:
 
 Make sure the data files are stored in folders of the same name (the naming of the files doesn't matter) eg:
 ```shell script
-|- sampledata
-|   | - blood
-|       | - COBAS 
-|         | - Cobas_datafile.xlsx
-|       | - MULTIPLEX 
-|         | - Multiplex_datafile.xlsx
+├── sampledata
+|   └── blood
+|       ├── COBAS 
+|         └── Cobas_datafile.xlsx
+|       ├── MULTIPLEX 
+|         └── Multiplex_datafile.xlsx
 ```
 In the OPEX Uploader, select the subdirectory as Input, eg `sampledata/blood/COBAS` 
 
 #### Data formatting
-1. The field names for all types are in `blood_fields.csv` - https://github.com/QBI-Software/OPEXUploader/blob/master/resources/fields/blood_fields.csv
+1. The field names for all blood types are in `blood_fields.csv` - https://github.com/QBI-Software/OPEXUploader/blob/master/resources/fields/blood_fields.csv
 1. For COBAS, check that the headings are in the SECOND row (eg Prolactin, Insulin etc) in the Excel file  
 1. For ELISAS and SOMATO, check that the data is in the THIRD TAB in the Excel file
 
@@ -212,9 +212,10 @@ Both ASHS and Freesurfer hippocampal volume data can be uploaded.  (NB, Fields f
 ### FMRI data
 
 There are several types of FMRI data. 
-3. MRI analysis data - fMRI behaviour (FMRI)
-4. MRI analysis data - fMRI Task Encoding (TASKENCODE)
-5. MRI analysis data - fMRI Task Retrieval (TASKRET)
+
+1. MRI analysis data - fMRI behaviour (FMRI)
+1. MRI analysis data - fMRI Task Encoding (TASKENCODE)
+1. MRI analysis data - fMRI Task Retrieval (TASKRET)
                   
 As the upload data is in a machine-readable format, either the OPEX Uploader App or the XNAT Spreadsheet upload functionality can be used.
 
