@@ -5,7 +5,7 @@ import pandas
 import sqlite3
 from os.path import join
 BASEDIR = '..'
-# Test with 'opexconfig_test.db'
+# Test with 'opexconfig_test.db' first by changing here:
 DBNAME = join(BASEDIR, 'resources', 'opexconfig.db')
 
 def setupDB():
@@ -115,6 +115,7 @@ def loadFields():
                 'ASHSRaw': 'ashsraw_fields.csv',
                 'FMRI': 'MRI_fields.csv',
                 'TASKRET': 'MRI_fields.csv',
+                'TASKENCODE': 'MRI_fields.csv',
                 'COSMED': 'cosmed_fields.csv',
                 'DEXA': 'dexa_fields.csv',
                 'GODIN': 'godin_fields.csv',

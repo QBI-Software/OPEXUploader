@@ -13,6 +13,8 @@
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 """
+from pyxnat.core.resources import Project
+
 __version__ = '2.0.1'
 __author__ = 'Liz Cooper-Williams'
 
@@ -20,21 +22,20 @@ import argparse
 import csv
 import glob
 import logging
-import os
 import re
 import sys
+from logging.handlers import RotatingFileHandler
 from os import R_OK, access, mkdir, listdir
 from os.path import expanduser, join, basename, exists, dirname, abspath, splitext
 
 import pandas as pd
 from numpy import nan
+from pyxnat.core.errors import DatabaseError
 from requests.exceptions import ConnectionError
 
-from pyxnat.core.errors import DatabaseError
-
-# from opexuploader.dataparser.AmunetParser import AmunetParser, generateAmunetdates
-from opexuploader.dataparser.AcerParser import AcerParser
 from opexuploader.dataparser.AccelParser import AccelParser
+from opexuploader.dataparser.AmunetParser import AmunetParser, generateAmunetdates
+from opexuploader.dataparser.AcerParser import AcerParser
 from opexuploader.dataparser.AdherenceParser import AdherenceParser
 from opexuploader.dataparser.AmunetParser_XML import AmunetParserXML
 from opexuploader.dataparser.BloodParser import BloodParser
@@ -45,24 +46,17 @@ from opexuploader.dataparser.DassParser import DassParser
 from opexuploader.dataparser.DexaParser import DexaParser
 from opexuploader.dataparser.FcasParser import FcasParser
 from opexuploader.dataparser.FitbitParser_new import FitbitParser
-from opexuploader.dataparser.FmriParser import FMRIParser
-from opexuploader.dataparser.fMRITaskParser import fMRITaskParser
 from opexuploader.dataparser.FoodDiaryParser import FoodDiaryParser
 from opexuploader.dataparser.GodinParser import GodinParser
 from opexuploader.dataparser.InsomniaParser import InsomniaParser
 from opexuploader.dataparser.IpaqParser import IpaqParser
 from opexuploader.dataparser.MissingParser import MissingParser
 from opexuploader.dataparser.MridataParser import MridataParser
-from opexuploader.dataparser.MRIParser import MRIParser
-from opexuploader.dataparser.MRIParserJunjie import JunjieParser
 from opexuploader.dataparser.PacesParser import PacesParser
 from opexuploader.dataparser.PsqiParser import PsqiParser
 from opexuploader.dataparser.SFParser import SF36Parser
 from opexuploader.dataparser.VisitParser import VisitParser
-
 from xnatconnect.XnatConnector import XnatConnector
-
-from logging.handlers import RotatingFileHandler
 
 ### Global config for logging required due to redirection of stdout to console in app
 logfile = join(expanduser('~'), 'logs', 'xnatupload.log')
@@ -79,7 +73,7 @@ logger = logging.getLogger('opex')
 handler = RotatingFileHandler(filename=logfile, maxBytes=4000000000)
 logger.addHandler(handler)
 
-DEBUG = 1  # Flag when Testing
+DEBUG = 0  # Flag when Testing
 
 
 ### Main class for upload of all dataparser types
@@ -274,7 +268,7 @@ class OPEXUploader():
             print('*****SubjectID:', sd)
             sd = str(sd)  # prevent unicode
             s = project.subject(sd)
-            if not s.exists():
+            if not DEBUG and not s.exists():
                 if self.args.create is not None and self.args.create:
                     # create subject in database
                     skwargs = dp.getSubjectData(sd)
@@ -282,7 +276,7 @@ class OPEXUploader():
                     msg = 'Subject CREATED: %s' % sd
                     logging.info(msg)
                     print(msg)
-                elif not DEBUG:
+                else:
                     missing.append({"ID": sd, "rows": dp.subjects[sd]})
                     msg = 'Subject does not exist - skipping: %s' % sd
                     logging.warning(msg)
@@ -298,6 +292,7 @@ class OPEXUploader():
                     xsdtypes = xsd
                     for i, row in dp.subjects[sd].iterrows():
                         sampleid = dp.getSampleid(sd, row)
+                        msg = 'SampleID: ' + sampleid
                         row.replace(nan, '', inplace=True)
                         if ('NOT_RUN' in row.values) or ('ABORTED' in row.values):
                             msg = "Skipping due to ABORT or NOT RUN: %s" % sampleid
@@ -323,9 +318,10 @@ class OPEXUploader():
                 elif 'dexa' in xsd:
                     for i, row in dp.subjects[sd].iterrows():
                         sampleid = dp.getSampleid(sd, row)
+                        logging.debug('SampleID: ' + sampleid)
                         row.replace(nan, '', inplace=True)
                         (mandata, data) = dp.mapData(row, i, xsd)
-                        if self.args.checks is None or not self.args.checks:    # Don't upload if checks
+                        if self.args.checks is None or not self.args.checks:  # Don't upload if checks
                             msg = self.loadSampledata(s, xsd, sampleid, mandata, data)
                             logging.info(msg)
                             if 'created' in msg:
@@ -336,7 +332,7 @@ class OPEXUploader():
                     for i, row in dp.subjects[sd].iterrows():
                         interval = int(row['interval'])
                         sampleid = dp.getSampleid(sd, interval)
-                        print('Sampleid:', sampleid)
+                        logging.debug('SampleID: ' + sampleid)
                         (mandata, data) = dp.mapData(row, i)
                         if self.args.checks is None or not self.args.checks:  # Don't upload if checks
                             msg = self.loadSampledata(s, xsd, sampleid, mandata, data)
@@ -351,6 +347,7 @@ class OPEXUploader():
                     for i in intervals:
                         iheaders = [c + "_" + str(i) for c in dp.fields]
                         sampleid = dp.getSampleid(sd, i)
+                        logging.debug('SampleID: ' + sampleid)
                         row = dp.subjects[sd]
                         # row.replace(nan, '', inplace=True)
                         if iheaders[0] in row.columns:
@@ -388,6 +385,7 @@ class OPEXUploader():
                 elif 'ipaq' in xsd:
                     interval = 0
                     sampleid = dp.getSampleid(sd, interval)
+                    logging.debug('SampleID: ' + sampleid)
                     row = dp.subjects[sd]
                     if dp.validData(row.values.tolist()[0]):
                         print(sampleid)
@@ -404,6 +402,7 @@ class OPEXUploader():
                     iheaders = dp.fields
                     for i, row in dp.subjects[sd].iterrows():
                         sampleid = dp.getSampleid(sd, row)
+                        logging.debug('SampleID: ' + sampleid)
                         if dp.validData(row[iheaders].values.tolist()):
                             (mandata, data) = dp.mapData(row, i, xsd)
                             if self.args.checks is None or not self.args.checks:  # Don't upload if checks
@@ -455,6 +454,7 @@ class OPEXUploader():
                         sampleid = dp.getSampleid(sd, i)
                         if sampleid in ['COS_1021LB_0', 'COS_1021LB_3']:
                             continue
+                        logging.debug('SampleID: ' + sampleid)
                         (mandata, data) = dp.mapData(row, i, xsd)
                         if self.args.checks is None or not self.args.checks:  # Don't upload if checks
                             msg = self.loadSampledata(s, xsd, sampleid, mandata, data)
@@ -477,6 +477,7 @@ class OPEXUploader():
 
                 elif 'amunetall' in xsd:
                     sampleid = dp.getSampleid(sd)
+                    logging.debug('SampleID: ' + sampleid)
                     (mandata, data) = dp.mapData()
                     print(mandata, data)
                     if self.args.checks is None or not self.args.checks:  # Don't upload if checks
@@ -486,9 +487,10 @@ class OPEXUploader():
                         if 'created' in msg:
                             print(msg)
 
-                elif ('mrifs' in xsd or 'blood' in xsd):
+                elif 'blood' in xsd:
                     for i, row in dp.subjects[sd].iterrows():
                         sampleid = dp.getPrefix() + "_" + dp.getSampleid(sd, row)
+                        logging.debug('SampleID: ' + sampleid)
                         row.replace(nan, '', inplace=True)
                         (mandata, data) = dp.mapData(row, i, xsd)
                         if self.args.checks is None or not self.args.checks:  # Don't upload if checks
@@ -501,9 +503,10 @@ class OPEXUploader():
                             print(data)
 
                 # Single row per subject - no interval
-                elif ('adherence' in xsd) or ('ashsraw' in xsd) or ('ashslong2' in xsd) or ('ashslong3' in xsd):
+                # elif ('adherence' in xsd) or ('ashsraw' in xsd) or ('ashslong2' in xsd) or ('ashslong3' in xsd):
+                elif ('adherence' in xsd):
                     sampleid = dp.getSampleid(sd)
-                    print('SampleID: ' + sampleid)
+                    logging.debug('SampleID: ' + sampleid)
                     row = dp.subjects[sd]
                     (mandata, data) = dp.mapData(row)
                     if self.args.checks is None or not self.args.checks:  # Don't upload if checks
@@ -514,17 +517,18 @@ class OPEXUploader():
 
                 # DEFAULT BASIC METHOD - No need to duplicate for each type
                 else:
-                    # elif 'food' in xsd or \
-                    #      'fcas' in xsd or \
-                    #      'accelday' in xsd or \
-                    #      'accelmonth' in xsd or \
-                    #      'mrijunjie' in xsd or \
-                    #      'taskret' in xsd or \
-                    #      'taskencode' in xsd or \
-                    #      'fmri' in xsd:
+                    # elif 'food' in xsd or
+                    #      'fcas' in xsd or
+                    #      'accelday' in xsd or
+                    #      'accelmonth' in xsd or
+                    #      'taskret' in xsd or
+                    #      'taskencode' in xsd or
+                    if isinstance(xsd, dict) and hasattr(dp, 'etype') and dp.etype is not None:
+                        xsd = xsd[dp.etype]
                     for i, row in dp.subjects[sd].iterrows():
                         sampleid = dp.getSampleid(sd, row)
-                        (mandata, data) = dp.mapData(row, i)
+                        logging.debug('SampleID: ' + sampleid)
+                        (mandata, data) = dp.mapData(row, i, xsd)
                         if self.args.checks is None or not self.args.checks:  # Don't upload if checks
                             msg = self.loadSampledata(s, xsd, sampleid, mandata, data)
                             logging.info(msg)
@@ -533,13 +537,12 @@ class OPEXUploader():
                         else:
                             print(xsd)
                             print(mandata)
-
+                            print(data)
 
             except Exception as e:
                 logging.error(e.args[0])
                 raise ValueError(e)
         return (missing, matches)
-
 
     def runDataUpload(self, projectcode, inputdir, datatype):
         """
@@ -551,8 +554,7 @@ class OPEXUploader():
         :param datatype: as given by --expt in args or see opexconfig.db expts table -> option
         :return: success or error
         """
-        print(datatype)
-        msg = "Running data upload for %s from %s " % (datatype, inputdir)
+        msg = "Running data upload for %s from %s " % (datatype.upper(), inputdir)
         logging.info(msg)
         print(msg)
         project = self.xnat.get_project(projectcode)
@@ -568,7 +570,7 @@ class OPEXUploader():
                 files = glob.glob(join(inputdir, seriespattern))
                 print("Files:", len(files))
                 for f2 in files:
-                    if ("RowBySession" in f2):
+                    if "RowBySession" in f2:
                         msg = "\nLoading: %s" % f2
                         print(msg)
                         logging.info(msg)
@@ -596,57 +598,6 @@ class OPEXUploader():
                     except Exception as e:
                         print("Cannot process file: %s" % e)
                         continue
-
-            # ---------------------------------------------------------------------#
-            elif datatype == 'mrijunjie':
-                dp = JunjieParser(inputdir=inputdir)
-                (missing, matches) = self.uploadData(project, dp)
-                # Output matches and missing
-                if len(matches) > 0 or len(missing) > 0:
-                    (out1, out2) = self.outputChecks(projectcode, matches, missing, inputdir)
-
-            # ---------------------------------------------------------------------#
-            elif (datatype == 'taskret') or (datatype == 'taskencode'):
-                dp = fMRITaskParser(inputdir=inputdir)
-                (missing, matches) = self.uploadData(project, dp)
-                print(missing)
-                # Output matches and missing
-                if len(matches) > 0 or len(missing) > 0:
-                    (out1, out2) = self.outputChecks(projectcode, matches, missing, inputdir)
-
-
-            # ---------------------------------------------------------------------#
-            elif datatype == 'mrinew':
-
-                # print("Loading " + inputdir)
-                # dp = MriParser(inputdir)
-                # (missing, matches) = self.uploadData(project, dp)
-
-                rootdir = inputdir
-                subdirs = listdir(rootdir)
-                etype = basename(rootdir)
-
-                for inputdir in subdirs:
-                    if inputdir not in ['0m', '6m', '12m']:
-                        continue
-                    interval = inputdir[0:-1]
-                    print('Interval:', interval)
-                    inputdir = join(rootdir, inputdir)
-                    dp = MRIParser(inputdir)
-                    (missing, matches) = self.uploadData(project, dp)
-                    print(missing)
-                    # Output matches and missing
-                    if len(matches) > 0 or len(missing) > 0:
-                        (out1, out2) = self.outputChecks(projectcode, matches, missing, inputdir, 'mrinew_report')
-
-            # ---------------------------------------------------------------------#
-            elif datatype == 'fmri':
-                dp = FMRIParser(inputdir=inputdir)
-                (missing, matches) = self.uploadData(project, dp)
-                # Output matches and missing
-                if len(matches) > 0 or len(missing) > 0:
-                    (out1, out2) = self.outputChecks(projectcode, matches, missing, inputdir, 'fmri_report')
-
 
             # ---------------------------------------------------------------------#
             elif datatype == 'amunetall':
@@ -747,28 +698,35 @@ class OPEXUploader():
 
 
             # ---------------------------------------------------------------------#
-            elif datatype == 'mridata':
-                seriespattern = '*.xlsx'  # the new file is xlsx
-                sheet = 0
+            elif datatype in ['mridata', 'fmri', 'taskret', 'taskencode', 'mrifs', 'mriashs']:
+                seriespattern = '*.xlsx'
+                tabs = 1  # Number of tabs in xls to upload
                 skip = 0
                 header = None
-                etype = 'MRI '
                 files = glob.glob(join(inputdir, seriespattern))
                 print("Files:", len(files))
                 for f2 in files:
                     print("Loading ", f2)
-                    if 'ASHS' in f2:
-                        etype += 'ASHS'
-                    elif 'FreeSurf' in f2:
-                        etype += 'FS'
+                    if datatype == 'mriashs':
+                        etype = 'MRI ASHS'
+                    elif datatype == 'mrifs':
+                        etype = 'MRI FS'
+                    elif datatype == 'taskret' or datatype == 'taskencode':
+                        etype = datatype.upper()
+                        tabs = 3  # Data upload file has 3 tabs: Bind, Bind3, Bind5
+                    elif datatype == 'fmri':
+                        etype = 'FMRI'
                     else:
-                        raise ValueError("Cannot determine MRI type")
-                    dp = MridataParser(f2, sheet, skip, header, etype)
-                    (missing, matches) = self.uploadData(project, dp)
-                    # Output matches and missing
-                    if len(matches) > 0 or len(missing) > 0:
-                        (out1, out2) = self.outputChecks(projectcode, matches, missing, inputdir,
-                                                         f2)
+                        raise ValueError("Cannot determine MRI datatype from %s" % datatype)
+                    msg = "Running %s" % etype
+                    print(msg)
+                    for tab in range(tabs):
+                        sheet = tab
+                        dp = MridataParser(f2, sheet, skip, header, etype)
+                        (missing, matches) = self.uploadData(project, dp)
+                        # Output matches and missing
+                        if len(matches) > 0 or len(missing) > 0:
+                            (out1, out2) = self.outputChecks(projectcode, matches, missing, inputdir, f2)
 
             # ---------------------------------------------------------------------#
             elif datatype == 'blood':
@@ -1150,17 +1108,17 @@ if __name__ == "__main__":
                 # Test run
                 missing = []
                 matches = []
-                if (not p.exists()):
+                if not p.exists():
                     msg = "This project [%s] does not exist in this database [%s]" % (
-                    projectcode, uploader.args.database)
+                        projectcode, uploader.args.database)
                     raise ConnectionError(msg)
                 # List available subjects in project
-                if (uploader.args.subjects is not None and uploader.args.subjects):
+                if uploader.args.subjects is not None and uploader.args.subjects:
                     msg = "Calling List Subjects"
                     print(msg)
                     uploader.xnat.list_subjects_all(projectcode)
                 # List available projects
-                if (uploader.args.projects is not None and uploader.args.projects):
+                if uploader.args.projects is not None and uploader.args.projects:
                     print("Calling List Projects")
                     projlist = uploader.xnat.list_projects()
                     for p in projlist:
