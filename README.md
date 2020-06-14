@@ -1,5 +1,5 @@
 # OPEXUploader
-A user's guide for data upload to XNAT modules for the OPEX project.
+A user guide for data upload to XNAT modules for the OPEX project.
 
 This can be viewed directly in the OPEX Uploader App under Help.
 
@@ -108,6 +108,15 @@ There are several types of BLOOD sample data:
 6. SOMATO (Somatostatin)
 
 Make sure the data files are stored in folders of the same name (the naming of the files doesn't matter) eg:
+
+```
+- sampledata
+|   - blood
+|       - COBAS 
+|         - Cobas_datafile.xlsx
+|       - MULTIPLEX 
+|         - Multiplex_datafile.xlsx
+```
 
 In the OPEX Uploader, select the subdirectory as Input, eg `sampledata/blood/COBAS` 
 
