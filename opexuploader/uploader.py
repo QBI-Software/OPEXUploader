@@ -15,7 +15,7 @@
 """
 from pyxnat.core.resources import Project
 
-__version__ = '2.0.1'
+__version__ = '2.1.0'
 __author__ = 'Liz Cooper-Williams'
 
 import argparse
