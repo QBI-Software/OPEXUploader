@@ -6,21 +6,21 @@ run from console/terminal with (example):
 >python CantabParser.py --filedir "data" --sheet "Sheetname_to_extract"
 
 Created on Thu Mar 2 2017
+Updated 12 Oct 2020
 
 @author: Liz Cooper-Williams, QBI
 """
-import sys
 import argparse
 import glob
+import sys
 from datetime import datetime
-import os
-from os import R_OK, access
+from os import R_OK, access, getcwd
 from os.path import join
-from numpy import nan
 
-import pandas
+import pandas as pd
+from numpy import nan, isnan
 
-sys.path.append(os.getcwd())
+sys.path.append(getcwd())
 from opexuploader.dataparser.abstract.DataParser import DataParser
 
 VERBOSE = 0
@@ -29,20 +29,17 @@ class CantabParser(DataParser):
     def __init__(self, *args):
         DataParser.__init__(self, *args)
         try:
-            # fields = join(self._DataParser__findResourcesdir(), 'cantab_fields.csv')
-            # self.cantabfields = pandas.read_csv(fields, header=0)
             self.cantabNewFields()
-            self.parseNewVisitorID()
-            self.rearangeIntervals()
             self.sortSubjects('Participant ID')
         except Exception as e:
             print(e)
             raise e
 
     def cantabNewFields(self):
-
-        # Cantab extended has changed the name of the fields- this function compresses new fields to old fields
-
+        """
+        Cantab extended has changed the name of the fields- this function compresses new fields to old fields
+        :return:
+        """
         oldnewfields={
             "SWMBE": "SWMBE468",
             "SWMDE": "SWMDE468",
@@ -59,28 +56,10 @@ class CantabParser(DataParser):
         df = self.data
 
         for k in list(oldnewfields.keys()):
-            df[k].fillna(df[oldnewfields[k]], inplace=True)
-            df.drop(columns=oldnewfields[k], inplace=True)
+            if oldnewfields[k] in df.columns:
+                df[k].fillna(df[oldnewfields[k]], inplace=True)
+                df.drop(columns=oldnewfields[k], inplace=True)
 
-        self.data = df
-
-    def parseNewVisitorID(self):
-
-        df = self.data
-
-        splitters = [str.split(x, " ") for x in df["Visit Identifier"]]
-
-        df['comments'] = ''
-        for i in range(0, len(splitters)):
-            df.loc[i,'Visit Identifier'] = splitters[i][0]
-            if len(splitters[i]) == 2:
-                df.loc[i, 'comments'] = splitters[i][1]
-
-        self.data = df
-
-    def rearangeIntervals(self, ID='Participant ID'):
-        df = self.data
-        df = df.groupby(ID).apply(correctIntervals).reset_index(drop=True)
         self.data = df
 
     def formatDateString(self,orig):
@@ -94,7 +73,7 @@ class CantabParser(DataParser):
         return dt.strftime("%Y%m%d%H%M%S")
 
     def genders(self):
-        return {0: 'male', 1: 'female'}
+        return {0: 'male', 1: 'female', 'F': 'female', 'M': 'male'}
 
     def formatDob(self,orig):
         """
@@ -114,8 +93,7 @@ class CantabParser(DataParser):
 
     def getInterval(self,orig):
         """Parses string M-00 to 0 or M-01 to 1 etc"""
-        # interval = int(orig[2:])
-        interval = int(list(filter(str.isdigit, orig)))
+        interval = int(orig[2:4])
         return interval
 
     def getSampleid(self, sd, row):
@@ -170,22 +148,27 @@ class CantabParser(DataParser):
         :return: data kwargs structure to load to xnat expt
         """
         xsd = self.getxsd()[type]
+        extended = 'Ex' in row['Visit Identifier']
+        comments = str(row[self.getCommentstring()[type]])
+        if extended:
+            comments = 'Extended study. ' + comments
 
         mandata = {
             xsd + '/interval': self.getInterval(row['Visit Identifier']),
-            # xsd + '/interval': str(row['interval']),
             xsd + '/date': row['Visit Start (Local)'],  # PARSED in experiment load
             xsd + '/sample_id': str(i),  # row number in this data file for reference
             xsd + '/sample_quality': 'Unknown',  # default - check later if an error
             xsd + '/data_valid': 'Initial',
             xsd + '/status': str(row[self.getStatusstring()[type]]),
-            xsd + '/comments': str(row[self.getCommentstring()[type]])
+            xsd + '/comments': comments
         }
         motdata={}
         cantabfields = self.dbi.getFields('CANTAB ' + type)
         for ctab in cantabfields:
-            motdata[xsd + '/' + ctab] = str(row[ctab])
+            if ctab in row:
+                motdata[xsd + '/' + ctab] = str(row[ctab])
         return (mandata, motdata)
+
 
     def getDFExpts(self,expts, interval, prefix=None):
         """
@@ -201,11 +184,11 @@ class CantabParser(DataParser):
             prefix = [key for key,val in self.getxsd().items() if val == xsd][0]
 
         ##Checking OK
-        print((teste.get()))
-        print(("DEBUG: Label=", teste.attrs.get('label')))
-        print(("DEBUG: Status=", teste.attrs.get(xsd +'/status')))
+        print(teste.get())
+        print("DEBUG: Label=", teste.attrs.get('label'))
+        print("DEBUG: Status=", teste.attrs.get(xsd +'/status'))
         ##Filter valid data
-        df_expts = pandas.DataFrame([(e.attrs.get(xsd +'/interval'),
+        df_expts = pd.DataFrame([(e.attrs.get(xsd +'/interval'),
                                       e.attrs.get(xsd +'/data_valid'),
                                       e.attrs.get(xsd +'/sample_quality'), e) for e in expts],
                                     columns=['Interval', 'Valid', 'Quality', 'expt'])
@@ -213,7 +196,7 @@ class CantabParser(DataParser):
         #generate columns with fields
         for field in self.cantabfields[prefix].dropna():
             fieldvals = []
-            print(("loading field=", field))
+            print("loading field=", field)
             for exp in df.expt:
                 #print(exp.attrs.get(xsd + '/' + field.lower()))
                 fieldvals.append(exp.attrs.get(xsd + '/' + field.lower()))
@@ -222,6 +205,7 @@ class CantabParser(DataParser):
         df.drop('expt', axis=1, inplace=True)
         #print(df)
         return df
+
 
     def getSubjectData(self,sd):
         """
@@ -236,15 +220,6 @@ class CantabParser(DataParser):
             group = str(self.subjects[sd]['Group'].iloc[0])
             skwargs = {'dob': dob, 'gender': gender, 'group': group}
         return skwargs
-
-
-def correctIntervals(df, sortvar='Visit Start (Local)', intervalvar='interval'):
-    intervals = list(range(0, 7)) + [9, 12]
-    wk_df = df.sort_values(by=sortvar)
-    wk_df = wk_df[~wk_df.isin(['NOT_RUN','ABORTED']).any(axis=1)]
-    wk_df[intervalvar] = intervals[0:wk_df.shape[0]]
-
-    return wk_df
 
 ########################################################################
 
@@ -263,64 +238,40 @@ if __name__ == "__main__":
     inputdir = args.filedir
     sheet = args.sheet
 
-    print(("Input:", inputdir))
+    print("Input:", inputdir)
     if access(inputdir, R_OK):
-        seriespattern = 'RowBySession_HealthyBrains_20181220.csv'
+        seriespattern = '*.csv'
         skip = 0
         header = None
         etype = 'CANTAB'
         try:
             files = glob.glob(join(inputdir, seriespattern))
-            print(("Files:", len(files)))
+            print("Files:", len(files))
             for f2 in files:
-                print(("Loading",f2))
+                print("Loading",f2)
                 dp = CantabParser(f2, sheet, skip, header, etype)
                 xsdtypes = dp.getxsd()
-                #cantab.sortSubjects()
+                for sd in dp.subjects:
+                    print('*****SubjectID:', sd)
+                    for i, row in dp.subjects[sd].iterrows():
+                        sampleid = dp.getSampleid(sd, row)
+                        row.replace(nan, '', inplace=True)
 
-                print((dp.data[['Participant ID','Visit Identifier', 'interval']]))
-                #
-                # for sd in dp.subjects:
-                #     print('*****SubjectID:', sd)
-                #     for i, row in dp.subjects[sd].iterrows():
-                #         sampleid = dp.getSampleid(sd, row)
-                #         row.replace(nan, '', inplace=True)
-                #
-                #         for type in xsdtypes.keys():
-                #             if str(row[dp.getStatusstring()[type]]) == 'SYSTEM_ERROR':
-                #                 continue
-                #             (mandata, data) = dp.mapData(row, i, type)
-                #             print(mandata)
-                #             print(data)
-
-
-
-                # [s for s in list if sub in s]
-
-                # canlist = cantab.data.columns.tolist()
-                # print([s for s in canlist if '468' in s])
-                # print(cantab.data.set_index('Participant ID').loc['1082BC','PALTE'])
-                # print('Subject summary')
-                # for sd in cantab.subjects:
-
-
-                        # for i, row in cantab.subjects[sd].iterrows():
-                        #     print(i, row)
-
-                    #     dob = cantab.formatDob(str(cantab.subjects[sd]['Date of Birth'][i]))
-                    #     print(i, 'Visit:', row['Visit Identifier'], 'DOB', dob)
-                    #     for ctab in cantab.fields:
-                    #         print(ctab, row[ctab]) #'MOTML', row['MOTML'],'MOTSDL',row['MOTSDL'] )
-
+                        for type in xsdtypes.keys():
+                            if str(row[dp.getStatusstring()[type]]) == 'SYSTEM_ERROR':
+                                continue
+                            (mandata, data) = dp.mapData(row, i, type)
+                            print(mandata)
+                            print(data)
 
         except ValueError as e:
-            print(("Sheet not found: ", e))
+            print("Sheet not found: ", e)
 
         except OSError as e:
-            print(("OS error:", e))
+            print("OS error:", e)
 
     else:
-        print(("Cannot access directory: ", inputdir))
+        print("Cannot access directory: ", inputdir)
 
 
 

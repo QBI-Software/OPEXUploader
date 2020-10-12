@@ -15,7 +15,7 @@
 """
 from pyxnat.core.resources import Project
 
-__version__ = '2.1.0'
+__version__ = '2.2.0'
 __author__ = 'Liz Cooper-Williams'
 
 import argparse
@@ -288,7 +288,6 @@ class OPEXUploader():
             try:
                 xsd = dp.getxsd()
                 if isinstance(xsd, dict) and 'opex:cantabMOT' in list(xsd.values()):  # cantab
-                    # print('Running cantab upload')
                     xsdtypes = xsd
                     for i, row in dp.subjects[sd].iterrows():
                         sampleid = dp.getSampleid(sd, row)
@@ -312,6 +311,7 @@ class OPEXUploader():
                             else:
                                 print(xsd)
                                 print(mandata)
+                                print(data)
 
 
                 # Extra filtering of nan
