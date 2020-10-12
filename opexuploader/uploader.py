@@ -13,8 +13,6 @@
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 """
-from pyxnat.core.resources import Project
-
 __version__ = '2.2.0'
 __author__ = 'Liz Cooper-Williams'
 
@@ -31,6 +29,7 @@ from os.path import expanduser, join, basename, exists, dirname, abspath, splite
 import pandas as pd
 from numpy import nan
 from pyxnat.core.errors import DatabaseError
+from pyxnat.core.resources import Project
 from requests.exceptions import ConnectionError
 
 from opexuploader.dataparser.AccelParser import AccelParser
@@ -56,6 +55,7 @@ from opexuploader.dataparser.PacesParser import PacesParser
 from opexuploader.dataparser.PsqiParser import PsqiParser
 from opexuploader.dataparser.SFParser import SF36Parser
 from opexuploader.dataparser.VisitParser import VisitParser
+from opexuploader.utils import findResourceDir
 from xnatconnect.XnatConnector import XnatConnector
 
 ### Global config for logging required due to redirection of stdout to console in app
@@ -74,6 +74,20 @@ handler = RotatingFileHandler(filename=logfile, maxBytes=4000000000)
 logger.addHandler(handler)
 
 DEBUG = 0  # Flag when Testing
+
+def getMaxMth(type):
+    """ For dass, godin, psqi, insomnia - get max month from maxmth.csv """
+    rtn = 12
+    try:
+        resdir = findResourceDir()
+        if resdir is not None:
+            maxmths = pd.read_csv(join(resdir, 'maxmth.csv'))
+            maxmth = maxmths[maxmths['TYPE'] == type]['MAXMTH']
+            if maxmth is not None:
+                rtn = int(maxmth)
+    except ValueError as e:
+        print(e)
+    return rtn
 
 
 ### Main class for upload of all dataparser types
@@ -342,7 +356,7 @@ class OPEXUploader():
 
                 # Loop over each interval
                 elif 'dass' in xsd:
-                    maxmth = 12
+                    maxmth = getMaxMth('dass')
                     intervals = list(range(0, maxmth + 1, 3))
                     for i in intervals:
                         iheaders = [c + "_" + str(i) for c in dp.fields]
@@ -865,7 +879,7 @@ class OPEXUploader():
                 seriespattern = 'GODIN*.xlsx'
                 files = glob.glob(join(inputdir, seriespattern))
                 print("Files:", len(files))
-                maxmth = 12
+                maxmth = getMaxMth('godin')
                 intervals = list(range(0, maxmth + 1, 3))
                 for f2 in files:
                     print("Loading ", f2)
@@ -931,7 +945,7 @@ class OPEXUploader():
                 seriespattern = 'PSQI*.xlsx'
                 files = glob.glob(join(inputdir, seriespattern))
                 print("Files:", len(files))
-                maxmth = 12
+                maxmth = getMaxMth('psqi')
                 intervals = list(range(0, maxmth + 1, 3))
                 for f2 in files:
                     print("Loading ", f2)
@@ -959,7 +973,7 @@ class OPEXUploader():
                 seriespattern = 'ISI*.xlsx'
                 files = glob.glob(join(inputdir, seriespattern))
                 print("Files:", len(files))
-                maxmth = 12
+                maxmth = getMaxMth('insomnia')
                 intervals = list(range(0, maxmth + 1, 3))
                 for f2 in files:
                     print("Loading ", f2)
