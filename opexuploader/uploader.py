@@ -89,6 +89,21 @@ def getMaxMth(type):
         print(e)
     return rtn
 
+def detectTabs(dp, intervals):
+    """
+    Check that correct number of tabs exist
+    Used in dass, godin, psqi, insomnia
+    :param dp: loaded DataParser
+    :param intervals: array of intervals to match tabs
+    :return:
+    """
+    if isinstance(dp, pd.DataFrame):
+        fp = dp.datafile
+    else:
+        fp = dp
+    xl = pd.ExcelFile(fp)
+    tabs = len(xl.sheet_names)
+    return intervals[0:tabs]
 
 ### Main class for upload of all dataparser types
 class OPEXUploader():
@@ -358,6 +373,7 @@ class OPEXUploader():
                 elif 'dass' in xsd:
                     maxmth = getMaxMth('dass')
                     intervals = list(range(0, maxmth + 1, 3))
+                    intervals = detectTabs(dp, intervals)
                     for i in intervals:
                         iheaders = [c + "_" + str(i) for c in dp.fields]
                         sampleid = dp.getSampleid(sd, i)
@@ -883,6 +899,7 @@ class OPEXUploader():
                 intervals = list(range(0, maxmth + 1, 3))
                 for f2 in files:
                     print("Loading ", f2)
+                    intervals = detectTabs(f2, intervals)
                     for sheet in range(0, len(intervals)):
                         i = intervals[sheet]
                         print('Interval:', i)
@@ -949,6 +966,7 @@ class OPEXUploader():
                 intervals = list(range(0, maxmth + 1, 3))
                 for f2 in files:
                     print("Loading ", f2)
+                    intervals = detectTabs(f2, intervals)
                     for sheet in range(0, len(intervals)):
                         i = intervals[sheet]
                         print('Interval:', i)
@@ -977,6 +995,7 @@ class OPEXUploader():
                 intervals = list(range(0, maxmth + 1, 3))
                 for f2 in files:
                     print("Loading ", f2)
+                    intervals = detectTabs(f2, intervals)
                     for sheet in range(0, len(intervals)):
                         i = intervals[sheet]
                         print('Interval:', i)
