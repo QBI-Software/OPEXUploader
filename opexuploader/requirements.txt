@@ -90,7 +90,7 @@ py==1.5.2
 pycparser==2.18
 pydataset==0.2.0
 pydicom==1.0.2
-Pygments==2.2.0
+Pygments==2.7.4
 pyOpenSSL==17.5.0
 pyparsing==2.2.0
 PyPDF2==1.26.0
