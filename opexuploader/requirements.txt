@@ -32,7 +32,7 @@ enum34==1.1.6
 et-xmlfile==1.0.1
 Flask==1.0
 Flask-Compress==1.4.0
-Flask-Cors==3.0.6
+Flask-Cors==3.0.9
 Flask-SeaSurf==0.2.2
 funcsigs==1.0.2
 functools32==3.2.3.post2
