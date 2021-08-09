@@ -100,7 +100,7 @@ pytest==3.4.0
 pytest-tap==2.2
 python-dateutil==2.7.3
 pytz==2018.4
-pywin32==223
+pywin32==301
 pywinpty==0.5.4
 pyxnat==1.2.0.0
 pyzmq==17.1.2
