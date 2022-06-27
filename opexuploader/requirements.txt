@@ -105,7 +105,7 @@ pywinpty==0.5.4
 pyxnat==1.2.0.0
 pyzmq==17.1.2
 qtconsole==4.4.2
-reportlab==3.5.23
+reportlab==3.5.55
 requests==2.22.0
 rows==0.3.1
 scandir==1.7
